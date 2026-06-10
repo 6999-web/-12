@@ -100,7 +100,7 @@ const initScene = () => {
 
   scene = new THREE.Scene();
   scene.background = null;
-  scene.fog = new THREE.Fog('#dff6ff', 28, 58);
+  scene.fog = new THREE.Fog('#061528', 24, 56);
 
   camera = new THREE.PerspectiveCamera(50, 1, 0.1, 120);
   camera.position.set(5.8, 17.2, 10.6);
@@ -112,7 +112,7 @@ const initScene = () => {
   });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.22;
+  renderer.toneMappingExposure = 1.08;
   renderer.shadowMap.enabled = false;
   renderer.domElement.className = 'lab-model-canvas';
   container.appendChild(renderer.domElement);
@@ -160,16 +160,18 @@ const initScene = () => {
 
 const createRoomShell = () => {
   const floorMaterial = new THREE.MeshStandardMaterial({
-    color: '#d9dde3',
-    roughness: 0.82,
-    metalness: 0.02,
-    emissive: '#6aafff',
-    emissiveIntensity: 0.025
+    color: '#26384d',
+    roughness: 0.76,
+    metalness: 0.16,
+    emissive: '#0f7ed8',
+    emissiveIntensity: 0.035
   });
   const wallMaterial = new THREE.MeshStandardMaterial({
-    color: '#f5f7fa',
-    roughness: 0.68,
-    metalness: 0.06
+    color: '#d5e3ef',
+    roughness: 0.62,
+    metalness: 0.08,
+    emissive: '#0b315f',
+    emissiveIntensity: 0.015
   });
   const blueLineMaterial = new THREE.MeshBasicMaterial({
     color: '#4fc3ff',
@@ -232,9 +234,9 @@ const addLightEdge = (name, size, position, material) => addBox(name, size, posi
 
 const createFloorGrid = (halfW, halfD) => {
   const gridMaterial = new THREE.LineBasicMaterial({
-    color: '#b7bcc6',
+    color: '#5b7894',
     transparent: true,
-    opacity: 0.28
+    opacity: 0.36
   });
   const points = [];
   for (let x = -halfW; x <= halfW + 0.001; x += ROOM.tileSize) {
@@ -335,18 +337,18 @@ const addDisplayWall = (textureLoader, name, position, size, texturePath, rotati
 
 const addPlaceholderAssets = (halfW, edgeMaterial) => {
   const deviceMaterial = new THREE.MeshStandardMaterial({
-    color: '#637a95',
+    color: '#425975',
     roughness: 0.48,
-    metalness: 0.28,
+    metalness: 0.38,
     emissive: '#1677ff',
-    emissiveIntensity: 0.055
+    emissiveIntensity: 0.075
   });
   const trophyMaterial = new THREE.MeshStandardMaterial({
-    color: '#f0d07b',
+    color: '#d8a85c',
     metalness: 0.45,
     roughness: 0.28,
-    emissive: '#4fc3ff',
-    emissiveIntensity: 0.018
+    emissive: '#ffae42',
+    emissiveIntensity: 0.025
   });
 
   for (let index = 0; index < 12; index += 1) {
@@ -372,10 +374,10 @@ const addPlaceholderAssets = (halfW, edgeMaterial) => {
 };
 
 const createLights = () => {
-  scene.add(new THREE.AmbientLight('#f4fbff', 1.25));
-  scene.add(new THREE.HemisphereLight('#ffffff', '#9fb6ce', 1.1));
+  scene.add(new THREE.AmbientLight('#7db6ff', 0.78));
+  scene.add(new THREE.HemisphereLight('#bfeaff', '#061528', 0.9));
 
-  const key = new THREE.DirectionalLight('#ffffff', 2.15);
+  const key = new THREE.DirectionalLight('#dff7ff', 1.9);
   key.position.set(4.5, 8, 6);
   scene.add(key);
 
@@ -384,8 +386,8 @@ const createLights = () => {
     [9.1, 2.4, 0, '#4fc3ff', 1.4, 8],
     [-1.7, 2.1, -4.1, '#4fc3ff', 1.65, 7],
     [5.15, 1.9, -0.45, '#4fc3ff', 1.25, 5],
-    [-3.9, 5.2, 0, '#f7fcff', 1.25, 12],
-    [8.1, 4.5, -0.35, '#ffffff', 1.45, 7],
+    [-3.9, 5.2, 0, '#bfeaff', 1.1, 12],
+    [8.1, 4.5, -0.35, '#dff7ff', 1.32, 7],
     [7.4, 3.2, 3.5, '#eaf9ff', 1.2, 6]
   ].forEach(([x, y, z, color, intensity, distance]) => {
     const light = new THREE.PointLight(color, intensity, distance);

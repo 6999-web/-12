@@ -18,11 +18,6 @@
 
     <div class="header-right">
       <div class="metric-item">
-        <span class="metric-icon">💧</span>
-        <span class="metric-label">湿度</span>
-        <span class="metric-val font-num">58%</span>
-      </div>
-      <div class="metric-item">
         <span class="metric-icon">🍃</span>
         <span class="metric-tag green">空气优</span>
       </div>
@@ -157,8 +152,10 @@ const selectTab = (tabName) => {
   justify-content: space-between;
   align-items: center;
   padding: 0 24px;
-  background: linear-gradient(180deg, rgba(9, 45, 105, 0.94) 0%, rgba(6, 34, 86, 0.72) 100%);
-  border-bottom: 1px solid rgba(110, 211, 255, 0.28);
+  background:
+    linear-gradient(90deg, rgba(3, 18, 42, 0.96), rgba(7, 38, 79, 0.98), rgba(3, 18, 42, 0.96));
+  border-bottom: 1px solid rgba(67, 183, 255, 0.3);
+  box-shadow: 0 4px 22px rgba(0, 8, 22, 0.45), inset 0 -1px 0 rgba(114, 231, 255, 0.12);
   position: relative;
   z-index: 10;
 }
@@ -173,7 +170,7 @@ const selectTab = (tabName) => {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--color-text-secondary);
+  color: #8fb5d6;
   font-size: 14px;
 }
 
@@ -181,8 +178,8 @@ const selectTab = (tabName) => {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: rgba(4, 27, 59, 0.72);
+  border: 1px solid rgba(67, 183, 255, 0.24);
   padding: 4px 10px;
   border-radius: 4px;
   font-size: 12px;
@@ -203,10 +200,15 @@ const selectTab = (tabName) => {
 .header-center h1 {
   font-size: 32px;
   margin: 0;
-  background: linear-gradient(180deg, #ffffff 30%, #a5d8ff 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  min-width: 430px;
+  padding: 5px 28px 7px;
+  border-radius: 0 0 18px 18px;
+  background:
+    linear-gradient(180deg, rgba(16, 83, 154, 0.72), rgba(5, 31, 68, 0.92));
+  border: 1px solid rgba(114, 231, 255, 0.58);
+  box-shadow: 0 8px 28px rgba(0, 8, 22, 0.42), 0 0 24px rgba(67, 183, 255, 0.18), inset 0 0 18px rgba(67, 183, 255, 0.12);
+  color: #fff !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.72), 0 0 22px rgba(67, 183, 255, 0.62), 0 2px 10px rgba(0, 7, 18, 0.8);
 }
 
 .subtitle {
@@ -222,11 +224,11 @@ const selectTab = (tabName) => {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--color-text-secondary);
-  background: rgba(255, 255, 255, 0.03);
+  color: #8fb5d6;
+  background: rgba(4, 27, 59, 0.72);
   padding: 4px 10px;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(67, 183, 255, 0.24);
 }
 
 .metric-label {
@@ -234,13 +236,13 @@ const selectTab = (tabName) => {
 }
 
 .metric-val {
-  color: #fff;
+  color: #cbeeff;
   font-weight: 600;
 }
 
 .metric-val.highlight {
-  color: #38bdf8;
-  text-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+  color: #72e7ff;
+  text-shadow: 0 0 10px rgba(114, 231, 255, 0.36);
 }
 
 .metric-tag.green {
@@ -252,10 +254,12 @@ const selectTab = (tabName) => {
 .navigation-bar {
   width: 100%;
   background:
-    linear-gradient(90deg, rgba(5, 29, 78, 0.62), rgba(9, 57, 132, 0.86), rgba(5, 29, 78, 0.62));
-  border-bottom: 1px solid rgba(93, 204, 255, 0.22);
+    linear-gradient(90deg, rgba(3, 16, 37, 0.78), rgba(6, 36, 75, 0.92), rgba(3, 16, 37, 0.78));
+  border-bottom: 1px solid rgba(67, 183, 255, 0.24);
   display: flex;
   justify-content: center;
+  align-items: center;
+  min-height: 60px;
   position: relative;
   z-index: 9;
 }
@@ -263,43 +267,54 @@ const selectTab = (tabName) => {
 .nav-container {
   display: flex;
   justify-content: space-between;
-  gap: 24px;
-  width: min(1480px, calc(100vw - 120px));
-  padding: 5px 0;
+  gap: 28px;
+  width: min(1560px, calc(100vw - 92px));
+  padding: 8px 0;
 }
 
 .nav-item {
   background: transparent;
   border: 1px solid transparent;
-  color: var(--color-text-secondary);
-  min-width: 158px;
+  color: #8fb5d6;
+  min-width: 178px;
   justify-content: center;
-  padding: 8px 26px;
-  border-radius: 4px;
+  padding: 11px 30px;
+  border-radius: 5px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 17px;
+  gap: 10px;
+  font-size: 18px;
   font-weight: 700;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-item:hover:not(.disabled) {
-  color: #fff;
-  background: rgba(0, 168, 255, 0.1);
-  border-color: rgba(0, 168, 255, 0.25);
-  text-shadow: 0 0 10px rgba(0, 168, 255, 0.4);
+  color: #eaf8ff;
+  background: rgba(67, 183, 255, 0.1);
+  border-color: rgba(67, 183, 255, 0.32);
+  text-shadow: 0 0 10px rgba(67, 183, 255, 0.34);
 }
 
 .nav-item.active {
   color: #fff;
-  background: linear-gradient(135deg, rgba(0, 102, 204, 0.4) 0%, rgba(0, 168, 255, 0.1) 100%);
-  border: 1px solid rgba(0, 168, 255, 0.6);
+  background: linear-gradient(180deg, rgba(42, 162, 255, 0.78), rgba(8, 70, 142, 0.82));
+  border: 1px solid rgba(118, 229, 255, 0.86);
   box-shadow: 
-    0 0 15px rgba(0, 168, 255, 0.25),
-    inset 0 0 8px rgba(0, 168, 255, 0.15);
-  text-shadow: 0 0 10px rgba(0, 168, 255, 0.4);
+    0 0 16px rgba(67, 183, 255, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  text-shadow: 0 0 10px rgba(67, 183, 255, 0.34);
+}
+
+.nav-item .nav-icon,
+.nav-item .nav-label {
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.nav-item.active .nav-icon,
+.nav-item.active .nav-label {
+  color: #fff !important;
 }
 
 .nav-item.disabled {
@@ -314,9 +329,9 @@ const selectTab = (tabName) => {
   }
 
   .nav-item {
-    min-width: 132px;
-    font-size: 15px;
-    padding-inline: 16px;
+    min-width: 148px;
+    font-size: 16px;
+    padding-inline: 18px;
   }
 }
 </style>

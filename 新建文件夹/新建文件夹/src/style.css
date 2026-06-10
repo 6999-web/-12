@@ -1,102 +1,120 @@
-/* Modern sci-fi dark theme variables & globals */
+/* Dark cockpit theme inspired by the low-altitude economy dashboard reference. */
 :root {
-  --bg-dark: #0a3f87;
-  --bg-panel: rgba(12, 63, 132, 0.58);
-  --bg-panel-hover: rgba(16, 87, 171, 0.72);
-  --bg-modal: rgba(7, 35, 86, 0.97);
-  
-  --color-border: rgba(103, 214, 255, 0.32);
-  --color-border-active: rgba(125, 233, 255, 0.72);
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #8da1c4;
-  --color-glow-blue: rgba(0, 168, 255, 0.4);
-  
-  /* Status Colors */
-  --status-online: #10b981;    /* Green */
-  --status-offline: #6b7280;   /* Gray */
-  --status-busy: #f59e0b;      /* Orange */
-  --status-alert: #ef4444;     /* Red */
-  --status-info: #3b82f6;      /* Blue */
-  --status-purple: #8b5cf6;    /* Purple */
+  --bg-dark: #03101f;
+  --bg-deep: #06182f;
+  --bg-panel: rgba(5, 28, 57, 0.78);
+  --bg-panel-hover: rgba(8, 44, 86, 0.88);
+  --bg-modal: rgba(4, 19, 40, 0.97);
+
+  --color-border: rgba(57, 166, 255, 0.34);
+  --color-border-active: rgba(112, 217, 255, 0.82);
+  --color-text-primary: #f2fbff;
+  --color-text-secondary: #8fb5d6;
+  --color-text-muted: #5e83a7;
+  --color-glow-blue: rgba(45, 178, 255, 0.42);
+  --color-electric: #43b7ff;
+  --color-cyan: #72e7ff;
+
+  --status-online: #2ee6a6;
+  --status-offline: #60758f;
+  --status-busy: #ffae42;
+  --status-alert: #ff6b62;
+  --status-info: #4aa8ff;
+  --status-purple: #a98cff;
 }
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", Arial, sans-serif;
   user-select: none;
 }
 
 body {
-  background-color: var(--bg-dark);
-  background-image: 
-    radial-gradient(circle at 50% 0%, rgba(115, 212, 255, 0.26) 0%, transparent 52%),
-    linear-gradient(180deg, #0b56ad 0%, #0f73bf 48%, #eaf8ff 140%);
-  background-attachment: fixed;
-  color: var(--color-text-primary);
   min-height: 100vh;
   overflow: hidden;
+  color: var(--color-text-primary);
+  background-color: var(--bg-dark);
+  background-image:
+    linear-gradient(rgba(64, 177, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(64, 177, 255, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 50% 0%, rgba(36, 143, 255, 0.28) 0%, transparent 34%),
+    radial-gradient(circle at 16% 22%, rgba(18, 203, 220, 0.12) 0%, transparent 28%),
+    linear-gradient(180deg, #061c36 0%, #03101f 46%, #020812 100%);
+  background-size: 42px 42px, 42px 42px, auto, auto, auto;
+  background-attachment: fixed;
 }
 
-/* Glassmorphism styling */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 8%, transparent 92%, rgba(35, 166, 255, 0.05)),
+    radial-gradient(ellipse at 50% 50%, transparent 42%, rgba(1, 7, 18, 0.48) 100%);
+  z-index: 0;
+}
+
 .glass-panel {
-  background: var(--bg-panel);
+  background:
+    linear-gradient(180deg, rgba(7, 36, 73, 0.86), rgba(3, 20, 45, 0.78));
   border: 1px solid var(--color-border);
-  box-shadow: 
-    0 10px 28px rgba(2, 27, 70, 0.28),
-    inset 0 0 18px rgba(103, 214, 255, 0.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border-radius: 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 16px 34px rgba(0, 8, 22, 0.42),
+    inset 0 1px 0 rgba(146, 226, 255, 0.12),
+    inset 0 0 28px rgba(45, 178, 255, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 
 .glass-panel:hover {
-  border-color: rgba(0, 168, 255, 0.35);
-  box-shadow: 
-    0 8px 32px 0 rgba(0, 0, 0, 0.6),
-    0 0 15px rgba(0, 168, 255, 0.1),
-    inset 0 0 16px rgba(0, 168, 255, 0.08);
+  background: var(--bg-panel-hover);
+  border-color: rgba(112, 217, 255, 0.58);
+  box-shadow:
+    0 18px 38px rgba(0, 8, 22, 0.48),
+    0 0 20px rgba(45, 178, 255, 0.15),
+    inset 0 0 30px rgba(45, 178, 255, 0.1);
 }
 
-/* Custom Scrollbar for Sci-Fi panels */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(4, 15, 38, 0.3);
+  background: rgba(7, 32, 64, 0.72);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 168, 255, 0.3);
+  background: rgba(67, 183, 255, 0.46);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 168, 255, 0.6);
+  background: rgba(114, 231, 255, 0.75);
 }
 
-/* Glower, blinking and animations */
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 5px rgba(0, 168, 255, 0.2), inset 0 0 5px rgba(0, 168, 255, 0.1);
+    box-shadow: 0 0 5px rgba(67, 183, 255, 0.26), inset 0 0 5px rgba(67, 183, 255, 0.14);
   }
   50% {
-    box-shadow: 0 0 15px rgba(0, 168, 255, 0.5), inset 0 0 10px rgba(0, 168, 255, 0.2);
+    box-shadow: 0 0 16px rgba(67, 183, 255, 0.62), inset 0 0 12px rgba(67, 183, 255, 0.24);
   }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.42; }
+  50% { opacity: 1; }
 }
 
 .pulse-glow-border {
   animation: pulse-glow 3s infinite;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
 }
 
 .status-dot {
@@ -104,7 +122,7 @@ body {
   height: 8px;
   border-radius: 50%;
   display: inline-block;
-  box-shadow: 0 0 8px currentColor;
+  box-shadow: 0 0 9px currentColor;
 }
 
 .status-dot.online { color: var(--status-online); background-color: var(--status-online); }
@@ -113,15 +131,436 @@ body {
 .status-dot.alert { color: var(--status-alert); background-color: var(--status-alert); }
 .status-dot.info { color: var(--status-info); background-color: var(--status-info); }
 
-/* Sci-fi Title Font stylings */
 .title-glow {
-  text-shadow: 
-    0 0 10px rgba(255, 255, 255, 0.2),
-    0 0 20px rgba(0, 168, 255, 0.5);
-  font-weight: 800;
+  color: #fff;
+  font-weight: 900;
   letter-spacing: 2px;
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.72),
+    0 0 22px rgba(67, 183, 255, 0.62),
+    0 2px 10px rgba(0, 7, 18, 0.8);
 }
 
 .font-num {
-  font-family: 'Consolas', 'Courier New', monospace;
+  font-family: "DIN Alternate", "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+}
+
+body .app-dashboard {
+  position: relative;
+  z-index: 1;
+  color: var(--color-text-primary);
+  font-size: 16px;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(30, 128, 255, 0.2), transparent 36%),
+    linear-gradient(180deg, rgba(4, 22, 45, 0.96), rgba(2, 9, 20, 0.98)) !important;
+}
+
+body .app-dashboard :is(.main-content, .home-overview-container, .members-hall-container, .achievements-container, .projects-showcase-container, .activity-showcase-container, .space-devices-container) {
+  background:
+    linear-gradient(rgba(76, 187, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(76, 187, 255, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 50% 14%, rgba(22, 112, 212, 0.22), transparent 42%),
+    linear-gradient(180deg, #071b35 0%, #03101f 58%, #020812 100%) !important;
+  background-size: 36px 36px, 36px 36px, auto, auto !important;
+}
+
+body .app-dashboard :is(p, span, li, td, th, label, input, select, button, small, div) {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+body .app-dashboard :is(h1, h2, h3, h4, h5, strong, .title, .name, .val, .num, .stat-num, .stat-value, .member-meta .name, .profile-card .name, .center-txt .num, .donut-center .val) {
+  color: var(--color-text-primary) !important;
+  font-weight: 800 !important;
+}
+
+body .app-dashboard h1 {
+  font-size: 34px !important;
+}
+
+body .app-dashboard h2 {
+  font-size: 24px !important;
+}
+
+body .app-dashboard :is(.section-header h3, .panel-header h3, .sidebar-header h3, .left-sidebar h3, .right-sidebar h3, .modal-header h2) {
+  color: #eaf8ff !important;
+  font-size: 18px !important;
+  letter-spacing: 0.5px !important;
+}
+
+body .app-dashboard :is(.desc, .description-text, .bio-text, .summary-para, .meta, .time, .location, .lbl, .label, .subtext, .grade, .card-stats, .stats-row, .timeline-item .desc, .log-item .txt, .device-status-table th, .donut-legend, .legend-item, .user-status) {
+  color: var(--color-text-secondary) !important;
+}
+
+body .app-dashboard :is(.text-highlight, .more-link, a, .metric-val.highlight, .nav-item.active .nav-label, .nav-item.active .nav-icon) {
+  color: var(--color-cyan) !important;
+  text-shadow: 0 0 10px rgba(114, 231, 255, 0.36) !important;
+}
+
+body .app-dashboard :is(
+  .glass-panel,
+  .sidebar-section,
+  .main-content-panel,
+  .center-feed,
+  .center-surveillance,
+  .members-grid-container,
+  .details-left-panel,
+  .details-middle-panel,
+  .details-right-panel,
+  .room-card,
+  .overview-card,
+  .stat-card,
+  .member-card,
+  .chart-box,
+  .logs-box,
+  .main-rec-box,
+  .latest-c-card,
+  .proj-card,
+  .project-showcase-card,
+  .activity-card,
+  .featured-activity-card,
+  .meeting-room-card,
+  .space-select-card,
+  .schedule-item,
+  .award-row-card,
+  .paper-card,
+  .assoc-card,
+  .rec-card,
+  .sum-card,
+  .bottom-card,
+  .grid-card,
+  .stat-box,
+  .overview-c,
+  .f-box,
+  .table-box,
+  .cert-card,
+  .ai-query-box,
+  .highlight-section,
+  .mini-calendar
+) {
+  background:
+    linear-gradient(180deg, rgba(7, 36, 73, 0.84), rgba(3, 18, 42, 0.74)) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow:
+    0 14px 30px rgba(0, 8, 22, 0.34),
+    inset 0 1px 0 rgba(146, 226, 255, 0.11),
+    inset 0 0 24px rgba(45, 178, 255, 0.075) !important;
+}
+
+body .app-dashboard :is(.room-card, .schedule-item, .award-row-card, .paper-card, .assoc-card, .rec-card, .member-card, .activity-card, .project-showcase-card, .meeting-room-card):hover {
+  background: rgba(8, 48, 92, 0.84) !important;
+  border-color: rgba(112, 217, 255, 0.58) !important;
+}
+
+body .app-dashboard :is(
+  .cover-image-container,
+  .proj-img-box,
+  .img-box,
+  .card-cover,
+  .camera-card,
+  .camera-feed-box,
+  .room-photo-card,
+  .monitor-viewport,
+  .device-image-box,
+  .top-img-box,
+  .cover-box,
+  .cert-image-preview,
+  .blueprint-view,
+  .donut-chart::before
+) {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(67, 183, 255, 0.2), transparent 62%),
+    linear-gradient(180deg, rgba(6, 28, 55, 0.94), rgba(2, 12, 28, 0.96)) !important;
+  border-color: rgba(57, 166, 255, 0.38) !important;
+}
+
+body .app-dashboard :is(
+  .filter-btn,
+  .nav-btn,
+  .btn-detail,
+  .btn-calendar,
+  .btn-ask-ai,
+  .btn-more,
+  .btn-primary,
+  .btn-export,
+  .layout-toggle button,
+  .control-item,
+  .subtab-btn,
+  .dialog-input button,
+  .quick-grid button,
+  .close-btn,
+  .dialog-close
+) {
+  min-height: 34px;
+  background: linear-gradient(180deg, rgba(13, 58, 103, 0.88), rgba(4, 28, 59, 0.84)) !important;
+  border: 1px solid rgba(67, 183, 255, 0.42) !important;
+  color: #cbeeff !important;
+  text-shadow: none !important;
+  box-shadow: inset 0 0 14px rgba(67, 183, 255, 0.08) !important;
+}
+
+body .app-dashboard :is(
+  .filter-btn.active,
+  .nav-btn.active,
+  .btn-primary,
+  .layout-toggle button.active,
+  .control-item.active,
+  .subtab-btn.active,
+  .nav-item.active,
+  .send-btn
+) {
+  background: linear-gradient(180deg, rgba(42, 162, 255, 0.78), rgba(8, 70, 142, 0.82)) !important;
+  border-color: rgba(118, 229, 255, 0.86) !important;
+  color: #fff !important;
+  box-shadow:
+    0 0 16px rgba(67, 183, 255, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+
+body .app-dashboard :is(
+  .filter-btn.active,
+  .nav-btn.active,
+  .btn-primary,
+  .layout-toggle button.active,
+  .control-item.active,
+  .subtab-btn.active,
+  .nav-item.active,
+  .send-btn
+) * {
+  color: #fff !important;
+}
+
+body .app-dashboard :is(.badge, .tag, .state-badge, .status-lbl, .role-tag, .skill-tag, .cloud-tag, .sci-badge, .icon-tag, .direction-badge, .type-tag) {
+  background: rgba(16, 77, 133, 0.56) !important;
+  border: 1px solid rgba(67, 183, 255, 0.3) !important;
+  color: #a9ddff !important;
+  border-radius: 4px !important;
+}
+
+body .app-dashboard :is(.green, .green-tag, .status-online, .status-lbl.green, .badge.green, .tag.green, .text-green) {
+  color: var(--status-online) !important;
+  background: rgba(46, 230, 166, 0.12) !important;
+  border-color: rgba(46, 230, 166, 0.34) !important;
+}
+
+body .app-dashboard :is(.orange, .orange-tag, .status-lbl.orange, .badge.orange, .tag.orange, .warn, .text-orange) {
+  color: var(--status-busy) !important;
+  background: rgba(255, 174, 66, 0.13) !important;
+  border-color: rgba(255, 174, 66, 0.35) !important;
+}
+
+body .app-dashboard :is(.blue, .blue-tag, .status-lbl.blue, .badge.blue, .tag.blue, .text-blue) {
+  color: #74c7ff !important;
+  background: rgba(74, 168, 255, 0.13) !important;
+  border-color: rgba(74, 168, 255, 0.34) !important;
+}
+
+body .app-dashboard :is(.purple, .tag.purple) {
+  color: var(--status-purple) !important;
+  background: rgba(169, 140, 255, 0.13) !important;
+  border-color: rgba(169, 140, 255, 0.34) !important;
+}
+
+body .app-dashboard table {
+  font-size: 14px !important;
+}
+
+body .app-dashboard :is(table th, table td, .timeline-item, .log-item, .alarm-list li) {
+  border-color: rgba(88, 170, 235, 0.18) !important;
+}
+
+body .app-dashboard table th {
+  background: rgba(7, 38, 75, 0.72) !important;
+  color: #8fb5d6 !important;
+  font-weight: 700 !important;
+}
+
+body .app-dashboard table td {
+  color: #d9f3ff !important;
+}
+
+body .app-dashboard :is(.progress-track, .track, .progress-bar-container) {
+  background: rgba(12, 53, 93, 0.74) !important;
+}
+
+body .app-dashboard :is(.progress-bar, .progress-fill, .fill, .bar-fill) {
+  background: linear-gradient(90deg, #34edc3, #43b7ff) !important;
+  box-shadow: 0 0 12px rgba(67, 183, 255, 0.32) !important;
+}
+
+body .app-dashboard :is(.line-svg path, .radar-poly) {
+  stroke: #59c7ff !important;
+}
+
+body .app-dashboard :is(.modal-overlay, .detail-dialog-overlay) {
+  background: rgba(1, 8, 19, 0.72) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+body .app-dashboard :is(.modal-window, .detail-dialog-window, .online-users-dropdown) {
+  background:
+    linear-gradient(180deg, rgba(7, 35, 70, 0.98), rgba(3, 17, 39, 0.98)) !important;
+  border-color: rgba(112, 217, 255, 0.5) !important;
+  box-shadow: 0 22px 54px rgba(0, 7, 18, 0.58), inset 0 0 24px rgba(67, 183, 255, 0.1) !important;
+}
+
+body .app-dashboard :is(.modal-header, .dialog-header, .subtabs-header, .filter-top-bar, .top-actions-bar) {
+  background: linear-gradient(90deg, rgba(8, 44, 88, 0.9), rgba(4, 24, 52, 0.72)) !important;
+  border-color: rgba(67, 183, 255, 0.26) !important;
+}
+
+body .app-dashboard :is(.camera-img, .cover-img, .proj-cover-img, .featured-img, .room-img) {
+  opacity: 0.72 !important;
+  mix-blend-mode: screen;
+  filter: saturate(1.08) contrast(1.04);
+}
+
+body .app-dashboard .main-3d-panel {
+  background:
+    radial-gradient(circle at 52% 45%, rgba(54, 153, 255, 0.2), transparent 34%),
+    radial-gradient(circle at 52% 56%, rgba(7, 190, 213, 0.11), transparent 48%),
+    linear-gradient(180deg, rgba(6, 25, 50, 0.5), rgba(2, 10, 24, 0.62)) !important;
+}
+
+body .app-dashboard .main-3d-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(93, 204, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(93, 204, 255, 0.045) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at 50% 50%, transparent 24%, black 100%);
+  opacity: 0.52;
+}
+
+body .app-dashboard .room-slogan h2,
+body .app-dashboard .room-slogan p,
+body .app-dashboard .online-widget :is(span, small) {
+  color: #f4fbff !important;
+  text-shadow: 0 0 16px rgba(67, 183, 255, 0.62), 0 2px 10px rgba(0, 7, 18, 0.7) !important;
+}
+
+body .app-dashboard .online-widget,
+body .app-dashboard .bottom-control-bar {
+  background: rgba(4, 26, 58, 0.78) !important;
+  border: 1px solid rgba(67, 183, 255, 0.44) !important;
+  box-shadow: 0 12px 28px rgba(0, 8, 22, 0.4), inset 0 0 18px rgba(67, 183, 255, 0.12) !important;
+}
+
+body .app-dashboard .text-truncate {
+  max-width: 260px;
+}
+
+body .app-dashboard :is(.timeline-simple, .timeline-logs, .activity-timeline, .patent-timeline, .vertical-trajectory-timeline .events-list) {
+  border-color: rgba(67, 183, 255, 0.28) !important;
+}
+
+body .app-dashboard .cam-footer,
+body .app-dashboard .photo-overlay-content,
+body .app-dashboard .img-overlay {
+  background: linear-gradient(180deg, transparent 0%, rgba(3, 16, 36, 0.92) 100%) !important;
+  color: #cbeeff !important;
+}
+
+body .app-dashboard input,
+body .app-dashboard select,
+body .app-dashboard textarea {
+  background: rgba(3, 18, 42, 0.92) !important;
+  border-color: rgba(67, 183, 255, 0.34) !important;
+  color: #eaf8ff !important;
+}
+
+body .app-dashboard input::placeholder,
+body .app-dashboard textarea::placeholder {
+  color: rgba(143, 181, 214, 0.72) !important;
+}
+
+body .ai-dialog,
+body .ai-dialog :is(.dialog-sidebar, .dialog-chat, .dialog-header, .message-bubble, .inline-card, .dialog-input) {
+  background:
+    linear-gradient(180deg, rgba(7, 35, 70, 0.98), rgba(3, 17, 39, 0.98)) !important;
+  border-color: rgba(112, 217, 255, 0.5) !important;
+  color: #eaf8ff !important;
+}
+
+body .ai-dialog :is(h2, strong, .inline-card strong) {
+  color: #f4fbff !important;
+}
+
+body .ai-dialog :is(p, span, small, div, input, button) {
+  color: var(--color-text-secondary) !important;
+}
+
+body .ai-dialog .dialog-message.user .message-bubble,
+body .ai-dialog .send-btn {
+  background: linear-gradient(180deg, rgba(42, 162, 255, 0.78), rgba(8, 70, 142, 0.82)) !important;
+  color: #fff !important;
+}
+
+body .ai-dialog .dialog-message.user .message-bubble * {
+  color: #fff !important;
+}
+
+body .app-dashboard .dashboard-header {
+  background:
+    linear-gradient(90deg, rgba(3, 18, 42, 0.96), rgba(7, 38, 79, 0.98), rgba(3, 18, 42, 0.96)) !important;
+  border-bottom: 1px solid rgba(67, 183, 255, 0.3) !important;
+  box-shadow: 0 4px 22px rgba(0, 8, 22, 0.45), inset 0 -1px 0 rgba(114, 231, 255, 0.12) !important;
+}
+
+body .app-dashboard .dashboard-header::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: min(620px, 46vw);
+  height: 100%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, transparent 0 9%, rgba(67, 183, 255, 0.24) 9% 10%, transparent 10% 90%, rgba(67, 183, 255, 0.24) 90% 91%, transparent 91%),
+    linear-gradient(180deg, rgba(37, 122, 220, 0.16), transparent);
+}
+
+body .app-dashboard .dashboard-header .header-center h1 {
+  background: linear-gradient(180deg, rgba(16, 83, 154, 0.72), rgba(5, 31, 68, 0.92)) !important;
+  border-color: rgba(114, 231, 255, 0.58) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  box-shadow: 0 8px 28px rgba(0, 8, 22, 0.42), 0 0 24px rgba(67, 183, 255, 0.18), inset 0 0 18px rgba(67, 183, 255, 0.12) !important;
+}
+
+body .app-dashboard .dashboard-header :is(.time-block, .metric-item, .status-block) {
+  background: rgba(4, 27, 59, 0.72) !important;
+  border: 1px solid rgba(67, 183, 255, 0.24) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+body .app-dashboard .dashboard-header :is(.metric-val, .metric-label, .time-text, .status-text) {
+  color: #cbeeff !important;
+}
+
+body .app-dashboard .navigation-bar {
+  min-height: 58px !important;
+  background:
+    linear-gradient(90deg, rgba(3, 16, 37, 0.78), rgba(6, 36, 75, 0.92), rgba(3, 16, 37, 0.78)) !important;
+  border-bottom: 1px solid rgba(67, 183, 255, 0.24) !important;
+}
+
+body .app-dashboard .navigation-bar .nav-item,
+body .app-dashboard .navigation-bar .nav-item :is(.nav-icon, .nav-label) {
+  color: #8fb5d6 !important;
+  line-height: 1.2 !important;
+}
+
+body .app-dashboard .navigation-bar .nav-item:hover,
+body .app-dashboard .navigation-bar .nav-item:hover :is(.nav-icon, .nav-label) {
+  color: #eaf8ff !important;
+}
+
+body .app-dashboard .navigation-bar .nav-item.active,
+body .app-dashboard .navigation-bar .nav-item.active :is(.nav-icon, .nav-label) {
+  color: #fff !important;
 }
