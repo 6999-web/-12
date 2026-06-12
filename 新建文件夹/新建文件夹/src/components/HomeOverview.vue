@@ -5,12 +5,25 @@
       
       <!-- Top Left Room Slogan -->
       <div class="room-slogan font-num">
-        <h2>310 智慧实验室</h2>
-        <p>实 验 · 创 新 · 协 同 · 发 展</p>
+        <h2>{{ currentSpace.title }}</h2>
+        <p>{{ currentSpace.slogan }}</p>
+      </div>
+
+      <div class="space-switcher glass-panel font-num" aria-label="选择三维空间">
+        <button
+          v-for="space in spaces"
+          :key="space.id"
+          type="button"
+          class="space-switch-item"
+          :class="{ active: activeSpace === space.id }"
+          @click="selectSpace(space.id)"
+        >
+          {{ space.shortName }}
+        </button>
       </div>
 
       <!-- Bottom Control Layer Bar -->
-      <div class="bottom-control-bar glass-panel font-num">
+      <div v-if="activeSpace === 'lab310'" class="bottom-control-bar glass-panel font-num">
         <button 
           v-for="layer in layers" 
           :key="layer.id"
@@ -25,7 +38,7 @@
       </div>
 
       <!-- Online Personnel Widget -->
-      <div class="online-widget clickable" @click.stop="toggleOnlineUsers">
+      <div v-if="activeSpace === 'lab310'" class="online-widget clickable" @click.stop="toggleOnlineUsers">
         <span class="lbl font-num">👥 在线人员</span>
         <span class="val font-num">6 <small>人</small></span>
         <div class="avatars">
@@ -37,7 +50,17 @@
 
       <!-- Main Background Simulation (The Isometric Image) -->
       <div class="simulation-bg-wrapper">
-        <LabModelViewer :active-layer="activeLayer" />
+        <LabModelViewer
+          v-show="activeSpace === 'lab310'"
+          :active-layer="activeLayer"
+          :visible="activeSpace === 'lab310'"
+        />
+        <RoomModelViewer
+          v-if="hasOpenedRoomModel"
+          v-show="activeSpace !== 'lab310'"
+          :space-id="roomViewerSpace"
+          :visible="activeSpace !== 'lab310'"
+        />
       </div>
     </div>
 
@@ -52,7 +75,11 @@
         </div>
         <div class="section-body space-cards">
           <!-- Card 1: 310 实验室 -->
-          <div class="room-card usage font-num">
+          <div
+            class="room-card usage font-num clickable"
+            :class="{ selected: activeSpace === 'lab310' }"
+            @click="selectSpace('lab310')"
+          >
             <div class="card-header-row">
               <h4>310 实验室</h4>
               <span class="badge green">使用中</span>
@@ -65,7 +92,11 @@
           </div>
 
           <!-- Card 2: 401 会议室 -->
-          <div class="room-card idle font-num clickable" @click="triggerModal('space-details')">
+          <div
+            class="room-card idle font-num clickable"
+            :class="{ selected: activeSpace === 'class401' }"
+            @click="selectSpace('class401')"
+          >
             <div class="card-header-row">
               <h4>401 会议室</h4>
               <span class="badge blue">空间中</span>
@@ -78,7 +109,11 @@
           </div>
 
           <!-- Card 3: 913 会议室 -->
-          <div class="room-card usage font-num">
+          <div
+            class="room-card usage font-num clickable"
+            :class="{ selected: activeSpace === 'meeting913' }"
+            @click="selectSpace('meeting913')"
+          >
             <div class="card-header-row">
               <h4>913 会议室</h4>
               <span class="badge green">使用中</span>
@@ -183,12 +218,42 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import LabModelViewer from './LabModelViewer.vue';
+import RoomModelViewer from './RoomModelViewer.vue';
+import { preloadRoomModels } from './roomModelAssets';
 
 const emit = defineEmits(['open-modal', 'toggle-online-users', 'navigate-tab']);
 
 const activeLayer = ref('panorama');
+const activeSpace = ref('lab310');
+const hasOpenedRoomModel = ref(true);
+const activeRoomSpace = ref('class401');
+let preloadTimer = 0;
+
+const spaces = [
+  {
+    id: 'lab310',
+    shortName: '310',
+    title: '310 智慧实验室',
+    slogan: '实 验 · 创 新 · 协 同 · 发 展'
+  },
+  {
+    id: 'class401',
+    shortName: '401',
+    title: '401 会议室',
+    slogan: '教 学 · 研 讨 · 协 作 · 展 示'
+  },
+  {
+    id: 'meeting913',
+    shortName: '913',
+    title: '913 会议室',
+    slogan: '会 议 · 汇 报 · 决 策 · 联 动'
+  }
+];
+
+const currentSpace = computed(() => spaces.find((space) => space.id === activeSpace.value) || spaces[0]);
+const roomViewerSpace = computed(() => activeRoomSpace.value);
 
 const layers = [
   { id: 'panorama', icon: '👁️', label: '全景漫游' },
@@ -199,6 +264,14 @@ const layers = [
 
 const toggleLayer = (layerId) => {
   activeLayer.value = layerId;
+};
+
+const selectSpace = (spaceId) => {
+  if (spaceId !== 'lab310') {
+    hasOpenedRoomModel.value = true;
+    activeRoomSpace.value = spaceId;
+  }
+  activeSpace.value = spaceId;
 };
 
 const toggleOnlineUsers = () => {
@@ -212,6 +285,16 @@ const triggerModal = (modalName) => {
 const navigateToDevices = () => {
   emit('navigate-tab', 'devices');
 };
+
+onMounted(() => {
+  preloadTimer = window.setTimeout(() => {
+    preloadRoomModels(['class401', 'meeting913']);
+  }, 800);
+});
+
+onUnmounted(() => {
+  if (preloadTimer) window.clearTimeout(preloadTimer);
+});
 </script>
 
 <style scoped>
@@ -258,6 +341,43 @@ const navigateToDevices = () => {
   letter-spacing: 6px;
   margin-top: 4px;
   text-shadow: 0 0 10px rgba(120, 211, 255, 0.62);
+}
+
+.space-switcher {
+  position: absolute;
+  top: 104px;
+  left: 28px;
+  z-index: 6;
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 6px;
+  background: rgba(5, 44, 103, 0.64);
+}
+
+.space-switch-item {
+  min-width: 54px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(226, 246, 255, 0.72);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.space-switch-item:hover {
+  color: #fff;
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.space-switch-item.active {
+  color: #fff;
+  border-color: rgba(56, 189, 248, 0.72);
+  background: rgba(0, 168, 255, 0.24);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.24);
 }
 
 .online-widget {
@@ -458,6 +578,12 @@ const navigateToDevices = () => {
   background: rgba(0, 168, 255, 0.04);
 }
 
+.room-card.selected {
+  border-color: rgba(56, 189, 248, 0.78);
+  background: rgba(0, 168, 255, 0.1);
+  box-shadow: inset 0 0 18px rgba(56, 189, 248, 0.08), 0 0 14px rgba(56, 189, 248, 0.1);
+}
+
 .card-header-row {
   display: flex;
   justify-content: space-between;
@@ -599,5 +725,64 @@ const navigateToDevices = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: bottom;
+}
+
+@media (max-width: 900px) {
+  .home-overview-container {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 106px);
+    overflow-y: auto;
+  }
+
+  .main-3d-panel {
+    flex: none;
+    width: 100%;
+    min-height: 560px;
+  }
+
+  .simulation-bg-wrapper {
+    inset: -8px 0 0;
+  }
+
+  .room-slogan {
+    top: 22px;
+    left: 18px;
+  }
+
+  .room-slogan h2 {
+    font-size: 24px;
+  }
+
+  .room-slogan p {
+    font-size: 12px;
+    letter-spacing: 3px;
+  }
+
+  .space-switcher {
+    top: 92px;
+    left: 18px;
+  }
+
+  .online-widget {
+    top: 148px;
+    left: 18px;
+    right: auto;
+  }
+
+  .bottom-control-bar {
+    width: calc(100% - 36px);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .right-sidebar {
+    width: 100%;
+    overflow-y: visible;
+  }
+
+  .text-truncate {
+    max-width: 180px;
+  }
 }
 </style>

@@ -8,6 +8,7 @@ import { WallSystem } from "./WallSystem";
 import { LightSystem } from "./LightSystem";
 import { PlaceholderAssets } from "./PlaceholderAssets";
 import { ModelAssets } from "./ModelAssets";
+import { PersonnelPlaceholders } from "./PersonnelPlaceholders";
 import { FlyKeyboardControls } from "./FlyKeyboardControls";
 import { SelectionSystem } from "./SelectionSystem";
 
@@ -37,6 +38,7 @@ function SceneContent() {
         <FloorSystem />
         <WallSystem />
         <ModelAssets />
+        <PersonnelPlaceholders />
         <PlaceholderAssets />
         <LightSystem />
         <ContactShadows position={[0, 0.05, 0]} opacity={0.28} scale={25} blur={2.6} far={7} />

@@ -404,10 +404,10 @@ const openProjectDetail = (proj) => {
 }
 
 .left-sidebar h3 {
-  font-size: 13px;
+  font-size: 20px;
   color: #fff;
   font-weight: bold;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   border-left: 2px solid #38bdf8;
   padding-left: 8px;
 }
@@ -416,14 +416,15 @@ const openProjectDetail = (proj) => {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .filter-list li {
-  font-size: 11px;
+  font-size: 15px;
   color: var(--color-text-secondary);
   cursor: pointer;
-  padding: 6px 8px;
+  min-height: 34px;
+  padding: 7px 10px;
   border-radius: 4px;
   transition: all 0.2s;
 }
@@ -1047,6 +1048,16 @@ const openProjectDetail = (proj) => {
 .modules-list,
 .achievements-bullet-list {
   font-size: 13px;
+}
+
+.left-sidebar h3 {
+  font-size: 20px;
+}
+
+.left-sidebar .filter-list li {
+  min-height: 34px;
+  font-size: 15px;
+  padding: 7px 10px;
 }
 
 .projects-layout-grid {

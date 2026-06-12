@@ -601,7 +601,7 @@ const papersList = [
 }
 
 .sidebar-header h3 {
-  font-size: 15px;
+  font-size: 22px;
   color: #fff;
   font-weight: bold;
 }
@@ -619,12 +619,24 @@ const papersList = [
   background: transparent;
   border: 1px solid transparent;
   color: var(--color-text-secondary);
-  padding: 10px 16px;
+  min-height: 48px;
+  padding: 12px 17px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 18px;
   text-align: left;
   transition: all 0.2s;
+}
+
+.nav-btn .icon {
+  width: 22px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 18px;
+}
+
+.nav-btn .lbl {
+  line-height: 1.2;
 }
 
 .nav-btn:hover {
@@ -1627,6 +1639,21 @@ const papersList = [
 .featured-paper-card .journal,
 .featured-paper-card .abstract {
   font-size: 13px;
+}
+
+.left-sidebar .sidebar-header h3 {
+  font-size: 22px;
+}
+
+.left-sidebar .nav-btn {
+  min-height: 48px;
+  font-size: 18px;
+  padding: 12px 17px;
+}
+
+.achievements-container .left-sidebar .sidebar-header h3 {
+  font-size: 22px !important;
+  line-height: 1.25;
 }
 
 .overview-stats-grid .stat-card {

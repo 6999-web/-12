@@ -14,6 +14,32 @@
         <b>X {{ selectedDesk.x }} · Y {{ selectedDesk.y }} · Z {{ selectedDesk.z }}</b>
       </div>
     </div>
+    <div v-if="selectedPerson" class="person-info-card font-num" :style="selectedPersonCardStyle">
+      <div class="person-info-header">
+        <span>成员信息</span>
+        <button type="button" aria-label="关闭成员信息" @click.stop="clearPersonSelection">×</button>
+      </div>
+      <strong>{{ selectedPerson.name }}</strong>
+      <p>{{ selectedPerson.studentId }}</p>
+      <dl>
+        <div>
+          <dt>部门</dt>
+          <dd>{{ selectedPerson.department }}</dd>
+        </div>
+        <div>
+          <dt>区队</dt>
+          <dd>{{ selectedPerson.squad }}</dd>
+        </div>
+        <div>
+          <dt>工位</dt>
+          <dd>{{ selectedPerson.seat }}</dd>
+        </div>
+        <div>
+          <dt>状态</dt>
+          <dd><span class="person-status">{{ selectedPerson.status }}</span></dd>
+        </div>
+      </dl>
+    </div>
     <div v-if="loading" class="model-loading font-num">
       <span>{{ loadingText }}</span>
     </div>
@@ -34,6 +60,10 @@ const props = defineProps({
   activeLayer: {
     type: String,
     default: 'panorama'
+  },
+  visible: {
+    type: Boolean,
+    default: true
   }
 });
 
@@ -42,6 +72,8 @@ const loading = ref(true);
 const loadError = ref('');
 const loadProgress = ref(0);
 const selectedDesk = ref(null);
+const selectedPerson = ref(null);
+const selectedPersonCardStyle = ref({ left: '24px', top: '92px' });
 
 const loadingText = computed(() => {
   if (loadProgress.value <= 0) return '加载3D场景中';
@@ -62,6 +94,9 @@ let loadedModelStatus = [];
 let raycaster;
 let pointer;
 let deskSelectionHelper;
+let personSelectionHelper;
+let selectedPersonAnchor = null;
+let personnelRoots = [];
 let pointerDownPoint = { x: 0, y: 0 };
 
 const ROOM = {
@@ -91,6 +126,57 @@ const modelLayers = [
     name: 'HardwareModelLayer',
     targetCenter: [7.4, 0, 3.55],
     targetSize: [5.65, 1.55]
+  }
+];
+
+const CAT_MODEL_URL = '/model/kiki.glb?v=20260612-full-white-2';
+const MEMBER_CAT_HEIGHT = 0.74;
+const CAT_WHITE_COLOR = new THREE.Color('#fffdf9');
+
+const catOccupants = [
+  {
+    id: 'member_seat_cat_01',
+    name: '李秉泽',
+    studentId: '25104070216',
+    department: '教育科技BU、具身智能BU',
+    squad: '25数据警务技术专业二区',
+    seat: 'A03 工位',
+    status: '在岗',
+    position: [-8.459, 0.79, -1.906],
+    rotationY: Math.PI
+  },
+  {
+    id: 'member_seat_cat_02',
+    name: '陈俊宏',
+    studentId: '25104070222',
+    department: '教育科技BU',
+    squad: '25数据警务技术专业二区',
+    seat: 'A06 工位',
+    status: '在岗',
+    position: [-6.136, 0.79, -1.887],
+    rotationY: Math.PI
+  },
+  {
+    id: 'member_seat_cat_03',
+    name: '朱为',
+    studentId: '25104070149',
+    department: '具身智能BU',
+    squad: '25数据警务技术专业一区',
+    seat: 'B02 工位',
+    status: '在岗',
+    position: [-2.764, 0.79, 1.731],
+    rotationY: Math.PI
+  },
+  {
+    id: 'member_seat_cat_04',
+    name: '庞力豪',
+    studentId: '25104070242',
+    department: '教育科技BU',
+    squad: '25数据警务技术专业二区',
+    seat: 'B05 工位',
+    status: '在岗',
+    position: [-1.061, 0.79, 1.731],
+    rotationY: Math.PI
   }
 ];
 
@@ -493,6 +579,90 @@ const getUsableBounds = (object) => {
   return hasVisual ? bounds : null;
 };
 
+const loadPersonnelPlaceholders = async (loader) => {
+  const gltf = await loader.loadAsync(CAT_MODEL_URL);
+  const personnelGroup = new THREE.Group();
+  personnelGroup.name = 'PersonnelCatPlaceholders';
+  personnelRoots = [];
+
+  catOccupants.forEach((person) => {
+    const root = createCatOccupant(gltf.scene, person);
+    personnelRoots.push(root);
+    personnelGroup.add(root);
+  });
+
+  labRoot.add(personnelGroup);
+  return personnelGroup;
+};
+
+const createCatOccupant = (catScene, person) => {
+  const root = new THREE.Group();
+  root.name = `${person.id}_root`;
+  root.position.set(...person.position);
+  root.rotation.y = person.rotationY;
+  root.userData.personInfo = person;
+
+  const model = catScene.clone(true);
+  model.name = `${person.id}_model`;
+  prepareMeshes(model);
+  applyCatMaterial(model);
+
+  const bounds = getUsableBounds(model) || new THREE.Box3().setFromObject(model);
+  const size = bounds.getSize(new THREE.Vector3());
+  const center = bounds.getCenter(new THREE.Vector3());
+  const targetHeight = MEMBER_CAT_HEIGHT;
+  const scale = targetHeight / Math.max(size.y, 0.001);
+  model.scale.setScalar(scale);
+  model.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
+  root.add(model);
+
+  const collider = new THREE.Mesh(
+    new THREE.BoxGeometry(1.1, 1, 1.1),
+    new THREE.MeshBasicMaterial({
+      color: '#7de9ff',
+      transparent: true,
+      opacity: 0,
+      depthWrite: false
+    })
+  );
+  collider.name = `${person.id}_collider`;
+  collider.position.set(0, 0.5, 0);
+  collider.userData.personInfo = person;
+  root.add(collider);
+
+  return root;
+};
+
+const applyCatMaterial = (object) => {
+  object.traverse((child) => {
+    if (!child.isMesh) return;
+    const material = new THREE.MeshStandardMaterial({
+      color: CAT_WHITE_COLOR,
+      roughness: 0.72,
+      metalness: 0,
+      emissive: new THREE.Color('#dbeafe'),
+      emissiveIntensity: 0.08
+    });
+    child.material = material;
+  });
+};
+
+const getPersonnelBounds = (personnelGroup) => {
+  personnelGroup.updateMatrixWorld(true);
+  return personnelGroup.children.map((root) => {
+    const box = new THREE.Box3().setFromObject(root);
+    const size = box.getSize(new THREE.Vector3());
+    return {
+      name: root.userData.personInfo?.name || root.name,
+      seat: root.userData.personInfo?.seat || '',
+      footY: Number(box.min.y.toFixed(3)),
+      topY: Number(box.max.y.toFixed(3)),
+      height: Number(size.y.toFixed(3)),
+      center: box.getCenter(new THREE.Vector3()).toArray().map((value) => Number(value.toFixed(3)))
+    };
+  });
+};
+
 const loadModels = async () => {
   const loader = new GLTFLoader();
   let completed = 0;
@@ -525,14 +695,18 @@ const loadModels = async () => {
     }));
 
     models.forEach((model) => labRoot.add(model));
+    const personnelGroup = await loadPersonnelPlaceholders(loader);
     if (containerRef.value) {
       containerRef.value.dataset.loadedModels = loadedModelStatus.map((item) => item.name).join(',');
       containerRef.value.dataset.loadedModelCount = String(loadedModelStatus.length);
       containerRef.value.dataset.sceneChildren = labRoot.children.map((child) => child.name).filter(Boolean).join(',');
+      containerRef.value.dataset.personnelCount = String(personnelGroup.children.length);
+      containerRef.value.dataset.personnelBounds = JSON.stringify(getPersonnelBounds(personnelGroup));
     }
     if (typeof window !== 'undefined') {
       window.__labModelStatus = {
         loadedModels: loadedModelStatus,
+        personnelCount: personnelGroup.children.length,
         rootChildren: labRoot.children.map((child) => child.name).filter(Boolean),
         totalRootChildren: labRoot.children.length
       };
@@ -552,10 +726,10 @@ const handlePointerDown = (event) => {
 const handlePointerUp = (event) => {
   const moved = Math.abs(event.clientX - pointerDownPoint.x) + Math.abs(event.clientY - pointerDownPoint.y);
   if (moved > 6) return;
-  pickDesk(event);
+  pickSceneObject(event);
 };
 
-const pickDesk = (event) => {
+const pickSceneObject = (event) => {
   if (!renderer || !camera || !labRoot) return;
 
   const rect = renderer.domElement.getBoundingClientRect();
@@ -564,9 +738,16 @@ const pickDesk = (event) => {
   raycaster.setFromCamera(pointer, camera);
 
   const intersections = raycaster.intersectObjects(labRoot.children, true);
+  const personObject = intersections.map((hit) => findPersonObject(hit.object)).find(Boolean);
+  if (personObject) {
+    showPersonInfo(personObject);
+    return;
+  }
+
   const deskObject = intersections.map((hit) => findDeskObject(hit.object)).find(Boolean);
 
   if (!deskObject) {
+    clearPersonSelection();
     clearDeskSelection();
     return;
   }
@@ -578,6 +759,15 @@ const findDeskObject = (object) => {
   let current = object;
   while (current && current !== labRoot && current !== scene) {
     if (getDeskPosition(current.name)) return current;
+    current = current.parent;
+  }
+  return null;
+};
+
+const findPersonObject = (object) => {
+  let current = object;
+  while (current && current !== labRoot && current !== scene) {
+    if (current.userData?.personInfo) return current;
     current = current.parent;
   }
   return null;
@@ -595,6 +785,7 @@ const getDeskPosition = (name) => {
 const showDeskLocation = (deskObject) => {
   const position = getDeskPosition(deskObject.name);
   if (!position) return;
+  clearPersonSelection();
 
   const box = new THREE.Box3().setFromObject(deskObject);
   const center = box.getCenter(new THREE.Vector3());
@@ -615,6 +806,72 @@ const showDeskLocation = (deskObject) => {
   showDeskHighlight(box);
 };
 
+const showPersonInfo = (personObject) => {
+  const person = personObject.userData.personInfo;
+  if (!person) return;
+
+  clearDeskSelection();
+  selectedPersonAnchor = personObject;
+  selectedPerson.value = {
+    name: person.name,
+    studentId: person.studentId,
+    department: person.department,
+    squad: person.squad,
+    seat: person.seat,
+    status: person.status
+  };
+  updateSelectedPersonCardPosition();
+
+  if (containerRef.value) {
+    containerRef.value.dataset.selectedPerson = person.name;
+  }
+
+  showPersonHighlight(personObject);
+};
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const updateSelectedPersonCardPosition = () => {
+  if (!selectedPersonAnchor || !containerRef.value || !camera) return;
+
+  const containerRect = containerRef.value.getBoundingClientRect();
+  const box = new THREE.Box3().setFromObject(selectedPersonAnchor);
+  const anchor = box.getCenter(new THREE.Vector3());
+  anchor.y = box.max.y * 0.88 + box.min.y * 0.12;
+  anchor.project(camera);
+
+  const x = (anchor.x * 0.5 + 0.5) * containerRect.width;
+  const y = (-anchor.y * 0.5 + 0.5) * containerRect.height;
+  const cardWidth = 286;
+  const cardHeight = 218;
+  const left = clamp(x + 26, 16, Math.max(16, containerRect.width - cardWidth - 16));
+  const top = clamp(y - 70, 16, Math.max(16, containerRect.height - cardHeight - 16));
+
+  selectedPersonCardStyle.value = {
+    left: `${Math.round(left)}px`,
+    top: `${Math.round(top)}px`
+  };
+};
+
+const updatePersonnelScreenPositions = () => {
+  if (!containerRef.value || !camera || !personnelRoots.length) return;
+
+  const containerRect = containerRef.value.getBoundingClientRect();
+  const positions = personnelRoots.map((root) => {
+    const box = new THREE.Box3().setFromObject(root);
+    const center = box.getCenter(new THREE.Vector3());
+    center.y = box.max.y * 0.65 + box.min.y * 0.35;
+    center.project(camera);
+    return {
+      name: root.userData.personInfo?.name,
+      x: Math.round((center.x * 0.5 + 0.5) * containerRect.width),
+      y: Math.round((-center.y * 0.5 + 0.5) * containerRect.height)
+    };
+  });
+
+  containerRef.value.dataset.personnelScreenPositions = JSON.stringify(positions);
+};
+
 const getDeskArea = ({ row, col }) => {
   if (col >= 13) return '右侧工位区';
   if (row <= 2) return '前排工位区';
@@ -631,12 +888,30 @@ const showDeskHighlight = (box) => {
   scene.add(deskSelectionHelper);
 };
 
+const showPersonHighlight = (object) => {
+  clearPersonHighlight();
+  const box = new THREE.Box3().setFromObject(object);
+  personSelectionHelper = new THREE.Box3Helper(box, '#fbbf24');
+  personSelectionHelper.name = 'Person_Cat_Highlight';
+  personSelectionHelper.material.transparent = true;
+  personSelectionHelper.material.opacity = 0.95;
+  scene.add(personSelectionHelper);
+};
+
 const clearDeskHighlight = () => {
   if (!deskSelectionHelper) return;
   scene?.remove(deskSelectionHelper);
   deskSelectionHelper.geometry?.dispose?.();
   deskSelectionHelper.material?.dispose?.();
   deskSelectionHelper = null;
+};
+
+const clearPersonHighlight = () => {
+  if (!personSelectionHelper) return;
+  scene?.remove(personSelectionHelper);
+  personSelectionHelper.geometry?.dispose?.();
+  personSelectionHelper.material?.dispose?.();
+  personSelectionHelper = null;
 };
 
 const clearDeskSelection = () => {
@@ -647,6 +922,21 @@ const clearDeskSelection = () => {
   clearDeskHighlight();
 };
 
+const clearPersonSelection = () => {
+  selectedPerson.value = null;
+  selectedPersonAnchor = null;
+  if (containerRef.value) {
+    delete containerRef.value.dataset.selectedPerson;
+  }
+  clearPersonHighlight();
+};
+
+const stopAnimation = () => {
+  if (!frameId) return;
+  window.cancelAnimationFrame(frameId);
+  frameId = 0;
+};
+
 const resizeRenderer = () => {
   if (!containerRef.value || !renderer || !camera) return;
   const { width, height } = containerRef.value.getBoundingClientRect();
@@ -654,13 +944,16 @@ const resizeRenderer = () => {
   const nextHeight = Math.max(1, Math.floor(height));
   camera.aspect = nextWidth / nextHeight;
   camera.updateProjectionMatrix();
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
   renderer.setSize(nextWidth, nextHeight, false);
+  updateSelectedPersonCardPosition();
 };
 
 const animate = () => {
   if (disposed) return;
   frameId = window.requestAnimationFrame(animate);
+  if (!props.visible) return;
+
   controls?.update();
 
   if (alarmPulse?.visible) {
@@ -669,6 +962,8 @@ const animate = () => {
     alarmPulse.material.opacity = 0.38 + Math.sin(Date.now() * 0.004) * 0.16;
   }
 
+  updateSelectedPersonCardPosition();
+  updatePersonnelScreenPositions();
   renderer?.render(scene, camera);
 };
 
@@ -688,21 +983,35 @@ const disposeObject = (object) => {
 };
 
 watch(() => props.activeLayer, updateLayerVisuals);
+watch(() => props.visible, (visible) => {
+  if (!visible) {
+    stopAnimation();
+    clearDeskSelection();
+    clearPersonSelection();
+    if (containerRef.value) delete containerRef.value.dataset.personnelScreenPositions;
+    return;
+  }
+  resizeRenderer();
+  updateSelectedPersonCardPosition();
+  updatePersonnelScreenPositions();
+  if (!frameId) animate();
+});
 
 onMounted(async () => {
   initScene();
   await loadModels();
-  animate();
+  if (props.visible) animate();
 });
 
 onUnmounted(() => {
   disposed = true;
-  if (frameId) window.cancelAnimationFrame(frameId);
+  stopAnimation();
   resizeObserver?.disconnect();
   renderer?.domElement?.removeEventListener('pointerdown', handlePointerDown);
   renderer?.domElement?.removeEventListener('pointerup', handlePointerUp);
   controls?.dispose();
   clearDeskHighlight();
+  clearPersonHighlight();
   if (scene) disposeObject(scene);
   renderer?.dispose();
   renderer?.domElement?.remove();
@@ -792,6 +1101,89 @@ onUnmounted(() => {
 .desk-location-grid b {
   color: #f8fdff;
   font-weight: 700;
+}
+
+.person-info-card {
+  position: absolute;
+  top: 92px;
+  left: 24px;
+  z-index: 4;
+  width: 286px;
+  padding: 13px 15px 14px;
+  border: 1px solid rgba(251, 191, 36, 0.36);
+  border-radius: 6px;
+  background: rgba(8, 24, 45, 0.88);
+  color: #f8fdff;
+  box-shadow: 0 14px 34px rgba(0, 7, 18, 0.36), inset 0 0 20px rgba(251, 191, 36, 0.08);
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+
+.person-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  color: #fbbf24;
+  font-size: 12px;
+}
+
+.person-info-header button {
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(251, 191, 36, 0.32);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff7d6;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.person-info-card strong {
+  display: block;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.person-info-card p {
+  margin: 5px 0 11px;
+  color: rgba(255, 247, 214, 0.74);
+  font-size: 12px;
+}
+
+.person-info-card dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.person-info-card dl div {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  font-size: 12px;
+}
+
+.person-info-card dt {
+  color: rgba(255, 247, 214, 0.58);
+}
+
+.person-info-card dd {
+  margin: 0;
+  color: #fff;
+  line-height: 1.45;
+}
+
+.person-status {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  background: rgba(16, 185, 129, 0.16);
+  color: #86efac;
 }
 
 .model-loading,

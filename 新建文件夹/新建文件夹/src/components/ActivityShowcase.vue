@@ -126,11 +126,24 @@
             <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
           </div>
           <div class="days">
-            <span class="other">27</span><span class="other">28</span><span class="other">29</span><span class="other">30</span><span>1</span><span>2</span><span>3</span>
-            <span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
-            <span>11</span><span>12</span><span>13</span><span>14</span><span class="event">15</span><span>16</span><span>17</span>
-            <span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span>
-            <span>25</span><span>26</span><span>27</span><span class="active">28</span><span>29</span><span>30</span><span>31</span>
+            <button
+              v-for="day in calendarDays"
+              :key="`${day.month}-${day.day}`"
+              type="button"
+              :class="{ other: day.other, event: day.event, active: selectedCalendarDay === day.day && !day.other }"
+              @click="selectCalendarDay(day)"
+            >
+              {{ day.day }}
+            </button>
+          </div>
+          <div class="calendar-event-panel">
+            <span class="event-date font-num">05-{{ String(selectedCalendarDay).padStart(2, '0') }}</span>
+            <h4>{{ selectedCalendarEvent.title }}</h4>
+            <p>{{ selectedCalendarEvent.summary }}</p>
+            <div class="event-meta">
+              <span>📍 {{ selectedCalendarEvent.location }}</span>
+              <span>👥 {{ selectedCalendarEvent.attendees }}</span>
+            </div>
           </div>
         </div>
       </section>
@@ -210,6 +223,53 @@ import { ref, computed } from 'vue';
 
 const selectedFilter = ref('all');
 const activeActivity = ref(null);
+const selectedCalendarDay = ref(28);
+
+const calendarEvents = {
+  15: {
+    title: '保研与学术经验沙龙',
+    summary: '骨干成员分享科研入门、推免规划与代码训练路径。',
+    location: '310实验室会议角',
+    attendees: '25人'
+  },
+  20: {
+    title: '华为昇腾生态技术参访',
+    summary: '实验室骨干赴杭州研究所进行技术交流与算力适配沟通。',
+    location: '华为杭州研究所',
+    attendees: '15人'
+  },
+  28: {
+    title: '多模态警务平台结题研讨',
+    summary: '项目结题答辩与学术研讨同步进行，专家组现场评审。',
+    location: '401学术汇报厅',
+    attendees: '45人'
+  }
+};
+
+const calendarDays = [
+  { month: 4, day: 27, other: true },
+  { month: 4, day: 28, other: true },
+  { month: 4, day: 29, other: true },
+  { month: 4, day: 30, other: true },
+  ...Array.from({ length: 31 }, (_, index) => {
+    const day = index + 1;
+    return { month: 5, day, event: Boolean(calendarEvents[day]) };
+  })
+];
+
+const selectedCalendarEvent = computed(() => {
+  return calendarEvents[selectedCalendarDay.value] || {
+    title: '实验室开放日常',
+    summary: '当日暂无重点活动安排，实验室保持常规开放与项目自研节奏。',
+    location: '310实验室',
+    attendees: '常规值守'
+  };
+});
+
+const selectCalendarDay = (day) => {
+  if (day.other) return;
+  selectedCalendarDay.value = day.day;
+};
 
 const filters = [
   { label: '全部活动', value: 'all' },
@@ -721,26 +781,82 @@ const openActivityDetail = (act) => {
   gap: 4px;
 }
 
-.mini-calendar .days span {
-  display: inline-block;
+.mini-calendar .days button {
+  appearance: none;
+  width: 100%;
+  min-height: 24px;
   padding: 2px 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-secondary);
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 4px;
+  font: inherit;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.mini-calendar .days span.other {
+.mini-calendar .days button:hover:not(.other) {
+  transform: translateY(-1px);
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.42);
+  color: #fff;
+}
+
+.mini-calendar .days button.other {
   color: rgba(255,255,255,0.15);
+  cursor: default;
 }
 
-.mini-calendar .days span.event {
+.mini-calendar .days button.event {
   background: rgba(56, 189, 248, 0.15);
   border: 1px solid #38bdf8;
+  color: #dff7ff;
+  box-shadow: inset 0 0 8px rgba(56, 189, 248, 0.16);
 }
 
-.mini-calendar .days span.active {
+.mini-calendar .days button.active {
   background: #38bdf8;
   color: #020617;
   font-weight: bold;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+}
+
+.calendar-event-panel {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 6px;
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.calendar-event-panel .event-date {
+  display: inline-flex;
+  margin-bottom: 5px;
+  color: #38bdf8;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.calendar-event-panel h4 {
+  margin: 0 0 5px;
+  color: #fff;
+  font-size: 12px;
+}
+
+.calendar-event-panel p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.calendar-event-panel .event-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 8px;
+  color: #bfe7ff;
+  font-size: 10px;
 }
 
 .hot-list {

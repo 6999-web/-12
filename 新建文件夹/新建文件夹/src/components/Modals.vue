@@ -449,7 +449,7 @@
           <h2>监控画面</h2>
           <button class="close-btn" @click="closeModal">×</button>
         </div>
-        <div class="modal-body scroll-container">
+        <div class="modal-body camera-monitor-body">
           <div class="camera-monitor-layout">
             <div class="monitor-main-feed">
               <img src="/assets/image6.png" alt="实时监控画面" />
@@ -459,17 +459,6 @@
               </div>
               <div class="monitor-hud bottom-right font-num">LIVE 10:32:18</div>
             </div>
-            <aside class="monitor-side-info font-num">
-              <h3>310实验室主视角</h3>
-              <p>画面状态稳定，识别到人员活动与设备运行区域。</p>
-              <div class="monitor-info-grid">
-                <span>空间</span><strong>310实验室</strong>
-                <span>分辨率</span><strong>1920 × 1080</strong>
-                <span>帧率</span><strong>30 FPS</strong>
-                <span>网络</span><strong class="text-highlight">正常</strong>
-              </div>
-              <button class="btn-primary" @click="closeModal">关闭监控</button>
-            </aside>
           </div>
         </div>
       </div>
@@ -663,7 +652,7 @@ const modalSizeClass = computed(() => {
   if (props.activeModal === 'space-details') return 'xl-modal';
   if (props.activeModal === 'device-quick-status') return 'large-modal';
   if (props.activeModal === 'device-full-details') return 'large-modal';
-  if (props.activeModal === 'camera-monitor') return 'large-modal';
+  if (props.activeModal === 'camera-monitor') return 'xl-modal';
   if (props.activeModal === 'event-logs') return 'xl-modal';
   if (props.activeModal === 'meeting-calendar') return 'xl-modal';
   return '';
@@ -2448,15 +2437,15 @@ const getMeetingBlockStyle = (meet) => {
 }
 
 .camera-monitor-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 20px;
-  min-height: 560px;
+  display: flex;
+  min-height: 68vh;
+  height: calc(90vh - 96px);
 }
 
 .monitor-main-feed {
   position: relative;
-  min-height: 560px;
+  flex: 1;
+  min-height: 100%;
   overflow: hidden;
   border-radius: 8px;
   border: 1px solid rgba(103, 214, 255, 0.3);
@@ -2466,9 +2455,9 @@ const getMeetingBlockStyle = (meet) => {
 .monitor-main-feed img {
   width: 100%;
   height: 100%;
-  min-height: 560px;
+  min-height: 100%;
   object-fit: cover;
-  opacity: 0.72;
+  opacity: 0.78;
 }
 
 .monitor-hud {
