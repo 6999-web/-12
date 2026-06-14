@@ -213,18 +213,18 @@
             <div class="quick-meta">
               <div class="title-status">
                 <h3>3D打印机</h3>
-                <span class="tag orange">使用中</span>
+                <span class="tag orange">{{ printerLoading ? '同步中' : '在线' }}</span>
               </div>
               <ul class="meta-list font-num">
-                <li><span class="lbl">设备编号:</span><span class="val">3DP-310-002</span></li>
+                <li><span class="lbl">设备编号:</span><span class="val">{{ primaryPrinter.id }}</span></li>
                 <li><span class="lbl">设备类型:</span><span class="val">增材制造设备</span></li>
                 <li><span class="lbl">所属空间:</span><span class="val">310实验室</span></li>
-                <li><span class="lbl">当前位置:</span><span class="val">A区-制造角</span></li>
-                <li><span class="lbl">最近心跳:</span><span class="val">2026-05-28 09:41:08</span></li>
-                <li><span class="lbl">当前使用:</span><span class="val text-highlight">张子轩</span></li>
+                <li><span class="lbl">当前位置:</span><span class="val">{{ primaryPrinter.location }}</span></li>
+                <li><span class="lbl">累计打印:</span><span class="val">{{ primaryPrinter.prints }} 次</span></li>
+                <li><span class="lbl">时间准确率:</span><span class="val text-highlight">{{ primaryPrinter.accuracy }}%</span></li>
                 <li><span class="lbl">网络状态:</span><span class="val"><span class="status-dot online"></span> 正常</span></li>
-                <li><span class="lbl">运行时长:</span><span class="val">2小时18分</span></li>
-                <li><span class="lbl">关联项目:</span><span class="val">智能制造教学演示平台</span></li>
+                <li><span class="lbl">打印占比:</span><span class="val">{{ primaryPrinter.share }}%</span></li>
+                <li><span class="lbl">关联项目:</span><span class="val">310实验室3D打印服务</span></li>
               </ul>
             </div>
           </div>
@@ -250,19 +250,19 @@
 
           <div class="quick-footer-grid">
             <div class="f-box font-num">
-              <span class="title">🕒 最近使用</span>
-              <span class="text">2026-05-28 09:25</span>
-              <span class="user">👤 张子轩</span>
+              <span class="title">🕒 累计打印</span>
+              <span class="text">{{ primaryPrinter.prints }} 次</span>
+              <span class="user">{{ primaryPrinter.name }}</span>
             </div>
             <div class="f-box font-num">
-              <span class="title">📅 下一预约</span>
-              <span class="text">2026-05-29 10:00</span>
-              <span class="user">👤 教学演示</span>
+              <span class="title">📅 总打印时长</span>
+              <span class="text">{{ printerSummary.totalHours }}h</span>
+              <span class="user">两台设备合计</span>
             </div>
             <div class="f-box font-num">
               <span class="title">🔔 状态提醒</span>
-              <span class="text orange">⚠️ 耗材偏低</span>
-              <span class="user">暂无严重警告</span>
+              <span class="text orange">{{ printerError || '无严重告警' }}</span>
+              <span class="user">成功 {{ printerSummary.successful }} / 失败 {{ printerSummary.failed }}</span>
             </div>
           </div>
 
@@ -287,7 +287,7 @@
             <div class="top-summary font-num">
               <div class="title-row">
                 <h3>3D打印机</h3>
-                <span class="status-tag active">使用中</span>
+                <span class="status-tag active">{{ printerLoading ? '同步中' : '在线' }}</span>
                 <span class="tag green-border">在线</span>
                 <span class="tag blue-border">无严重告警</span>
               </div>
@@ -304,13 +304,13 @@
             <div class="full-card">
               <h4>1 基础信息</h4>
               <ul class="full-meta-list font-num">
-                <li><span class="lbl">设备编号:</span><span class="val">3DP-310-002</span></li>
-                <li><span class="lbl">资产编号:</span><span class="val">ZC-3DP-2024-056</span></li>
+                <li><span class="lbl">设备编号:</span><span class="val">{{ primaryPrinter.id }}</span></li>
+                <li><span class="lbl">资产编号:</span><span class="val">{{ primaryPrinter.name }}</span></li>
                 <li><span class="lbl">设备类型:</span><span class="val">增材制造设备</span></li>
-                <li><span class="lbl">品牌/型号:</span><span class="val">FlashForge / Adventurer 5M Pro</span></li>
-                <li><span class="lbl">序列号:</span><span class="val">FF5MP20240560089</span></li>
+                <li><span class="lbl">品牌/型号:</span><span class="val">{{ primaryPrinter.model }}</span></li>
+                <li><span class="lbl">序列号:</span><span class="val">{{ primaryPrinter.name }}</span></li>
                 <li><span class="lbl">所属空间:</span><span class="val">310实验室</span></li>
-                <li><span class="lbl">安装位置:</span><span class="val">设备区-左侧</span></li>
+                <li><span class="lbl">安装位置:</span><span class="val">{{ primaryPrinter.location }}</span></li>
                 <li><span class="lbl">责任人:</span><span class="val">李明阳 (实验室工程师)</span></li>
               </ul>
             </div>
@@ -319,12 +319,12 @@
             <div class="full-card">
               <h4>2 运行状态</h4>
               <ul class="full-meta-list font-num">
-                <li><span class="lbl">当前状态:</span><span class="val text-highlight"><span class="status-dot online"></span> 使用中</span></li>
-                <li><span class="lbl">当前使用人:</span><span class="val">张子轩</span></li>
-                <li><span class="lbl">当前任务:</span><span class="val">教学演示打印</span></li>
-                <li><span class="lbl">关联项目:</span><span class="val">智能制造教学演示平台</span></li>
-                <li><span class="lbl">最近心跳:</span><span class="val">2026-05-28 09:41:08</span></li>
-                <li><span class="lbl">开机时长:</span><span class="val">5天 08:36:22</span></li>
+                <li><span class="lbl">当前状态:</span><span class="val text-highlight"><span class="status-dot online"></span> {{ primaryPrinter.status }}</span></li>
+                <li><span class="lbl">累计打印:</span><span class="val">{{ primaryPrinter.prints }} 次</span></li>
+                <li><span class="lbl">时间准确率:</span><span class="val">{{ primaryPrinter.accuracy }}%</span></li>
+                <li><span class="lbl">关联项目:</span><span class="val">310实验室3D打印服务</span></li>
+                <li><span class="lbl">总打印时长:</span><span class="val">{{ printerSummary.totalHours }}h</span></li>
+                <li><span class="lbl">打印占比:</span><span class="val">{{ primaryPrinter.share }}%</span></li>
                 <li><span class="lbl">网络状态:</span><span class="val text-highlight">在线 (5G)</span></li>
                 <li><span class="lbl">电源状态:</span><span class="val text-highlight">正常供电</span></li>
               </ul>
@@ -339,19 +339,19 @@
             <div class="full-card">
               <h4>3 使用与维护</h4>
               <ul class="full-meta-list font-num">
-                <li><span class="lbl">今日使用时长:</span><span class="val">04:18:36</span></li>
-                <li><span class="lbl">本周使用次数:</span><span class="val">6 次</span></li>
+                <li><span class="lbl">累计使用时长:</span><span class="val">{{ printerSummary.totalHours }}h</span></li>
+                <li><span class="lbl">累计使用次数:</span><span class="val">{{ printerSummary.totalPrints }} 次</span></li>
                 <li><span class="lbl">下次维护时间:</span><span class="val">2026-06-05 <small class="text-highlight">(还有 8 天)</small></span></li>
                 <li><span class="lbl">上次维护时间:</span><span class="val">2026-05-20</span></li>
               </ul>
               <div class="consumables font-num">
                 <div class="consumable-item">
-                  <div class="lbl-row"><span>PLA 耗材</span><span>62%</span></div>
-                  <div class="progress-bar"><div class="fill" style="width: 62%;"></div></div>
+                  <div class="lbl-row"><span>{{ filamentStats[0]?.name || '耗材' }}</span><span>{{ filamentStats[0]?.count || 0 }} 次</span></div>
+                  <div class="progress-bar"><div class="fill" :style="{ width: `${filamentBarWidth(filamentStats[0]?.count)}%` }"></div></div>
                 </div>
                 <div class="consumable-item">
-                  <div class="lbl-row"><span>支撑材料</span><span>38%</span></div>
-                  <div class="progress-bar"><div class="fill warn" style="width: 38%;"></div></div>
+                  <div class="lbl-row"><span>{{ filamentStats[1]?.name || '耗材' }}</span><span>{{ filamentStats[1]?.count || 0 }} 次</span></div>
+                  <div class="progress-bar"><div class="fill warn" :style="{ width: `${filamentBarWidth(filamentStats[1]?.count)}%` }"></div></div>
                 </div>
               </div>
               <div class="maint-person font-num" style="margin-top: 10px; font-size:12px;">
@@ -366,9 +366,7 @@
                 <div class="log-col">
                   <h5>最近使用</h5>
                   <ul class="log-entries font-num">
-                    <li><span>张子轩 教学演示...</span><span class="date">05-28</span></li>
-                    <li><span>王思远 样件打印</span><span class="date">05-28</span></li>
-                    <li><span>刘昊 项目原型...</span><span class="date">05-27</span></li>
+                    <li v-for="printer in printerCards" :key="printer.id"><span>{{ printer.name }} 累计 {{ printer.prints }} 次</span><span class="date">{{ printer.share }}%</span></li>
                   </ul>
                   <span class="more-link">查看全部 &gt;</span>
                 </div>
@@ -414,8 +412,8 @@
                   </div>
                 </div>
                 <div class="trend-stats">
-                  <div>今日打印时长: <strong>04:18:36</strong> <small>(日均 03:21)</small></div>
-                  <div>本周打印时长: <strong>18:46:12</strong> <small class="green-text">环比 +12.5%</small></div>
+                  <div>总打印时长: <strong>{{ printerSummary.totalHours }}h</strong> <small>历史累计</small></div>
+                  <div>耗材成本: <strong>¥{{ printerSummary.totalCost }}</strong> <small class="green-text">{{ printerSummary.totalFilament }}g</small></div>
                 </div>
               </div>
 
@@ -628,7 +626,13 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import {
+  fetchPrinterDashboard,
+  formatPrinterNumber,
+  getFilamentStats,
+  getPrinterCards
+} from './printerDashboard';
 
 const props = defineProps({
   activeModal: {
@@ -638,6 +642,9 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'open-modal']);
+const printerDashboard = ref(null);
+const printerLoading = ref(false);
+const printerError = ref('');
 
 const closeModal = () => {
   emit('close');
@@ -645,6 +652,52 @@ const closeModal = () => {
 
 const openAdvancedDeviceDetails = () => {
   emit('open-modal', 'device-full-details');
+};
+
+const loadPrinterDashboard = async () => {
+  printerLoading.value = true;
+  printerError.value = '';
+
+  try {
+    printerDashboard.value = await fetchPrinterDashboard();
+  } catch (error) {
+    printerError.value = error instanceof Error ? error.message : '打印机状态加载失败';
+  } finally {
+    printerLoading.value = false;
+  }
+};
+
+watch(() => props.activeModal, (modalName) => {
+  if ((modalName === 'device-quick-status' || modalName === 'device-full-details') && !printerDashboard.value) {
+    loadPrinterDashboard();
+  }
+});
+
+const printerCards = computed(() => getPrinterCards(printerDashboard.value));
+const primaryPrinter = computed(() => printerCards.value[0] || {
+  id: '3DP-310-001',
+  name: '--',
+  model: 'Bambu Lab 3D Printer',
+  location: '310实验室 · 制造角',
+  prints: '--',
+  accuracy: '--',
+  share: '--',
+  status: printerLoading.value ? '同步中' : '暂无数据'
+});
+
+const filamentStats = computed(() => getFilamentStats(printerDashboard.value));
+const printerSummary = computed(() => ({
+  totalPrints: formatPrinterNumber(printerDashboard.value?.total_prints),
+  successful: formatPrinterNumber(printerDashboard.value?.successful_prints),
+  failed: formatPrinterNumber(printerDashboard.value?.failed_prints),
+  totalHours: formatPrinterNumber(printerDashboard.value?.total_print_time_hours, 1),
+  totalFilament: formatPrinterNumber(printerDashboard.value?.total_filament_grams, 0),
+  totalCost: formatPrinterNumber(printerDashboard.value?.total_cost, 2)
+}));
+
+const filamentBarWidth = (count) => {
+  const max = Math.max(...filamentStats.value.map((item) => Number(item.count) || 0), 1);
+  return Math.max(6, Math.round(((Number(count) || 0) / max) * 100));
 };
 
 // Modal size configuration

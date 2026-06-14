@@ -415,6 +415,36 @@ body .app-dashboard :is(.camera-img, .cover-img, .proj-cover-img, .featured-img,
   filter: saturate(1.08) contrast(1.04);
 }
 
+body .app-dashboard :is(.achievements-container, .projects-showcase-container) :is(.cover-img, .proj-cover-img, .featured-img, .cert-real-img) {
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  filter: none !important;
+}
+
+body .app-dashboard :is(.achievements-container, .projects-showcase-container) :is(
+  .cover-image-container,
+  .proj-img-box,
+  .award-thumb-wrap,
+  .featured-award-card .image-box,
+  .cert-image-preview,
+  .cover-box
+) {
+  background: var(--bg-dark, #020617) !important;
+  border-color: rgba(57, 166, 255, 0.22) !important;
+}
+
+body .app-dashboard :is(.achievements-container, .projects-showcase-container) :is(
+  .cover-img,
+  .proj-cover-img,
+  .award-thumb-img,
+  .featured-img,
+  .cert-real-img,
+  .patent-thumb-img
+) {
+  object-fit: contain !important;
+  background: var(--bg-dark, #020617) !important;
+}
+
 body .app-dashboard .main-3d-panel {
   background:
     radial-gradient(circle at 52% 45%, rgba(54, 153, 255, 0.2), transparent 34%),
@@ -511,25 +541,15 @@ body .app-dashboard .dashboard-header {
 }
 
 body .app-dashboard .dashboard-header::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 0;
-  width: min(620px, 46vw);
-  height: 100%;
-  transform: translateX(-50%);
-  pointer-events: none;
-  background:
-    linear-gradient(135deg, transparent 0 9%, rgba(67, 183, 255, 0.24) 9% 10%, transparent 10% 90%, rgba(67, 183, 255, 0.24) 90% 91%, transparent 91%),
-    linear-gradient(180deg, rgba(37, 122, 220, 0.16), transparent);
+  content: none !important;
 }
 
 body .app-dashboard .dashboard-header .header-center h1 {
-  background: linear-gradient(180deg, rgba(16, 83, 154, 0.72), rgba(5, 31, 68, 0.92)) !important;
-  border-color: rgba(114, 231, 255, 0.58) !important;
+  background: transparent !important;
+  border: 0 !important;
   color: #fff !important;
   -webkit-text-fill-color: #fff !important;
-  box-shadow: 0 8px 28px rgba(0, 8, 22, 0.42), 0 0 24px rgba(67, 183, 255, 0.18), inset 0 0 18px rgba(67, 183, 255, 0.12) !important;
+  box-shadow: none !important;
 }
 
 body .app-dashboard .dashboard-header :is(.time-block, .metric-item, .status-block) {

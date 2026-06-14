@@ -50,10 +50,8 @@
 
       <!-- Main Background Simulation (The Isometric Image) -->
       <div class="simulation-bg-wrapper">
-        <LabModelViewer
+        <Lab310EmbeddedViewer
           v-show="activeSpace === 'lab310'"
-          :active-layer="activeLayer"
-          :visible="activeSpace === 'lab310'"
         />
         <RoomModelViewer
           v-if="hasOpenedRoomModel"
@@ -78,7 +76,7 @@
           <div
             class="room-card usage font-num clickable"
             :class="{ selected: activeSpace === 'lab310' }"
-            @click="selectSpace('lab310')"
+            @click="navigateToDevices"
           >
             <div class="card-header-row">
               <h4>310 实验室</h4>
@@ -219,7 +217,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import LabModelViewer from './LabModelViewer.vue';
+import Lab310EmbeddedViewer from './Lab310EmbeddedViewer.vue';
 import RoomModelViewer from './RoomModelViewer.vue';
 import { preloadRoomModels } from './roomModelAssets';
 
@@ -227,9 +225,10 @@ const emit = defineEmits(['open-modal', 'toggle-online-users', 'navigate-tab']);
 
 const activeLayer = ref('panorama');
 const activeSpace = ref('lab310');
-const hasOpenedRoomModel = ref(true);
+const hasOpenedRoomModel = ref(false);
 const activeRoomSpace = ref('class401');
 let preloadTimer = 0;
+let preloadIdleId = 0;
 
 const spaces = [
   {
@@ -286,14 +285,26 @@ const navigateToDevices = () => {
   emit('navigate-tab', 'devices');
 };
 
-onMounted(() => {
-  preloadTimer = window.setTimeout(() => {
+const startRoomPreload = () => {
+  const run = () => {
     preloadRoomModels(['class401', 'meeting913']);
-  }, 800);
+  };
+
+  if ('requestIdleCallback' in window) {
+    preloadIdleId = window.requestIdleCallback(run, { timeout: 3000 });
+    return;
+  }
+
+  preloadTimer = window.setTimeout(run, 1800);
+};
+
+onMounted(() => {
+  preloadTimer = window.setTimeout(startRoomPreload, 1200);
 });
 
 onUnmounted(() => {
   if (preloadTimer) window.clearTimeout(preloadTimer);
+  if (preloadIdleId && 'cancelIdleCallback' in window) window.cancelIdleCallback(preloadIdleId);
 });
 </script>
 

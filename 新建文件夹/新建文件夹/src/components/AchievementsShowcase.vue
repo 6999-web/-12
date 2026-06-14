@@ -22,12 +22,12 @@
       <div class="sidebar-footer-widget glass-panel">
         <h5>运行动态</h5>
         <div class="metric-row">
-          <span>本季度新增:</span>
-          <strong class="green-text">+14 项</strong>
+          <span>附件奖项:</span>
+          <strong class="green-text">{{ awardsSummary.total }} 项</strong>
         </div>
         <div class="metric-row">
-          <span>审核中成果:</span>
-          <strong class="orange-text">3 项</strong>
+          <span>产权附件:</span>
+          <strong class="orange-text">{{ patentsList.length }} 项</strong>
         </div>
       </div>
     </aside>
@@ -56,25 +56,19 @@
               <div class="donut-chart-wrapper">
                 <svg viewBox="0 0 100 100" class="donut-svg">
                   <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.03)" stroke-width="12"></circle>
-                  <!-- Papers: 42/156 = 27% -> stroke-dasharray="67.8 251.2" -->
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#38bdf8" stroke-width="12" stroke-dasharray="67.8 251.2" stroke-dashoffset="0" transform="rotate(-90 50 50)"></circle>
-                  <!-- Patents: 28/156 = 18% -> stroke-dasharray="45.2 251.2" -->
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#10b981" stroke-width="12" stroke-dasharray="45.2 251.2" stroke-dashoffset="-67.8" transform="rotate(-90 50 50)"></circle>
-                  <!-- Awards: 36/156 = 23% -> stroke-dasharray="57.8 251.2" -->
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#fbbf24" stroke-width="12" stroke-dasharray="57.8 251.2" stroke-dashoffset="-113.0" transform="rotate(-90 50 50)"></circle>
-                  <!-- Projects: 50/156 = 32% -> stroke-dasharray="80.4 251.2" -->
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#8b5cf6" stroke-width="12" stroke-dasharray="80.4 251.2" stroke-dashoffset="-170.8" transform="rotate(-90 50 50)"></circle>
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#10b981" stroke-width="12" :stroke-dasharray="donutSegment(achievementSummary.patents)" stroke-dashoffset="0" transform="rotate(-90 50 50)"></circle>
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#fbbf24" stroke-width="12" :stroke-dasharray="donutSegment(achievementSummary.awards)" :stroke-dashoffset="donutOffset(achievementSummary.patents)" transform="rotate(-90 50 50)"></circle>
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#8b5cf6" stroke-width="12" :stroke-dasharray="donutSegment(achievementSummary.projects)" :stroke-dashoffset="donutOffset(achievementSummary.patents + achievementSummary.awards)" transform="rotate(-90 50 50)"></circle>
                 </svg>
                 <div class="donut-center-txt">
-                  <span class="num">156</span>
+                  <span class="num">{{ achievementSummary.total }}</span>
                   <span class="lbl">成果总量</span>
                 </div>
               </div>
               <div class="legend-list">
-                <div class="legend-item"><span class="bullet" style="background:#38bdf8"></span> 论文成果: 42项 (27%)</div>
-                <div class="legend-item"><span class="bullet" style="background:#10b981"></span> 专利软著: 28项 (18%)</div>
-                <div class="legend-item"><span class="bullet" style="background:#fbbf24"></span> 竞赛获奖: 36项 (23%)</div>
-                <div class="legend-item"><span class="bullet" style="background:#8b5cf6"></span> 项目成果: 50项 (32%)</div>
+                <div class="legend-item"><span class="bullet" style="background:#10b981"></span> 专利软著: {{ achievementSummary.patents }}项 ({{ achievementPercent(achievementSummary.patents) }}%)</div>
+                <div class="legend-item"><span class="bullet" style="background:#fbbf24"></span> 竞赛获奖: {{ achievementSummary.awards }}项 ({{ achievementPercent(achievementSummary.awards) }}%)</div>
+                <div class="legend-item"><span class="bullet" style="background:#8b5cf6"></span> 项目成果: {{ achievementSummary.projects }}项 ({{ achievementPercent(achievementSummary.projects) }}%)</div>
               </div>
             </div>
 
@@ -116,44 +110,34 @@
             <div class="glass-panel main-rec-box">
               <h4>最新代表性成果</h4>
               <div class="latest-cards-list">
-                <!-- 1. Paper -->
-                <div class="latest-c-card" @click="activeCategory = 'papers'">
-                  <div class="icon-tag paper">📄 论文</div>
-                  <div class="info">
-                    <h5>Multimodal Spatial-Temporal Graph Networks...</h5>
-                    <p class="desc">第一作者：李明阳 · 发表期刊: IEEE T-ITS (SCI一区)</p>
-                  </div>
-                  <span class="date">05-28</span>
-                </div>
-
-                <!-- 2. Patent -->
+                <!-- 1. Patent -->
                 <div class="latest-c-card" @click="activeCategory = 'patents'">
                   <div class="icon-tag patent">💡 专利</div>
                   <div class="info">
-                    <h5>一种智能边缘分析盒子及姿态识别方法</h5>
-                    <p class="desc">发明专利 · CN20251039281.3 · 进入实审阶段</p>
+                    <h5>{{ featuredPatent.name }}</h5>
+                    <p class="desc">{{ featuredPatent.type }} · {{ featuredPatent.code }} · {{ featuredPatent.status }}</p>
                   </div>
-                  <span class="date">05-20</span>
+                  <span class="date">{{ featuredPatent.date }}</span>
                 </div>
 
-                <!-- 3. Award -->
+                <!-- 2. Award -->
                 <div class="latest-c-card" @click="activeCategory = 'awards'">
                   <div class="icon-tag award">🏆 奖项</div>
                   <div class="info">
-                    <h5>全国大学生智能技术创新大赛一等奖</h5>
-                    <p class="desc">国家级一等奖 · 获奖项目：多模态警务感知融合大平台</p>
+                    <h5>{{ featuredAward.name }}</h5>
+                    <p class="desc">{{ featuredAward.level }} · 参赛成员：{{ featuredAward.team }}</p>
                   </div>
-                  <span class="date">05-15</span>
+                  <span class="date">{{ featuredAward.date }}</span>
                 </div>
 
-                <!-- 4. Project -->
+                <!-- 3. Project -->
                 <div class="latest-c-card" @click="activeCategory = 'projects'">
                   <div class="icon-tag project">📁 项目</div>
                   <div class="info">
-                    <h5>智能无人机库周边警戒系统</h5>
-                    <p class="desc">负责人：王思远 · 状态：已部署测试，关联软著已授权</p>
+                    <h5>{{ featuredProject.title }}</h5>
+                    <p class="desc">来源：实验室竞赛成果_附件 · 关联 {{ featuredProject.patentsCount }} 项产权</p>
                   </div>
-                  <span class="date">05-02</span>
+                  <span class="date">附件归档</span>
                 </div>
               </div>
             </div>
@@ -196,13 +180,29 @@
               </div>
             </div>
 
-            <!-- Projects Cards Grid -->
+            <!-- Projects List -->
             <div class="projects-cards-scroll scroll-container">
-              <div class="projects-grid">
-                <div class="proj-card glass-panel" v-for="proj in filteredProjects" :key="proj.title">
+              <div class="projects-list-view">
+                <div class="proj-list-row certificate-layout-row glass-panel" v-for="proj in filteredProjects" :key="proj.title">
+                  <aside class="certificate-side">
+                    <span class="direction-badge static">{{ proj.direction }}</span>
+                    <div class="certificate-side-stats">
+                      <span>产权 {{ proj.patents }}</span>
+                      <span>奖项 {{ proj.awards }}</span>
+                    </div>
+                    <a
+                      v-if="proj.pdfUrl"
+                      class="pdf-open-link"
+                      :href="proj.pdfUrl"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      打开PDF附件
+                    </a>
+                  </aside>
                   <div class="cover-image-container">
-                    <img :src="proj.cover" class="cover-img" alt="项目图" style="opacity: 0.25; object-fit: cover; background-color: #0c1b3d;" />
-                    <span class="direction-badge">{{ proj.direction }}</span>
+                    <img v-if="proj.cover" :src="proj.cover" class="cover-img" alt="项目图" loading="lazy" decoding="async" />
+                    <div v-else class="project-no-image">PDF 附件</div>
                   </div>
                   <div class="proj-meta">
                     <h4>{{ proj.title }}</h4>
@@ -212,7 +212,6 @@
                       <span class="member" v-for="m in proj.members" :key="m">👤 {{ m }}</span>
                     </div>
                     <div class="assoc-stats-row">
-                      <span>📄 论文: <strong>{{ proj.papers }}</strong></span>
                       <span>💡 产权: <strong>{{ proj.patents }}</strong></span>
                       <span>🏆 奖项: <strong>{{ proj.awards }}</strong></span>
                     </div>
@@ -233,7 +232,7 @@
                     <span>{{ c.count }}个</span>
                   </div>
                   <div class="progress-bar-container">
-                    <div class="progress-fill" :style="{ width: (c.count / 10 * 100) + '%' }"></div>
+                    <div class="progress-fill" :style="{ width: projectDirectionBarWidth(c.count) }"></div>
                   </div>
                 </div>
               </div>
@@ -264,19 +263,28 @@
             <div class="glass-panel featured-award-card">
               <div class="badge-tag">🏆 重点成果展示</div>
               <div class="image-box">
-                <img src="/assets/image2.png" alt="获奖证书" class="featured-img" style="opacity: 0.3; object-fit: cover; background-color:#0d1d40;" />
+                <img :src="displayedAward.image || featuredProject.cover" alt="获奖证书" class="featured-img" style="opacity: 1; object-fit: contain; background-color:#0d1d40;" />
                 <div class="img-overlay">
-                  <h4>全国大学生智能技术创新大赛 2025</h4>
-                  <span class="rank">国家级 一等奖</span>
+                  <h4>{{ displayedAward.name }}</h4>
+                  <span class="rank">{{ displayedAward.level }}</span>
                 </div>
               </div>
               <div class="details">
-                <p class="title"><strong>获奖项目:</strong> 多模态警务感知融合大平台</p>
-                <p class="team"><strong>参赛成员:</strong> 张子轩, 陈一诺, 刘宇航</p>
-                <p class="mentor"><strong>指导教师:</strong> 李明阳, 孙志强</p>
+                <p class="title"><strong>获奖项目:</strong> {{ featuredProject.title }}</p>
+                <p class="team"><strong>参赛成员:</strong> {{ displayedAward.team }}</p>
+                <p class="mentor"><strong>指导教师:</strong> {{ displayedAward.mentor }}</p>
                 <p class="desc">
-                  多模态警务感知融合平台结合计算机视觉算法与微调大模型，提供面向嫌疑人的跨时空追踪及实时轨迹建模。现场演示答辩以出色的实战效果征服评审，在200余支高校队伍中名列前茅，斩获一等奖。
+                  {{ displayedAward.sourceFile || featuredProject.desc }}
                 </p>
+                <a
+                  v-if="displayedAward.pdfUrl"
+                  class="pdf-open-link featured-pdf-link"
+                  :href="displayedAward.pdfUrl"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  打开PDF附件
+                </a>
               </div>
             </div>
           </div>
@@ -285,11 +293,11 @@
           <div class="other-awards-col">
             <div class="stats-top-row">
               <div class="sum-card">
-                <span class="num">36 <small>项</small></span>
+                <span class="num">{{ awardsSummary.total }} <small>项</small></span>
                 <span class="lbl">累计奖项</span>
               </div>
               <div class="sum-card">
-                <span class="num">8 <small>项</small></span>
+                <span class="num">{{ awardsSummary.nationalFirst }} <small>项</small></span>
                 <span class="lbl">国家一等奖</span>
               </div>
             </div>
@@ -297,12 +305,32 @@
             <div class="awards-list-box glass-panel">
               <h4>竞赛获奖列表</h4>
               <div class="awards-scroll scroll-container">
-                <div class="award-row-card glass-panel" v-for="aw in awardsList" :key="aw.name">
+                <div
+                  class="award-row-card glass-panel"
+                  v-for="aw in awardsList"
+                  :key="aw.id || aw.name"
+                  :class="{ active: activeAwardKey === (aw.id || aw.name) }"
+                  @click="selectedAward = aw"
+                >
                   <span class="medal">🥇</span>
+                  <div class="award-thumb-wrap">
+                    <img v-if="aw.image" :src="aw.image" :alt="aw.name" class="award-thumb-img" loading="lazy" decoding="async" />
+                    <span v-else class="no-thumb">PDF</span>
+                  </div>
                   <div class="txt">
                     <h5>{{ aw.name }}</h5>
                     <p class="lvl">{{ aw.level }} · 主办单位: {{ aw.host }}</p>
                     <p class="team">成员: {{ aw.team }} · 指导: {{ aw.mentor }}</p>
+                    <a
+                      v-if="aw.pdfUrl"
+                      class="pdf-open-link award-pdf-link"
+                      :href="aw.pdfUrl"
+                      target="_blank"
+                      rel="noopener"
+                      @click.stop
+                    >
+                      打开PDF
+                    </a>
                   </div>
                   <span class="date">{{ aw.date }}</span>
                 </div>
@@ -320,17 +348,19 @@
             <div class="glass-panel cert-card">
               <div class="cert-header">💡 代表性知识产权</div>
               <div class="cert-image-preview">
+                <img v-if="displayedPatent.image" :src="displayedPatent.image" alt="知识产权附件" class="cert-real-img" decoding="async" />
+                <div v-else class="cert-no-image">附件暂无图片</div>
                 <div class="badge-stamp">已授权</div>
-                <span class="cert-title">发明专利证书</span>
-                <span class="pat-name">《一种利用时空图卷积网络的边缘设备多路视频识别系统》</span>
+                <span class="cert-title">{{ displayedPatent.type }}</span>
+                <span class="pat-name">《{{ displayedPatent.name }}》</span>
               </div>
               <ul class="meta-details">
-                <li><span>专利类型:</span> <strong>发明专利</strong></li>
-                <li><span>申请号:</span> <strong>CN20251029381.5</strong></li>
-                <li><span>授权公告号:</span> <strong>CN118392812B</strong></li>
+                <li><span>专利类型:</span> <strong>{{ displayedPatent.type }}</strong></li>
+                <li><span>申请号:</span> <strong>{{ displayedPatent.code }}</strong></li>
+                <li><span>授权公告号:</span> <strong>{{ displayedPatent.status }}</strong></li>
                 <li><span>专利权人:</span> <strong>智慧实验室</strong></li>
-                <li><span>第一发明人:</span> <strong>李明阳 (导师)</strong></li>
-                <li><span>关联项目:</span> <strong>多模态警务感知融合大平台</strong></li>
+                <li><span>第一发明人:</span> <strong>{{ displayedPatent.role }}</strong></li>
+                <li><span>关联项目:</span> <strong>{{ featuredProject.title }}</strong></li>
               </ul>
             </div>
           </div>
@@ -349,16 +379,26 @@
               <table class="data-table">
                 <thead>
                   <tr>
+                    <th>附件图</th>
                     <th>产权名称</th>
                     <th>类型</th>
                     <th>编号/登记号</th>
-                    <th>申请日期</th>
+                    <th>来源</th>
                     <th>当前状态</th>
                     <th>角色</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="pat in patentsList" :key="pat.name">
+                  <tr
+                    v-for="pat in patentsList"
+                    :key="pat.name"
+                    :class="{ active: displayedPatent.name === pat.name }"
+                    @click="selectedPatent = pat"
+                  >
+                    <td>
+                      <img v-if="pat.image" :src="pat.image" :alt="pat.name" class="patent-thumb-img" loading="lazy" decoding="async" />
+                      <span v-else class="no-thumb compact">无图</span>
+                    </td>
                     <td class="text-highlight">{{ pat.name }}</td>
                     <td>{{ pat.type }}</td>
                     <td>{{ pat.code }}</td>
@@ -373,211 +413,98 @@
         </div>
       </div>
 
-      <!-- 5. 论文成果 SUBPAGE -->
-      <div v-else-if="activeCategory === 'papers'" class="tab-pane-papers font-num">
-        <div class="papers-grid-layout">
-          <!-- Left: Paper stats/theme -->
-          <aside class="papers-sidebar">
-            <div class="chart-box glass-panel">
-              <h4>学术论文收录分布</h4>
-              <ul class="paper-distribution font-num">
-                <li><span>SCI 一区 (Top)</span> <strong>6 篇</strong></li>
-                <li><span>SCI 二区</span> <strong>12 篇</strong></li>
-                <li><span>SCI 三/四区</span> <strong>10 篇</strong></li>
-                <li><span>EI 会议/期刊</span> <strong>14 篇</strong></li>
-              </ul>
-            </div>
-
-            <div class="chart-box glass-panel">
-              <h4>核心研究主题</h4>
-              <div class="simple-bar-chart">
-                <div class="chart-bar-item" v-for="thm in paperThemes" :key="thm.name">
-                  <div class="lbl-row"><span>{{ thm.name }}</span><strong>{{ thm.count }}篇</strong></div>
-                  <div class="progress-bar-container">
-                    <div class="progress-fill" :style="{ width: (thm.count / 15 * 100) + '%', backgroundColor: thm.color }"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          <!-- Right: Representative & Table -->
-          <main class="papers-main-content">
-            <div class="featured-paper-card glass-panel">
-              <div class="badge-tag">🔥 最新高水平代表作</div>
-              <h4>Multimodal Spatial-Temporal Graph Networks for Intelligent Target Tracking in Complex Urban Environments</h4>
-              <p class="authors">作者：李明阳 (通讯作者), 张子轩 (研二), 刘宇航 (大四)</p>
-              <p class="journal">发表期刊：<strong>IEEE Transactions on Intelligent Transportation Systems (T-ITS)</strong></p>
-              <p class="abstract">
-                <strong>摘要:</strong> 本文提出一种全新的多模态时空图神经网络架构，有效融合路面高清图像深度语义与微波雷达回波速度。通过动态自注意力对齐机制，在城市复杂交叉路口目标跟踪准确度上提升了12.5%，并在实际警务融合大平台中完成实测部署。
-              </p>
-              <div class="meta-row">
-                <span>发表时间: <strong>2026-05</strong></span>
-                <span>收录分区: <strong class="text-highlight">SCI 一区 (IF: 8.5)</strong></span>
-                <span>关联项目: <strong>多模态警务感知融合大平台</strong></span>
-              </div>
-            </div>
-
-            <div class="table-actions-row">
-              <h3>论文台账列表</h3>
-              <button class="btn-export">📥 导出论文库</button>
-            </div>
-
-            <div class="table-box glass-panel scroll-container">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>论文题目</th>
-                    <th>作者</th>
-                    <th>发表期刊/会议</th>
-                    <th>发表时间</th>
-                    <th>收录情况</th>
-                    <th>引用</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="pap in papersList" :key="pap.title">
-                    <td class="text-highlight" :title="pap.title">{{ pap.title }}</td>
-                    <td>{{ pap.author }}</td>
-                    <td>{{ pap.journal }}</td>
-                    <td>{{ pap.date }}</td>
-                    <td><span class="sci-badge">{{ pap.indexed }}</span></td>
-                    <td class="text-highlight"><strong>{{ pap.citations }}</strong></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </main>
-        </div>
-      </div>
     </main>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
+import {
+  realAwardsList,
+  realPatentsList,
+  realAchievementProjects,
+  realProjectDirections,
+  getDirectionCounts,
+  getOverviewStats
+} from './labAchievementData';
 
 const activeCategory = ref('overview');
 const selectedProjDir = ref('all');
+const selectedAward = ref(null);
+const selectedPatent = ref(null);
 
 const categories = [
   { id: 'overview', label: '成果总览', icon: '📊' },
   { id: 'projects', label: '项目成果', icon: '📁' },
   { id: 'awards', label: '奖项成果', icon: '🏆' },
-  { id: 'patents', label: '产权成果', icon: '💡' },
-  { id: 'papers', label: '论文成果', icon: '📄' }
+  { id: 'patents', label: '产权成果', icon: '💡' }
 ];
 
-const overviewStats = [
-  { label: '成果总数', val: 156, icon: '🏆', class: '' },
-  { label: '论文成果', val: 42, icon: '📄', class: 'blue-s' },
-  { label: '专利软著', val: 28, icon: '💡', class: 'green-s' },
-  { label: '竞赛获奖', val: 36, icon: '🥇', class: 'orange-s' }
-];
+const overviewStats = getOverviewStats();
+const projectDirections = realProjectDirections.map((direction) => (
+  direction.value === 'all' ? { ...direction, label: '全部项目' } : direction
+));
+const projectDirectionCounts = getDirectionCounts(realAchievementProjects);
+const achievementSummary = {
+  patents: realPatentsList.length,
+  awards: realAwardsList.length,
+  projects: realAchievementProjects.length
+};
+achievementSummary.total = achievementSummary.patents + achievementSummary.awards + achievementSummary.projects;
+const donutCircumference = 251.2;
 
-const projectDirections = [
-  { label: '全部项目', value: 'all' },
-  { label: '公安实战', value: '公安实战' },
-  { label: 'AI教育', value: 'AI教育' },
-  { label: '智能硬件', value: '智能硬件' },
-  { label: 'AIGC应用', value: 'AIGC应用' }
-];
+const achievementPercent = (count) => {
+  if (!achievementSummary.total) return 0;
+  return Math.round((count / achievementSummary.total) * 100);
+};
 
-const projectDirectionCounts = [
-  { name: '公安实战', count: 8 },
-  { name: 'AI教育', count: 6 },
-  { name: '智能硬件', count: 5 },
-  { name: 'AIGC应用', count: 5 }
-];
+const donutSegment = (count) => {
+  const length = achievementSummary.total ? (count / achievementSummary.total) * donutCircumference : 0;
+  return `${length} ${donutCircumference}`;
+};
 
-// Mock Logs Log
+const donutOffset = (countBefore) => {
+  const length = achievementSummary.total ? (countBefore / achievementSummary.total) * donutCircumference : 0;
+  return `-${length}`;
+};
+
+const maxDirectionCount = computed(() => Math.max(...projectDirectionCounts.map((item) => item.count), 1));
+const projectDirectionBarWidth = (count) => `${Math.round((count / maxDirectionCount.value) * 100)}%`;
+
 const latestLogs = [
-  { time: '09:39', class: 'blue', user: '李明阳 (导师)', action: '发表了高水平SCI论文', title: 'Multimodal Spatial-Temporal Graph Networks...' },
-  { time: '09:12', class: 'green', user: '刘昊 (学生)', action: '发明专利公布入册', title: '一种智能边缘分析盒子及姿态识别方法' },
-  { time: '08:58', class: 'orange', user: '张子轩 (学生)', action: '带队荣获竞赛全国金奖', title: '中国机器人及人工智能大赛一等奖' },
-  { time: '08:15', class: 'purple', user: '王思远 (学生)', action: '项目顺利上线可演示', title: '智能无人机库周边警戒系统' }
+  { time: '09:39', class: 'orange', user: '成果管理员', action: '归档竞赛获奖材料', title: realAwardsList[0].name },
+  { time: '09:12', class: 'green', user: '知识产权管理员', action: '录入知识产权台账', title: realPatentsList[0].name },
+  { time: '08:58', class: 'purple', user: '项目展厅', action: '更新项目成果分组', title: realAchievementProjects[0].title },
+  { time: '08:15', class: 'blue', user: '成果中心', action: '同步附件目录真实数据', title: '实验室竞赛成果_附件' }
 ];
 
-// Mock Projects
-const projectsList = [
-  {
-    title: '多模态警务感知融合大平台',
-    direction: '公安实战',
-    desc: '融合边缘AI盒子和视频流时空图网络，在城市级路口实现目标跨镜头追踪和姿态预警。',
-    members: ['张子轩', '陈一诺'],
-    papers: 2,
-    patents: 3,
-    awards: 1,
-    cover: '/assets/image4.png'
-  },
-  {
-    title: '智能无人机库周边警戒系统',
-    direction: '智能硬件',
-    desc: '面向无网络、无市电环境的高可靠性雷达+红外防区报警，保障户外机库资产安全。',
-    members: ['刘昊', '王思远'],
-    papers: 1,
-    patents: 2,
-    awards: 1,
-    cover: '/assets/image5.png'
-  },
-  {
-    title: '智小喵大模型实验室AI大助手',
-    direction: 'AIGC应用',
-    desc: '在实验室内部署微调轻量化本地大模型，支持自然语言检索实验室设备与科研成果。',
-    members: ['张子轩', '孙雨桐'],
-    papers: 1,
-    patents: 1,
-    awards: 0,
-    cover: '/assets/image7.png'
-  },
-  {
-    title: '基于知识图谱的在线智慧课堂',
-    direction: 'AI教育',
-    desc: '实时提炼课堂教学视频动作，与后台知识大纲点位动态绑定，生成学生学习兴趣度图谱。',
-    members: ['李思雨', '孙雨桐'],
-    papers: 2,
-    patents: 1,
-    awards: 2,
-    cover: '/assets/image8.png'
-  }
-];
+const projectsList = realAchievementProjects.map((project) => ({
+  title: project.title,
+  direction: project.direction,
+  desc: project.desc,
+  members: project.members,
+  patents: project.patentsCount,
+  awards: project.awardsCount,
+  cover: project.cover
+}));
 
 const filteredProjects = computed(() => {
   if (selectedProjDir.value === 'all') return projectsList;
   return projectsList.filter(p => p.direction === selectedProjDir.value);
 });
 
-// Mock Awards
-const awardsList = [
-  { name: '中国机器人及人工智能大赛一等奖', level: '国家级', host: '中国人工智能学会', team: '张子轩, 刘宇航, 陈一诺', mentor: '李明阳', date: '2025-11' },
-  { name: '全国智能制造技术应用创新大赛二等奖', level: '行业级/国家级', host: '工业和信息化部', team: '刘昊, 王思远', mentor: '李明阳', date: '2025-07' },
-  { name: '“挑战杯”大学生课外学术科技作品竞赛二等奖', level: '国家级', host: '共青团中央', team: '张子轩, 李思雨', mentor: '李明阳', date: '2025-06' },
-  { name: '蓝桥杯单片机设计省部一等奖', level: '省部级', host: '工信部人才交流中心', team: '刘昊', mentor: '无', date: '2024-05' }
-];
-
-// Mock Patents
-const patentsList = [
-  { name: '一种物联网多传感器融合监测网关', type: '实用新型专利', code: 'ZL20242189382.9', date: '2024-12-05', status: '已授权', statusClass: 'green-tag', role: '第一发明人' },
-  { name: '机械臂柔性压力感知指尖控制电路系统', type: '实用新型专利', code: 'ZL2025204893.3', date: '2025-04-18', status: '已授权', statusClass: 'green-tag', role: '第一发明人' },
-  { name: '一种利用知识图谱进行空间设备智能检索的系统', type: '发明专利', code: 'CN2025108422.3', date: '2025-09-15', status: '受理', statusClass: 'blue-tag', role: '第二发明人' },
-  { name: '警务多路视频流汇聚及姿态分析算法软件', type: '软件著作权', code: '2025SR120938', date: '2025-08-20', status: '已登记', statusClass: 'green-tag', role: '第一著作权人' },
-  { name: '智小喵实验室问答大模型控制系统', type: '软件著作权', code: '2025SR10822', date: '2025-06-12', status: '已登记', statusClass: 'green-tag', role: '第一著作权人' }
-];
-
-// Mock Papers
-const paperThemes = [
-  { name: '计算机视觉与识别', count: 14, color: '#38bdf8' },
-  { name: '自然语言处理与大模型', count: 10, color: '#8b5cf6' },
-  { name: '嵌入式物联网感知', count: 8, color: '#10b981' },
-  { name: '智慧教育智能分析', count: 6, color: '#fbbf24' }
-];
-
-const papersList = [
-  { title: 'Multimodal Spatial-Temporal Graph Networks for Intelligent Target Tracking...', author: '李明阳, 张子轩', journal: 'IEEE T-ITS', date: '2026-05', indexed: 'SCI 一区', citations: 12 },
-  { title: 'Knowledge Graph Reasoning for Crime Scene Reconstruction: A Deep Learning Approach', author: '李明阳, 陈一诺', journal: 'Pattern Recognition Letters', date: '2025-08', indexed: 'SCI 二区', citations: 24 },
-  { title: 'A Natural Language Interface for IoT Enabled Smart Labs: The ZhiXiaoMiao Agent', author: '张子轩, 李明阳', journal: 'IEEE L-IoT', date: '2025-07', indexed: 'SCI 三区', citations: 10 },
-  { title: 'Spatial-Temporal Multi-Agent Networks for Real-time Anomaly Detection', author: '张子轩', journal: 'Journal of Intelligent Systems', date: '2025-12', indexed: 'EI', citations: 4 }
-];
+const awardsList = realAwardsList;
+const patentsList = realPatentsList;
+const featuredAward = awardsList.find((award) => award.image && award.level.includes('特等奖')) || awardsList.find((award) => award.image) || awardsList[0];
+const featuredPatent = patentsList.find((patent) => patent.image) || patentsList[0];
+const featuredProject = realAchievementProjects[0];
+const displayedAward = computed(() => selectedAward.value || featuredAward);
+const displayedPatent = computed(() => selectedPatent.value || featuredPatent);
+const activeAwardKey = computed(() => displayedAward.value?.id || displayedAward.value?.name);
+const awardsSummary = {
+  total: awardsList.length,
+  nationalFirst: awardsList.filter((award) => award.level.includes('国家级一等奖')).length
+};
 </script>
 
 <style scoped>
@@ -684,6 +611,69 @@ const papersList = [
   padding: 16px;
 }
 
+.main-content-panel,
+.tab-pane-overview,
+.tab-pane-projects,
+.tab-pane-awards,
+.tab-pane-patents,
+.projects-cards-scroll,
+.awards-scroll,
+.table-box,
+.scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(91, 152, 220, 0.95) rgba(5, 18, 42, 0.88);
+  scrollbar-gutter: stable;
+}
+
+.main-content-panel::-webkit-scrollbar,
+.tab-pane-overview::-webkit-scrollbar,
+.tab-pane-projects::-webkit-scrollbar,
+.tab-pane-awards::-webkit-scrollbar,
+.tab-pane-patents::-webkit-scrollbar,
+.projects-cards-scroll::-webkit-scrollbar,
+.awards-scroll::-webkit-scrollbar,
+.table-box::-webkit-scrollbar,
+.scroll-container::-webkit-scrollbar {
+  width: 9px;
+}
+
+.main-content-panel::-webkit-scrollbar-track,
+.tab-pane-overview::-webkit-scrollbar-track,
+.tab-pane-projects::-webkit-scrollbar-track,
+.tab-pane-awards::-webkit-scrollbar-track,
+.tab-pane-patents::-webkit-scrollbar-track,
+.projects-cards-scroll::-webkit-scrollbar-track,
+.awards-scroll::-webkit-scrollbar-track,
+.table-box::-webkit-scrollbar-track,
+.scroll-container::-webkit-scrollbar-track {
+  background: rgba(5, 18, 42, 0.88);
+  border: 1px solid rgba(54, 126, 210, 0.35);
+  border-radius: 8px;
+}
+
+.main-content-panel::-webkit-scrollbar-thumb,
+.tab-pane-overview::-webkit-scrollbar-thumb,
+.tab-pane-projects::-webkit-scrollbar-thumb,
+.tab-pane-awards::-webkit-scrollbar-thumb,
+.tab-pane-patents::-webkit-scrollbar-thumb,
+.projects-cards-scroll::-webkit-scrollbar-thumb,
+.awards-scroll::-webkit-scrollbar-thumb,
+.table-box::-webkit-scrollbar-thumb,
+.scroll-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #6ea7f0, #3569a8);
+  border-radius: 8px;
+  border: 2px solid rgba(4, 15, 35, 0.96);
+}
+
+.tab-pane-projects,
+.tab-pane-awards,
+.tab-pane-patents {
+  height: 100%;
+  min-height: 0;
+  overflow-y: scroll;
+  padding-right: 10px;
+}
+
 /* ========================================================
    SUBPAGE: OVERVIEW
    ======================================================== */
@@ -692,7 +682,8 @@ const papersList = [
   flex-direction: column;
   gap: 16px;
   height: 100%;
-  overflow-y: auto;
+  overflow-y: scroll;
+  padding-right: 10px;
 }
 
 .overview-stats-grid {
@@ -1031,35 +1022,70 @@ const papersList = [
   overflow-y: auto;
 }
 
-.projects-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+.projects-list-view {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
   padding-right: 4px;
 }
 
-.proj-card {
+.proj-list-row {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: rgba(9, 23, 55, 0.72);
+  min-height: 270px;
+  border: 1px solid rgba(79, 172, 254, 0.18);
+}
+
+.certificate-layout-row {
+  gap: 14px;
+  padding: 10px 14px 10px 10px;
+}
+
+.certificate-side {
+  width: 96px;
+  align-self: stretch;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  background: rgba(6,18,45,0.4);
+  align-items: flex-start;
+  gap: 10px;
+  flex-shrink: 0;
+  padding-top: 8px;
+}
+
+.certificate-side-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  line-height: 1.35;
 }
 
 .cover-image-container {
-  height: 120px;
+  width: 184px;
+  height: 246px;
+  flex-shrink: 0;
   position: relative;
-  background: #020617;
+  background: var(--bg-dark, #020617);
+  border: 1px solid rgba(57, 166, 255, 0.22);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .cover-img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+  background-color: var(--bg-dark, #020617);
+  opacity: 1;
 }
 
 .direction-badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
   background: rgba(56, 189, 248, 0.25);
   border: 1px solid #38bdf8;
   color: #fff;
@@ -1068,11 +1094,26 @@ const papersList = [
   border-radius: 4px;
 }
 
+.direction-badge.static {
+  position: static;
+  max-width: 100%;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+}
+
 .proj-meta {
-  padding: 12px;
+  padding: 10px 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .proj-meta h4 {
@@ -1085,14 +1126,15 @@ const papersList = [
   font-size: 11px;
   color: var(--color-text-secondary);
   line-height: 1.4;
-  height: 44px;
+  margin: 0;
+  max-height: 64px;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .team-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   font-size: 10px;
   color: var(--color-text-secondary);
@@ -1113,6 +1155,33 @@ const papersList = [
 
 .assoc-stats-row strong {
   color: #fff;
+}
+
+.pdf-open-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(251, 191, 36, 0.36);
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.pdf-open-link:hover {
+  background: rgba(251, 191, 36, 0.18);
+  border-color: rgba(251, 191, 36, 0.58);
+}
+
+.featured-pdf-link {
+  margin-top: 4px;
 }
 
 .projects-right-sidebar {
@@ -1231,22 +1300,23 @@ const papersList = [
 
 .featured-award-card .image-box {
   position: relative;
-  height: 200px;
-  background: #020617;
+  height: min(52vh, 420px);
+  min-height: 320px;
+  background: var(--bg-dark, #020617);
   border-radius: 6px;
   overflow: hidden;
+  border: 1px solid rgba(57, 166, 255, 0.22);
 }
 
 .featured-img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+  background: var(--bg-dark, #020617);
 }
 
 .img-overlay {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  padding: 12px;
-  background: linear-gradient(180deg, transparent 0%, rgba(2, 6, 20, 0.9) 100%);
+  display: none;
 }
 
 .img-overlay h4 {
@@ -1323,18 +1393,74 @@ const papersList = [
 
 .award-row-card {
   display: flex;
-  align-items: center;
-  padding: 10px 12px;
+  align-items: stretch;
+  padding: 12px;
   background: rgba(255,255,255,0.01);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: border-color 0.2s, background 0.2s;
+  min-height: 190px;
+}
+
+.award-row-card:hover,
+.award-row-card.active {
+  background: rgba(56, 189, 248, 0.06);
+  border-color: rgba(56, 189, 248, 0.34);
 }
 
 .award-row-card .medal {
   font-size: 20px;
   margin-right: 12px;
+  padding-top: 6px;
+}
+
+.award-thumb-wrap {
+  width: 132px;
+  height: 176px;
+  margin-right: 12px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-dark, #020617);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.award-thumb-img,
+.patent-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 1;
+  background: var(--bg-dark, #020617);
+}
+
+.no-thumb {
+  color: #fbbf24;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.no-thumb.compact {
+  display: inline-flex;
+  width: 56px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: rgba(2, 12, 30, 0.82);
 }
 
 .award-row-card .txt {
   flex-grow: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
 }
 
 .award-row-card h5 {
@@ -1346,9 +1472,19 @@ const papersList = [
 .award-row-card .lvl { font-size: 9px; color: #fbbf24; margin: 2px 0;}
 .award-row-card .team { font-size: 9px; color: var(--color-text-secondary); }
 
+.award-pdf-link {
+  margin-top: 5px;
+  min-height: 22px;
+  padding: 2px 8px;
+  font-size: 10px;
+}
+
 .award-row-card .date {
   font-size: 10px;
   color: var(--color-text-secondary);
+  align-self: flex-start;
+  padding-top: 6px;
+  flex-shrink: 0;
 }
 
 /* ========================================================
@@ -1391,11 +1527,40 @@ const papersList = [
   align-items: center;
   padding: 20px;
   text-align: center;
+  overflow: hidden;
+}
+
+.cert-real-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.86;
+  background: #06122d;
+}
+
+.cert-no-image,
+.project-no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fbbf24;
+  font-weight: 700;
+  font-size: 13px;
+  background: linear-gradient(135deg, rgba(6, 18, 45, 0.94), rgba(2, 6, 20, 1));
+}
+
+.project-no-image {
+  min-height: 120px;
 }
 
 .badge-stamp {
   position: absolute;
   top: 8px; right: 8px;
+  z-index: 1;
   border: 1px solid var(--status-online);
   color: var(--status-online);
   font-size: 8px;
@@ -1405,6 +1570,11 @@ const papersList = [
 }
 
 .cert-image-preview .cert-title {
+  position: relative;
+  z-index: 1;
+  background: rgba(2, 6, 20, 0.7);
+  padding: 2px 8px;
+  border-radius: 3px;
   font-size: 13px;
   color: #fbbf24;
   font-weight: bold;
@@ -1412,6 +1582,11 @@ const papersList = [
 }
 
 .cert-image-preview .pat-name {
+  position: relative;
+  z-index: 1;
+  background: rgba(2, 6, 20, 0.72);
+  padding: 4px 8px;
+  border-radius: 3px;
   font-size: 9px;
   color: var(--color-text-secondary);
   margin-top: 10px;
@@ -1504,6 +1679,25 @@ const papersList = [
   padding: 10px 8px;
   border-bottom: 1px dashed rgba(255,255,255,0.03);
   color: #fff;
+}
+
+.data-table tbody tr {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.data-table tbody tr:hover,
+.data-table tbody tr.active {
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.patent-thumb-img {
+  width: 56px;
+  height: 42px;
+  border-radius: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  background: #06122d;
+  object-fit: contain;
 }
 
 /* ========================================================
@@ -1686,10 +1880,6 @@ const papersList = [
 .papers-sidebar,
 .cert-col {
   width: 300px;
-}
-
-.projects-grid {
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 }
 
 .latest-c-card h5,

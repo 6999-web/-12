@@ -202,11 +202,10 @@ const selectTab = (tabName) => {
   margin: 0;
   min-width: 430px;
   padding: 5px 28px 7px;
-  border-radius: 0 0 18px 18px;
-  background:
-    linear-gradient(180deg, rgba(16, 83, 154, 0.72), rgba(5, 31, 68, 0.92));
-  border: 1px solid rgba(114, 231, 255, 0.58);
-  box-shadow: 0 8px 28px rgba(0, 8, 22, 0.42), 0 0 24px rgba(67, 183, 255, 0.18), inset 0 0 18px rgba(67, 183, 255, 0.12);
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
   color: #fff !important;
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.72), 0 0 22px rgba(67, 183, 255, 0.62), 0 2px 10px rgba(0, 7, 18, 0.8);
 }

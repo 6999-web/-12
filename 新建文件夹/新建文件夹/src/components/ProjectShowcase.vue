@@ -44,33 +44,44 @@
           <label>排序方式:</label>
           <select v-model="sortBy">
             <option value="default">默认</option>
-            <option value="progress">项目进度</option>
+            <option value="progress">成果占比</option>
             <option value="achievements">成果数量</option>
             <option value="date">更新时间</option>
           </select>
         </div>
 
-        <div class="layout-toggle">
-          <button :class="{ active: layout === 'grid' }" @click="layout = 'grid'">🎚️ 网格</button>
-          <button :class="{ active: layout === 'list' }" @click="layout = 'list'">📋 列表</button>
-        </div>
       </div>
 
       <!-- Scrollable Projects List -->
       <div class="projects-list-scroll scroll-container">
-        <div :class="['projects-layout-' + layout]">
+        <div class="projects-layout-list">
           <div 
             v-for="proj in filteredAndSortedProjects" 
             :key="proj.id" 
-            class="project-showcase-card glass-panel"
+            class="project-showcase-card certificate-layout-row glass-panel"
             @click="openProjectDetail(proj)"
           >
+            <aside class="certificate-side">
+              <span class="direction-tag static">{{ proj.direction }}</span>
+              <div class="certificate-side-stats">
+                <span>软著/专利 {{ proj.patentsCount }}</span>
+                <span>奖项 {{ proj.awardsCount }}</span>
+              </div>
+              <a
+                v-if="proj.pdfUrl"
+                class="pdf-open-link"
+                :href="proj.pdfUrl"
+                target="_blank"
+                rel="noopener"
+                @click.stop
+              >
+                打开PDF附件
+              </a>
+            </aside>
             <!-- Card Image -->
             <div class="proj-img-box">
-              <img :src="proj.cover" alt="项目封面" class="proj-cover-img" style="opacity: 0.25; object-fit: cover; background-color: #0c1b3d;" />
-              <div class="overlay-tags">
-                <span class="direction-tag">{{ proj.direction }}</span>
-              </div>
+              <img v-if="proj.cover" :src="proj.cover" alt="项目封面" class="proj-cover-img" loading="lazy" decoding="async" />
+              <div v-else class="project-no-image">PDF 附件</div>
             </div>
 
             <!-- Card Body -->
@@ -90,18 +101,17 @@
               <!-- Progress Bar -->
               <div class="progress-section">
                 <div class="progress-header">
-                  <span>项目进度:</span>
-                  <strong>{{ proj.progress }}%</strong>
+                  <span>成果占比:</span>
+                  <strong>{{ proj.evidencePercent }}%</strong>
                 </div>
                 <div class="progress-track">
-                  <div class="progress-bar" :style="{ width: proj.progress + '%' }"></div>
+                  <div class="progress-bar" :style="{ width: proj.evidencePercent + '%' }"></div>
                 </div>
               </div>
 
               <!-- Associated Achievements -->
               <div class="assoc-achievements">
                 <span class="label">沉淀成果:</span>
-                <span class="badge paper">📄 论文: {{ proj.papersCount }}</span>
                 <span class="badge patent">💡 软著/专利: {{ proj.patentsCount }}</span>
                 <span class="badge award">🏆 奖项: {{ proj.awardsCount }}</span>
               </div>
@@ -119,47 +129,47 @@
         <div class="dashboard-stats">
           <div class="stat-item">
             <span class="lbl">累计项目</span>
-            <span class="val">18 <small>个</small></span>
+            <span class="val">{{ projectStats.total }} <small>个</small></span>
           </div>
           <div class="stat-item">
-            <span class="lbl">研发中</span>
-            <span class="val text-orange">6 <small>个</small></span>
+            <span class="lbl">竞赛奖项</span>
+            <span class="val text-orange">{{ projectStats.awards }} <small>项</small></span>
           </div>
           <div class="stat-item">
-            <span class="lbl">测试中</span>
-            <span class="val text-blue">4 <small>个</small></span>
+            <span class="lbl">专利软著</span>
+            <span class="val text-blue">{{ projectStats.patents }} <small>项</small></span>
           </div>
           <div class="stat-item">
-            <span class="lbl">已上线/落地</span>
-            <span class="val text-green">8 <small>个</small></span>
+            <span class="lbl">真实成果</span>
+            <span class="val text-green">{{ projectStats.achievements }} <small>项</small></span>
           </div>
         </div>
       </section>
 
-      <!-- Phase Distribution -->
+      <!-- Direction Distribution -->
       <section class="sidebar-section">
-        <h3>📈 研发阶段分布</h3>
+        <h3>📈 成果方向分布</h3>
         <div class="distribution-list">
-          <div class="dist-item" v-for="d in phaseDistribution" :key="d.phase">
+          <div class="dist-item" v-for="d in directionDistribution" :key="d.name">
             <div class="lbl-row">
-              <span>{{ d.phase }}</span>
+              <span>{{ d.name }}</span>
               <span>{{ d.count }}个</span>
             </div>
             <div class="track">
-              <div class="fill" :style="{ width: (d.count / 8 * 100) + '%' }"></div>
+              <div class="fill" :style="{ width: phaseBarWidth(d.count) }"></div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ZhiXiaoMiao Recommendation -->
+      <!-- Real Source Summary -->
       <section class="sidebar-section highlight-section glass-panel">
-        <h3>🐱 智小喵推荐项目</h3>
+        <h3>📎 真实来源摘要</h3>
         <div class="rec-list">
           <div class="rec-card" v-for="rp in recommendedProjects" :key="rp.title">
             <h5>{{ rp.title }}</h5>
             <p>{{ rp.reason }}</p>
-            <span class="badge-rec">热度: ★★★★★</span>
+            <span class="badge-rec">来源: 实验室竞赛成果_附件</span>
           </div>
         </div>
       </section>
@@ -175,41 +185,50 @@
         <div class="dialog-body scroll-container">
           <div class="dialog-top-meta">
             <div class="cover-box">
-              <img :src="activeDetailProject.cover" alt="封面" style="width:100%; height:120px; object-fit:cover; opacity: 0.3;" />
+              <img v-if="activeDetailProject.cover" :src="activeDetailProject.cover" alt="封面" style="width:100%; height:120px; object-fit:contain; opacity: 1; background:#06122d;" />
+              <div v-else class="project-no-image detail">PDF 附件</div>
             </div>
             <div class="info-box">
               <h4>{{ activeDetailProject.title }}</h4>
-              <p>方向：<span class="tag">{{ activeDetailProject.direction }}</span> · 状态：<span class="state-badge" :class="activeDetailProject.stateClass">{{ activeDetailProject.state }}</span></p>
+              <p>方向：<span class="tag">{{ activeDetailProject.direction }}</span> · 归档：<span class="state-badge" :class="activeDetailProject.stateClass">{{ activeDetailProject.state }}</span></p>
               <p>负责人：<strong>{{ activeDetailProject.owner }}</strong></p>
-              <p>研发周期：{{ activeDetailProject.timeline || '2025-01 至 2026-06' }}</p>
+              <p>材料年份：{{ activeDetailProject.timeline }}</p>
             </div>
           </div>
 
           <div class="dialog-section">
             <h5>项目简介</h5>
             <p class="intro-p">{{ activeDetailProject.desc }}</p>
+            <a
+              v-if="activeDetailProject.pdfUrl"
+              class="pdf-open-link"
+              :href="activeDetailProject.pdfUrl"
+              target="_blank"
+              rel="noopener"
+            >
+              打开PDF附件
+            </a>
           </div>
 
           <div class="dialog-section">
-            <h5>详细模块设计 & 进度</h5>
+            <h5>真实成果数量</h5>
             <div class="progress-section" style="margin-bottom: 12px;">
-              <div class="progress-header"><span>核心系统开发进度</span><strong>{{ activeDetailProject.progress }}%</strong></div>
-              <div class="progress-track"><div class="progress-bar" :style="{ width: activeDetailProject.progress + '%' }"></div></div>
+              <div class="progress-header"><span>该分组成果占比</span><strong>{{ activeDetailProject.evidencePercent }}%</strong></div>
+              <div class="progress-track"><div class="progress-bar" :style="{ width: activeDetailProject.evidencePercent + '%' }"></div></div>
             </div>
             <ul class="modules-list">
-              <li><span class="status-dot online"></span> 算法模型微调训练: <span class="text-green">已完成 (100%)</span></li>
-              <li><span class="status-dot online"></span> 边缘端硬件板卡接入: <span class="text-green">已完成 (100%)</span></li>
-              <li><span class="status-dot busy"></span> 前端多路监控流可视化: <span class="text-orange">调试中 (80%)</span></li>
-              <li><span class="status-dot offline"></span> 场景实地综合演示: <span class="text-gray">待开始 (0%)</span></li>
+              <li><span class="status-dot online"></span> 竞赛奖项: <span class="text-green">{{ activeDetailProject.awardsCount }} 项</span></li>
+              <li><span class="status-dot online"></span> 软著/专利: <span class="text-green">{{ activeDetailProject.patentsCount }} 项</span></li>
+              <li><span class="status-dot online"></span> 附件状态: <span class="text-green">{{ activeDetailProject.state }}</span></li>
             </ul>
           </div>
 
           <div class="dialog-section">
             <h5>关联的成果沉淀</h5>
             <ul class="achievements-bullet-list">
-              <li>📄 论文: Multimodal Spatial-Temporal Graph Networks... (SCI一区录用)</li>
-              <li>💡 软著: 警务多路视频流汇聚及姿态分析算法软件 (已登记)</li>
-              <li>🏆 奖项: 中国机器人及人工智能大赛一等奖 (国家级)</li>
+              <li>💡 软著/专利: {{ activeDetailProject.achievementDetails.patent }}</li>
+              <li>🏆 奖项: {{ activeDetailProject.achievementDetails.award }}</li>
+              <li>📎 来源: {{ activeDetailProject.achievementDetails.source }}</li>
             </ul>
           </div>
         </div>
@@ -223,129 +242,57 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import {
+  realAchievementProjects,
+  realProjectDirections,
+  getDirectionCounts
+} from './labAchievementData';
 
 const selectedDirection = ref('all');
 const selectedState = ref('all');
 const searchQuery = ref('');
 const sortBy = ref('default');
-const layout = ref('grid');
 const activeDetailProject = ref(null);
 
-const directions = [
-  { label: '全部项目方向', value: 'all' },
-  { label: '公安实战', value: '公安实战' },
-  { label: 'AI教育', value: 'AI教育' },
-  { label: '智能硬件', value: '智能硬件' },
-  { label: 'AIGC应用', value: 'AIGC应用' },
-  { label: '数据治理', value: '数据治理' },
-  { label: '基础平台', value: '基础平台' }
-];
+const directions = realProjectDirections;
 
 const states = [
-  { label: '全部项目状态', value: 'all' },
-  { label: '调研中', value: '调研中' },
-  { label: '原型中', value: '原型中' },
-  { label: '开发中', value: '开发中' },
-  { label: '测试中', value: '测试中' },
-  { label: '已上线', value: '已上线' },
-  { label: '已落地', value: '已落地' }
+  { label: '全部归档状态', value: 'all' },
+  { label: '附件归档', value: '附件归档' }
 ];
 
-const phaseDistribution = [
-  { phase: '开发中', count: 6 },
-  { phase: '测试中', count: 4 },
-  { phase: '已上线', count: 5 },
-  { phase: '已落地', count: 3 }
-];
+const directionDistribution = getDirectionCounts(realAchievementProjects);
 
 const recommendedProjects = [
-  { title: '多模态警务感知融合大平台', reason: '本月核心推进项目，结合AI大模型在公安一线的最新落地成果，备受行业关注。' },
-  { title: '智小喵大模型实验室AI大助手', reason: '实验室智能转型的示范作品，支持全舱室环境控制及知识检索，体验极佳。' }
+  { title: realAchievementProjects[0].title, reason: '由智警杯、智能警务挑战赛等附件奖项材料归纳。' },
+  { title: realAchievementProjects[2].title, reason: '由蓝桥杯国赛、省赛与程序设计竞赛附件材料归纳。' }
 ];
 
-// Mock Projects Database
-const projects = [
-  {
-    id: 1,
-    title: '多模态警务感知融合大平台',
-    direction: '公安实战',
-    state: '已上线',
-    stateClass: 'green-tag',
-    cover: '/assets/image4.png',
-    desc: '融合路面视频流时空分析算法与大语言模型，在城市交警路口实现嫌疑目标的高精度跨镜头跟踪与行为特征预警。现已在多个市局交警支队完成实战落地部署。',
-    owner: '张子轩',
-    members: ['陈一诺', '刘昊'],
-    progress: 95,
-    papersCount: 2,
-    patentsCount: 3,
-    awardsCount: 1,
-    timeline: '2024-09 至 2026-05'
-  },
-  {
-    id: 2,
-    title: '智能无人机库周边警戒系统',
-    direction: '智能硬件',
-    state: '测试中',
-    stateClass: 'orange-tag',
-    cover: '/assets/image5.png',
-    desc: '专为野外小型无人机固定充电舱室设计的高灵敏警报防区。结合超低功耗Mesh感知网关及雷达复合视觉探头，无网无市电环境下持续稳定警戒。',
-    owner: '王思远',
-    members: ['刘昊'],
-    progress: 85,
-    papersCount: 1,
-    patentsCount: 2,
-    awardsCount: 1,
-    timeline: '2025-03 至今'
-  },
-  {
-    id: 3,
-    title: '智小喵大模型实验室AI大助手',
-    direction: 'AIGC应用',
-    state: '开发中',
-    stateClass: 'blue-tag',
-    cover: '/assets/image7.png',
-    desc: '集成RAG大语言模型知识检索与边缘物联网总线调度，实验室成员可通过自然语言语音/文字控制舱内大屏显示及环境舒适度，并实时搜索台账。',
-    owner: '张子轩',
-    members: ['孙雨桐', '王浩然'],
-    progress: 88,
-    papersCount: 1,
-    patentsCount: 1,
-    awardsCount: 0,
-    timeline: '2025-03 至今'
-  },
-  {
-    id: 4,
-    title: '基于知识图谱的在线智慧课堂',
-    direction: 'AI教育',
-    state: '已落地',
-    stateClass: 'green-tag',
-    cover: '/assets/image8.png',
-    desc: '通过课堂顶置鱼眼摄像头捕捉学生动作（记笔记、抬头、低头、侧身），与后台课程大纲进度融合计算兴趣度指标，指导中小学教师智能排课。',
-    owner: '李思雨',
-    members: ['孙雨桐'],
-    progress: 100,
-    papersCount: 2,
-    patentsCount: 1,
-    awardsCount: 2,
-    timeline: '2024-03 至 2025-01'
-  },
-  {
-    id: 5,
-    title: '基于联邦学习的数据协同治理大平台',
-    direction: '数据治理',
-    state: '开发中',
-    stateClass: 'blue-tag',
-    cover: '/assets/image1.png',
-    desc: '针对智慧警务的多单位联合办案数据流通难题，利用联邦学习隐私计算框架实现“数据不出域、算法多跑路”，提升协同办案效率。',
-    owner: '王浩然',
-    members: ['陈一诺'],
-    progress: 60,
-    papersCount: 0,
-    patentsCount: 1,
-    awardsCount: 0,
-    timeline: '2025-02 至今'
+const totalEvidence = realAchievementProjects.reduce((sum, project) => sum + project.patentsCount + project.awardsCount, 0);
+
+const projects = realAchievementProjects.map((project) => ({
+  ...project,
+  state: '附件归档',
+  stateClass: 'green-tag',
+  progress: Math.round(((project.patentsCount + project.awardsCount) / Math.max(totalEvidence, 1)) * 100),
+  evidencePercent: Math.round(((project.patentsCount + project.awardsCount) / Math.max(totalEvidence, 1)) * 100),
+  achievementDetails: {
+    patent: `${project.patentsCount} 项专利/软著成果`,
+    award: `${project.awardsCount} 项真实竞赛获奖材料`,
+    source: '赛事奖项、赛事奖项（开发看）、知识产权附件'
   }
-];
+}));
+
+const projectStats = computed(() => ({
+  total: projects.length,
+  awards: projects.reduce((sum, project) => sum + project.awardsCount, 0),
+  patents: projects.reduce((sum, project) => sum + project.patentsCount, 0),
+  achievements: totalEvidence
+}));
+
+const maxPhaseCount = computed(() => Math.max(...directionDistribution.map((item) => item.count), 1));
+
+const phaseBarWidth = (count) => `${Math.round((count / maxPhaseCount.value) * 100)}%`;
 
 const filteredAndSortedProjects = computed(() => {
   let list = projects;
@@ -368,7 +315,7 @@ const filteredAndSortedProjects = computed(() => {
 
   // Sorting
   if (sortBy.value === 'progress') {
-    list = [...list].sort((a, b) => b.progress - a.progress);
+    list = [...list].sort((a, b) => b.evidencePercent - a.evidencePercent);
   } else if (sortBy.value === 'achievements') {
     list = [...list].sort((a, b) => (b.papersCount + b.patentsCount + b.awardsCount) - (a.papersCount + a.patentsCount + a.awardsCount));
   } else if (sortBy.value === 'date') {
@@ -519,56 +466,28 @@ const openProjectDetail = (proj) => {
   font-size: 11px;
 }
 
-.layout-toggle {
-  margin-left: auto;
-  display: flex;
-  gap: 4px;
-}
-
-.layout-toggle button {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.05);
-  color: var(--color-text-secondary);
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.layout-toggle button.active {
-  background: rgba(0, 168, 255, 0.2);
-  border-color: var(--color-border-active);
-  color: #fff;
-}
-
 .projects-list-scroll {
   flex: 1;
   overflow-y: auto;
   margin-top: 16px;
 }
 
-/* Layouts */
-.projects-layout-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-  padding-right: 4px;
-}
-
 .projects-layout-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   padding-right: 4px;
 }
 
 .project-showcase-card {
   display: flex;
+  align-items: center;
   overflow: hidden;
-  background: rgba(6,18,45,0.4);
+  background: rgba(9, 23, 55, 0.72);
   cursor: pointer;
   transition: all 0.2s;
-  border: 1px solid rgba(0, 168, 255, 0.08);
+  border: 1px solid rgba(79, 172, 254, 0.18);
+  min-height: 270px;
 }
 
 .project-showcase-card:hover {
@@ -577,42 +496,96 @@ const openProjectDetail = (proj) => {
   box-shadow: 0 0 12px rgba(0, 168, 255, 0.1);
 }
 
-.projects-layout-grid .project-showcase-card {
-  flex-direction: column;
+.certificate-layout-row {
+  gap: 14px;
+  padding: 10px 14px 10px 10px;
 }
 
-.projects-layout-list .project-showcase-card {
-  flex-direction: row;
-  height: 150px;
+.certificate-side {
+  width: 106px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  flex-shrink: 0;
+  padding-top: 8px;
+}
+
+.certificate-side-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  line-height: 1.35;
 }
 
 .proj-img-box {
   position: relative;
-  background: #020617;
+  background: var(--bg-dark, #020617);
+  border: 1px solid rgba(57, 166, 255, 0.22);
+  border-radius: 4px;
   flex-shrink: 0;
-}
-
-.projects-layout-grid .proj-img-box {
-  height: 120px;
-  width: 100%;
-}
-
-.projects-layout-list .proj-img-box {
-  width: 200px;
-  height: 100%;
+  width: 184px;
+  height: 246px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .proj-cover-img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+  opacity: 1;
+  background-color: var(--bg-dark, #020617);
 }
 
-.overlay-tags {
-  position: absolute;
-  top: 8px; left: 8px;
+.project-no-image {
+  width: 100%;
+  height: 100%;
+  min-height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fbbf24;
+  font-weight: 700;
+  font-size: 13px;
+  background: linear-gradient(135deg, rgba(6, 18, 45, 0.94), rgba(2, 6, 20, 1));
 }
 
-.overlay-tags .direction-tag {
+.project-no-image.detail {
+  height: 120px;
+  min-height: 120px;
+  border-radius: 4px;
+}
+
+.pdf-open-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(251, 191, 36, 0.36);
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.pdf-open-link:hover {
+  background: rgba(251, 191, 36, 0.18);
+  border-color: rgba(251, 191, 36, 0.58);
+}
+
+.direction-tag {
   background: rgba(56, 189, 248, 0.25);
   border: 1px solid #38bdf8;
   color: #fff;
@@ -621,12 +594,26 @@ const openProjectDetail = (proj) => {
   border-radius: 4px;
 }
 
+.direction-tag.static {
+  position: static;
+  max-width: 100%;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+}
+
 .proj-body {
-  padding: 12px;
+  padding: 10px 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
   flex-grow: 1;
+  min-width: 0;
 }
 
 .proj-body .title-row {
@@ -655,13 +642,15 @@ const openProjectDetail = (proj) => {
   font-size: 11px;
   color: var(--color-text-secondary);
   line-height: 1.4;
-  height: 38px;
+  max-height: 64px;
   overflow: hidden;
 }
 
 .proj-body .people-row {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   font-size: 10px;
   color: var(--color-text-secondary);
 }
@@ -907,11 +896,20 @@ const openProjectDetail = (proj) => {
 }
 
 .dialog-top-meta .cover-box {
-  width: 140px;
-  height: 80px;
-  background: #020617;
+  width: 160px;
+  height: 214px;
+  background: var(--bg-dark, #020617);
   border-radius: 4px;
   overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid rgba(57, 166, 255, 0.22);
+}
+
+.dialog-top-meta .cover-box img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  background: var(--bg-dark, #020617) !important;
 }
 
 .dialog-top-meta .info-box {
@@ -1039,7 +1037,6 @@ const openProjectDetail = (proj) => {
 .top-actions-bar .search-box input,
 .sort-group,
 .sort-group select,
-.layout-toggle button,
 .distribution-list,
 .ai-query-box .desc,
 .ai-query-box .questions,
@@ -1060,25 +1057,17 @@ const openProjectDetail = (proj) => {
   padding: 7px 10px;
 }
 
-.projects-layout-grid {
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 18px;
+.project-showcase-card {
+  min-height: 270px;
 }
 
-.projects-layout-list .project-showcase-card {
-  height: 178px;
-}
-
-.projects-layout-grid .proj-img-box {
-  height: 142px;
-}
-
-.projects-layout-list .proj-img-box {
-  width: 250px;
+.proj-img-box {
+  width: 184px;
+  height: 246px;
 }
 
 .proj-body {
-  padding: 16px;
+  padding: 12px 0;
   gap: 10px;
 }
 

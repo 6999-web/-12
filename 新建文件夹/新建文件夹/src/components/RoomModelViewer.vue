@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { getRoomConfig, loadRoomModelAsset } from './roomModelAssets';
@@ -60,10 +60,12 @@ const loadProgress = ref(0);
 const selectedPerson = ref(null);
 const selectedPersonCardStyle = ref({ left: '24px', top: '92px' });
 
-const loadingText = computed(() => {
-  if (loadProgress.value <= 0) return '加载教室模型中';
-  return `加载教室模型 ${Math.round(loadProgress.value)}%`;
-});
+const loadingText = '加载教室模型中';
+
+const setLoadProgress = (value) => {
+  const nextValue = Math.max(loadProgress.value, Math.min(100, value));
+  loadProgress.value = Number.isFinite(nextValue) ? nextValue : loadProgress.value;
+};
 
 let renderer;
 let scene;
@@ -602,18 +604,20 @@ const loadModels = async (currentBootId) => {
   scene.add(roomRoot);
 
   let completed = 0;
+  const modelProgress = new Array(config.models.length).fill(0);
 
   try {
-    const models = await Promise.all(config.models.map((modelConfig) => {
+    const models = await Promise.all(config.models.map((modelConfig, index) => {
       return loadRoomModelAsset(modelConfig, (event) => {
         if (event.lengthComputable) {
-          const current = completed / config.models.length;
-          const partial = (event.loaded / event.total) / config.models.length;
-          loadProgress.value = Math.min(99, (current + partial) * 100);
+          modelProgress[index] = Math.max(modelProgress[index], event.loaded / event.total);
+          const totalProgress = modelProgress.reduce((sum, value) => sum + value, 0) / config.models.length;
+          setLoadProgress(Math.min(99, totalProgress * 100));
         }
       }).then((gltf) => {
         completed += 1;
-        loadProgress.value = Math.min(99, (completed / config.models.length) * 100);
+        modelProgress[index] = 1;
+        setLoadProgress(Math.min(99, (completed / config.models.length) * 100));
         const model = gltf.scene.clone(true);
         model.name = modelConfig.name;
         prepareModel(model, config);

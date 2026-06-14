@@ -67,13 +67,78 @@
       </section>
     </aside>
 
-    <!-- Center Section: 9 Cameras -->
+    <!-- Center Section: 3D printer status / cameras -->
     <main class="center-surveillance glass-panel">
       <div class="panel-header">
-        <h3>实时监控画面</h3>
-        <span class="subtext">点击画面可查看详情</span>
+        <h3>{{ selectedSpace === '310实验室' ? '310实验室 3D打印机状态' : '实时监控画面' }}</h3>
+        <span class="subtext">{{ selectedSpace === '310实验室' ? printerPanelSubtext : '点击画面可查看详情' }}</span>
       </div>
-      <div class="surveillance-grid">
+      <div v-if="selectedSpace === '310实验室'" class="printer-dashboard font-num">
+        <div v-if="printerLoading" class="printer-state-card muted">打印机状态加载中</div>
+        <div v-else-if="printerError" class="printer-state-card error">{{ printerError }}</div>
+        <div v-else-if="!printerDashboard" class="printer-state-card muted">暂无打印机状态</div>
+        <template v-else>
+          <div class="printer-summary-grid">
+            <div class="summary-card">
+              <span>总打印次数</span>
+              <strong>{{ formatNumber(printerDashboard.total_prints) }}</strong>
+            </div>
+            <div class="summary-card">
+              <span>成功 / 失败</span>
+              <strong>{{ formatNumber(printerDashboard.successful_prints) }} / {{ formatNumber(printerDashboard.failed_prints) }}</strong>
+            </div>
+            <div class="summary-card">
+              <span>总打印时长</span>
+              <strong>{{ formatNumber(printerDashboard.total_print_time_hours, 1) }}h</strong>
+            </div>
+            <div class="summary-card">
+              <span>耗材 / 成本</span>
+              <strong>{{ formatNumber(printerDashboard.total_filament_grams, 0) }}g / ¥{{ formatNumber(printerDashboard.total_cost, 2) }}</strong>
+            </div>
+          </div>
+
+          <div class="printer-card-grid">
+            <article v-for="printer in printerCards" :key="printer.name" class="printer-card">
+              <div class="printer-card-head">
+                <div>
+                  <span class="printer-kicker">Bambu Lab</span>
+                  <h4>{{ printer.name }}</h4>
+                </div>
+                <span class="status-lbl green">在线</span>
+              </div>
+              <div class="printer-main-stat">
+                <strong>{{ printer.prints }}</strong>
+                <span>累计打印</span>
+              </div>
+              <dl class="printer-metrics">
+                <div>
+                  <dt>时间准确率</dt>
+                  <dd>{{ printer.accuracy }}%</dd>
+                </div>
+                <div>
+                  <dt>打印占比</dt>
+                  <dd>{{ printer.share }}%</dd>
+                </div>
+                <div>
+                  <dt>当前状态</dt>
+                  <dd>{{ printer.status }}</dd>
+                </div>
+              </dl>
+            </article>
+          </div>
+
+          <div class="filament-section">
+            <h4>耗材类型统计</h4>
+            <div class="filament-grid">
+              <div v-for="item in filamentStats" :key="item.name" class="filament-pill">
+                <span>{{ item.name }}</span>
+                <strong>{{ item.count }}</strong>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+      <div v-else class="surveillance-grid">
         <div 
           v-for="cam in cameras" 
           :key="cam.id" 
@@ -216,11 +281,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import {
+  fetchPrinterDashboard,
+  formatPrinterNumber,
+  getFilamentStats,
+  getPrinterCards
+} from './printerDashboard';
 
 const emit = defineEmits(['open-modal']);
 
 const selectedSpace = ref('310实验室');
+const printerDashboard = ref(null);
+const printerLoading = ref(true);
+const printerError = ref('');
 
 const triggerModal = (modalName) => {
   emit('open-modal', modalName);
@@ -244,6 +318,37 @@ const cameras = [
   { id: 8, name: '摄像头-08', status: '使用中', statusClass: 'busy' },
   { id: 9, name: '摄像头-09', status: '在线', statusClass: 'online' }
 ];
+
+const loadPrinterDashboard = async () => {
+  printerLoading.value = true;
+  printerError.value = '';
+
+  try {
+    printerDashboard.value = await fetchPrinterDashboard();
+  } catch (error) {
+    printerError.value = error instanceof Error ? error.message : '打印机状态加载失败';
+  } finally {
+    printerLoading.value = false;
+  }
+};
+
+const formatNumber = formatPrinterNumber;
+
+const printerPanelSubtext = computed(() => {
+  if (printerLoading.value) return '正在同步 Bambu Buddy 数据';
+  if (printerError.value) return '数据同步失败';
+  return '来自 Bambu Buddy Dashboard';
+});
+
+const printerCards = computed(() => {
+  return getPrinterCards(printerDashboard.value);
+});
+
+const filamentStats = computed(() => {
+  return getFilamentStats(printerDashboard.value);
+});
+
+onMounted(loadPrinterDashboard);
 </script>
 
 <style scoped>
@@ -260,6 +365,9 @@ const cameras = [
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .right-sidebar {
@@ -441,6 +549,168 @@ const cameras = [
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
   gap: 12px;
+}
+
+.printer-dashboard {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.printer-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.summary-card,
+.printer-state-card {
+  min-height: 86px;
+  padding: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.16);
+  border-radius: 6px;
+  background: rgba(2, 8, 24, 0.36);
+}
+
+.summary-card span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.summary-card strong {
+  color: #fff;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.printer-state-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #dff7ff;
+}
+
+.printer-state-card.error {
+  border-color: rgba(248, 113, 113, 0.38);
+  color: #fecaca;
+}
+
+.printer-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.printer-card {
+  padding: 18px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, rgba(7, 31, 68, 0.68), rgba(2, 8, 24, 0.5));
+  box-shadow: inset 0 0 18px rgba(56, 189, 248, 0.05);
+}
+
+.printer-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.printer-kicker {
+  display: block;
+  color: #72e7ff;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+.printer-card h4 {
+  margin-top: 4px;
+  color: #fff;
+  font-size: 22px;
+}
+
+.printer-main-stat {
+  margin: 18px 0 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.printer-main-stat strong {
+  color: #fff;
+  font-size: 36px;
+  line-height: 1;
+}
+
+.printer-main-stat span {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.printer-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.printer-metrics div {
+  padding: 10px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.printer-metrics dt {
+  margin-bottom: 4px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
+.printer-metrics dd {
+  margin: 0;
+  color: #fff;
+  font-size: 14px;
+}
+
+.filament-section {
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.filament-section h4 {
+  margin-bottom: 12px;
+  color: #fff;
+  font-size: 15px;
+}
+
+.filament-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filament-pill {
+  min-width: 108px;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 10px;
+  border: 1px solid rgba(56, 189, 248, 0.16);
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.05);
+  color: var(--color-text-secondary);
+}
+
+.filament-pill strong {
+  color: #fff;
 }
 
 .camera-card {
@@ -713,5 +983,12 @@ const cameras = [
 .alarm-list .loc {
   color: var(--color-text-secondary);
   font-size: 11px;
+}
+
+@media (max-width: 1280px) {
+  .printer-summary-grid,
+  .printer-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 </style>

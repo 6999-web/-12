@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  font-family:
+    Inter,
+    "Microsoft YaHei",
+    "PingFang SC",
+    system-ui,
+    sans-serif;
+}
+
+canvas {
+  display: block;
+}
+
+.editor-step-button {
+  height: 1.75rem;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(103, 232, 249, 0.22);
+  background: rgba(15, 23, 42, 0.52);
+  color: rgba(207, 250, 254, 0.86);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.editor-step-button:hover {
+  border-color: rgba(165, 243, 252, 0.58);
+  background: rgba(103, 232, 249, 0.12);
+  color: #f0fdff;
+}
+
+.selection-info-card {
+  animation: selection-card-in 200ms ease-out both;
+  will-change: opacity, transform;
+}
+
+.selection-info-card.is-exiting {
+  animation: selection-card-out 160ms ease-out both;
+}
+
+@keyframes selection-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes selection-card-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
