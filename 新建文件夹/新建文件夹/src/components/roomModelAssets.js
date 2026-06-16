@@ -18,7 +18,7 @@ export const ROOM_CONFIGS = {
     minDistance: 6,
     maxDistance: 70,
     rootRotationY: -0.02,
-    floorColor: '#26384d',
+    floorColor: '#eef1ee',
     models: [
       { url: '/model/401/workstations_fixed.glb', name: 'Classroom401_Workstations' },
       { url: '/model/401/air_conditioner_01_fixed.glb', name: 'Classroom401_AirConditioner01' },
@@ -48,7 +48,7 @@ export const ROOM_CONFIGS = {
     minDistance: 3.2,
     maxDistance: 65,
     rootRotationY: -0.08,
-    floorColor: '#2b3648',
+    floorColor: '#eef1ee',
     models: [
       { url: '/model/913/meeting_table_fixed.glb', name: 'Meeting913_Table', scale: 0.1 },
       { url: '/model/913/meeting_screen_fixed.glb', name: 'Meeting913_Screen', scale: 0.1 },

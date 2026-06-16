@@ -47,7 +47,6 @@
               <span>💧 45%</span>
               <span>🍃 优 32</span>
             </div>
-            <button class="btn-detail" @click="triggerModal('space-details')">查看详情</button>
           </div>
           <!-- 913 -->
           <div class="meeting-room-card font-num">
@@ -61,86 +60,20 @@
               <span>💧 46%</span>
               <span>🍃 优 35</span>
             </div>
-            <button class="btn-detail" @click="triggerModal('space-details')">查看详情</button>
           </div>
         </div>
       </section>
     </aside>
 
-    <!-- Center Section: 3D printer status / cameras -->
+    <!-- Center Section: cameras -->
     <main class="center-surveillance glass-panel">
       <div class="panel-header">
-        <h3>{{ selectedSpace === '310实验室' ? '310实验室 3D打印机状态' : '实时监控画面' }}</h3>
-        <span class="subtext">{{ selectedSpace === '310实验室' ? printerPanelSubtext : '点击画面可查看详情' }}</span>
+        <h3>{{ selectedSpaceLabel }} 实时监控画面</h3>
+        <span class="subtext">点击画面可查看详情</span>
       </div>
-      <div v-if="selectedSpace === '310实验室'" class="printer-dashboard font-num">
-        <div v-if="printerLoading" class="printer-state-card muted">打印机状态加载中</div>
-        <div v-else-if="printerError" class="printer-state-card error">{{ printerError }}</div>
-        <div v-else-if="!printerDashboard" class="printer-state-card muted">暂无打印机状态</div>
-        <template v-else>
-          <div class="printer-summary-grid">
-            <div class="summary-card">
-              <span>总打印次数</span>
-              <strong>{{ formatNumber(printerDashboard.total_prints) }}</strong>
-            </div>
-            <div class="summary-card">
-              <span>成功 / 失败</span>
-              <strong>{{ formatNumber(printerDashboard.successful_prints) }} / {{ formatNumber(printerDashboard.failed_prints) }}</strong>
-            </div>
-            <div class="summary-card">
-              <span>总打印时长</span>
-              <strong>{{ formatNumber(printerDashboard.total_print_time_hours, 1) }}h</strong>
-            </div>
-            <div class="summary-card">
-              <span>耗材 / 成本</span>
-              <strong>{{ formatNumber(printerDashboard.total_filament_grams, 0) }}g / ¥{{ formatNumber(printerDashboard.total_cost, 2) }}</strong>
-            </div>
-          </div>
-
-          <div class="printer-card-grid">
-            <article v-for="printer in printerCards" :key="printer.name" class="printer-card">
-              <div class="printer-card-head">
-                <div>
-                  <span class="printer-kicker">Bambu Lab</span>
-                  <h4>{{ printer.name }}</h4>
-                </div>
-                <span class="status-lbl green">在线</span>
-              </div>
-              <div class="printer-main-stat">
-                <strong>{{ printer.prints }}</strong>
-                <span>累计打印</span>
-              </div>
-              <dl class="printer-metrics">
-                <div>
-                  <dt>时间准确率</dt>
-                  <dd>{{ printer.accuracy }}%</dd>
-                </div>
-                <div>
-                  <dt>打印占比</dt>
-                  <dd>{{ printer.share }}%</dd>
-                </div>
-                <div>
-                  <dt>当前状态</dt>
-                  <dd>{{ printer.status }}</dd>
-                </div>
-              </dl>
-            </article>
-          </div>
-
-          <div class="filament-section">
-            <h4>耗材类型统计</h4>
-            <div class="filament-grid">
-              <div v-for="item in filamentStats" :key="item.name" class="filament-pill">
-                <span>{{ item.name }}</span>
-                <strong>{{ item.count }}</strong>
-              </div>
-            </div>
-          </div>
-        </template>
-      </div>
-      <div v-else class="surveillance-grid">
+      <div class="surveillance-grid">
         <div 
-          v-for="cam in cameras" 
+          v-for="cam in activeCameras" 
           :key="cam.id" 
           class="camera-card clickable"
           @click="triggerModal('camera-monitor')"
@@ -185,9 +118,6 @@
               <div class="legend-item"><span class="bullet blue"></span> 空闲: 10 <small>(10.4%)</small></div>
               <div class="legend-item"><span class="bullet red"></span> 异常: 4 <small>(4.2%)</small></div>
             </div>
-          </div>
-          <div class="link-row" style="text-align: right; margin-top:10px;">
-            <span class="more-link clickable" @click="triggerModal('device-full-details')">查看全部设备 &gt;</span>
           </div>
         </div>
       </section>
@@ -269,10 +199,6 @@
               <span class="loc">401会议室</span>
             </li>
           </ul>
-          
-          <div class="link-row" style="text-align: right; margin-top:10px;">
-            <span class="more-link clickable" @click="triggerModal('event-logs')">查看全部告警 &gt;</span>
-          </div>
         </div>
       </section>
     </aside>
@@ -281,20 +207,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-import {
-  fetchPrinterDashboard,
-  formatPrinterNumber,
-  getFilamentStats,
-  getPrinterCards
-} from './printerDashboard';
+import { computed, ref } from 'vue';
 
 const emit = defineEmits(['open-modal']);
 
 const selectedSpace = ref('310实验室');
-const printerDashboard = ref(null);
-const printerLoading = ref(true);
-const printerError = ref('');
 
 const triggerModal = (modalName) => {
   emit('open-modal', modalName);
@@ -307,48 +224,36 @@ const spaces = [
   { name: '全部空间', statusText: '总览', statusClass: 'gray', people: 26, devices: 96, meetings: 15 }
 ];
 
-const cameras = [
-  { id: 1, name: '摄像头-01', status: '在线', statusClass: 'online' },
-  { id: 2, name: '摄像头-02', status: '在线', statusClass: 'online' },
-  { id: 3, name: '摄像头-03', status: '使用中', statusClass: 'busy' },
-  { id: 4, name: '摄像头-04', status: '在线', statusClass: 'online' },
-  { id: 5, name: '摄像头-05', status: '在线', statusClass: 'online' },
-  { id: 6, name: '摄像头-06', status: '离线', statusClass: 'offline' },
-  { id: 7, name: '摄像头-07', status: '在线', statusClass: 'online' },
-  { id: 8, name: '摄像头-08', status: '使用中', statusClass: 'busy' },
-  { id: 9, name: '摄像头-09', status: '在线', statusClass: 'online' }
-];
-
-const loadPrinterDashboard = async () => {
-  printerLoading.value = true;
-  printerError.value = '';
-
-  try {
-    printerDashboard.value = await fetchPrinterDashboard();
-  } catch (error) {
-    printerError.value = error instanceof Error ? error.message : '打印机状态加载失败';
-  } finally {
-    printerLoading.value = false;
-  }
+const cameraMap = {
+  '310实验室': [
+    { id: '310-1', name: '310-主视角', status: '在线', statusClass: 'online' },
+    { id: '310-2', name: '310-工位区', status: '在线', statusClass: 'online' },
+    { id: '310-3', name: '310-设备区', status: '使用中', statusClass: 'busy' },
+    { id: '310-4', name: '310-会议角', status: '在线', statusClass: 'online' },
+    { id: '310-5', name: '310-入口', status: '在线', statusClass: 'online' },
+    { id: '310-6', name: '310-安全巡检', status: '在线', statusClass: 'online' }
+  ],
+  '401会议室': [
+    { id: '401-1', name: '401-主视角', status: '在线', statusClass: 'online' },
+    { id: '401-2', name: '401-讲台', status: '在线', statusClass: 'online' },
+    { id: '401-3', name: '401-会议桌', status: '在线', statusClass: 'online' },
+    { id: '401-4', name: '401-入口', status: '在线', statusClass: 'online' }
+  ],
+  '913会议室': [
+    { id: '913-1', name: '913-主视角', status: '使用中', statusClass: 'busy' },
+    { id: '913-2', name: '913-会议桌', status: '在线', statusClass: 'online' },
+    { id: '913-3', name: '913-屏幕区', status: '在线', statusClass: 'online' },
+    { id: '913-4', name: '913-入口', status: '在线', statusClass: 'online' }
+  ]
 };
 
-const formatNumber = formatPrinterNumber;
-
-const printerPanelSubtext = computed(() => {
-  if (printerLoading.value) return '正在同步 Bambu Buddy 数据';
-  if (printerError.value) return '数据同步失败';
-  return '来自 Bambu Buddy Dashboard';
+const selectedSpaceLabel = computed(() => selectedSpace.value === '全部空间' ? '全部空间' : selectedSpace.value);
+const activeCameras = computed(() => {
+  if (selectedSpace.value === '全部空间') {
+    return Object.values(cameraMap).flat();
+  }
+  return cameraMap[selectedSpace.value] || cameraMap['310实验室'];
 });
-
-const printerCards = computed(() => {
-  return getPrinterCards(printerDashboard.value);
-});
-
-const filamentStats = computed(() => {
-  return getFilamentStats(printerDashboard.value);
-});
-
-onMounted(loadPrinterDashboard);
 </script>
 
 <style scoped>
@@ -546,9 +451,10 @@ onMounted(loadPrinterDashboard);
 .surveillance-grid {
   flex-grow: 1;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-auto-rows: minmax(168px, 1fr);
   gap: 12px;
+  min-height: 0;
 }
 
 .printer-dashboard {

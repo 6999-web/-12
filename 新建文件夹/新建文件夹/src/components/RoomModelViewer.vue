@@ -86,7 +86,7 @@ const loadedSpaceStates = new Map();
 
 const CAT_MODEL_URL = '/model/kiki.glb?v=20260612-full-white-2';
 const MEMBER_CAT_HEIGHT = 0.74;
-const CAT_WHITE_COLOR = new THREE.Color('#fffdf9');
+const CAT_SOFT_COLOR = new THREE.Color('#e6ded2');
 
 const catOccupants = [
   {
@@ -205,34 +205,20 @@ const createRoomShell = (config, bounds) => {
   const floorMaterial = new THREE.MeshStandardMaterial({
     color: config.floorColor,
     roughness: 0.76,
-    metalness: 0.16,
-    emissive: '#0f7ed8',
-    emissiveIntensity: 0.035
-  });
-  const wallMaterial = new THREE.MeshStandardMaterial({
-    color: '#d5e3ef',
-    roughness: 0.62,
-    metalness: 0.08,
-    emissive: '#0b315f',
-    emissiveIntensity: 0.015,
-    transparent: true,
-    opacity: 0.72
+    metalness: 0.04,
+    emissive: '#ffffff',
+    emissiveIntensity: 0.01
   });
 
   addBox(`${props.spaceId}_Floor`, [width, 0.08, depth], [centerX, floorY - 0.02, centerZ], floorMaterial);
-  const grid = new THREE.GridHelper(Math.max(width, depth), room.gridDivisions, '#38bdf8', '#1d4ed8');
+  const grid = new THREE.GridHelper(Math.max(width, depth), room.gridDivisions, '#d9dee2', '#c9d0d6');
   grid.name = `${props.spaceId}_Floor_Grid`;
   grid.position.set(centerX, floorY + 0.04, centerZ);
   if (grid.material) {
     grid.material.transparent = true;
-    grid.material.opacity = 0.18;
+    grid.material.opacity = 0.14;
   }
   roomRoot.add(grid);
-
-  addBox(`${activeSpaceId}_BackWall`, [width, height, wallThickness], [centerX, wallY, minZ - wallThickness / 2], wallMaterial);
-  addBox(`${activeSpaceId}_FrontWall`, [width, height, wallThickness], [centerX, wallY, maxZ + wallThickness / 2], wallMaterial);
-  addBox(`${activeSpaceId}_LeftWall`, [wallThickness, height, depth], [minX - wallThickness / 2, wallY, centerZ], wallMaterial);
-  addBox(`${activeSpaceId}_RightWall`, [wallThickness, height, depth], [maxX + wallThickness / 2, wallY, centerZ], wallMaterial);
 
   const shellBounds = {
     minX: Number(minX.toFixed(3)),
@@ -453,7 +439,7 @@ const applyCatMaterial = (object) => {
   object.traverse((child) => {
     if (!child.isMesh) return;
     child.material = new THREE.MeshStandardMaterial({
-      color: CAT_WHITE_COLOR,
+      color: CAT_SOFT_COLOR,
       roughness: 0.72,
       metalness: 0,
       emissive: new THREE.Color('#dbeafe'),

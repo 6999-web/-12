@@ -30,7 +30,7 @@ export const getPrinterCards = (dashboard) => {
       prints,
       accuracy: formatPrinterNumber(accuracyByPrinter[name], 1),
       share: formatPrinterNumber(share, 1),
-      status: prints > 0 ? '有打印记录' : '暂无记录'
+      status: prints > 0 ? '在线' : '暂无记录'
     };
   });
 };

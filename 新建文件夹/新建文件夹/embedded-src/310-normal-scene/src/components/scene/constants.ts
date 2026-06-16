@@ -9,7 +9,7 @@ export const ROOM = {
 };
 
 export const COLORS = {
-  floor: "#2B3648",
+  floor: "#C9D4DB",
   floorGroove: "#B7BCC6",
   wall: "#D5E3EF",
   wallTrim: "#91A8BD",
@@ -28,8 +28,8 @@ export const materials = {
     color: COLORS.floor,
     roughness: 0.82,
     metalness: 0.02,
-    emissive: "#0F7ED8",
-    emissiveIntensity: 0.035,
+    emissive: COLORS.floor,
+    emissiveIntensity: 0.012,
   }),
   Floor_HUD_Path: new THREE.MeshBasicMaterial({
     color: COLORS.cyan,

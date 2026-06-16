@@ -464,7 +464,7 @@
       <!-- 5. Laboratory Operation Event Stream (Logs log table) -->
       <div v-else-if="activeModal === 'event-logs'" class="modal-content-wrapper event-logs-modal">
         <div class="modal-header">
-          <h2>实验室运行事件流</h2>
+          <h2>空间告警中心</h2>
           <div class="header-actions">
             <button class="btn-filter">🔍 筛选</button>
             <button class="btn-export">📥 导出</button>
@@ -723,14 +723,14 @@ const onlineUsersList = [
 
 // Mock Logs Log
 const eventLogsList = [
-  { time: '09:39:21', type: '设备事件', typeClass: 'blue-tag', target: 'AI训练服务器集群', content: 'AI训练任务 #AIGC-0427 已完成第 36/50 轮训练，准确率 92.4%。', status: '在线', statusClass: 'green-tag', source: '设备物联网平台' },
-  { time: '09:25:14', type: '告警事件', typeClass: 'red-tag', target: '3D打印机 #02', content: '材料耗尽告警已恢复，已自动补充耗材，设备恢复正常运行。', status: '已恢复', statusClass: 'green-tag', source: '设备物联网平台' },
-  { time: '09:12:07', type: '项目事件', typeClass: 'green-tag', target: '智慧教学质量分析平台', content: '项目进度更新：需求分析完成，进入系统设计阶段（40%）。', status: '进行中', statusClass: 'blue-tag', source: '项目管理系统' },
-  { time: '08:58:43', type: '成果事件', typeClass: 'purple-tag', target: '论文《基于知识图谱的...》', content: '论文被 IEEE Access 正式收录，DOI 已生成。', status: '已发表', statusClass: 'green-tag', source: '科研成果系统' },
-  { time: '08:41:30', type: '活动事件', typeClass: 'orange-tag', target: '项目评审会', content: '会议室 401 正在进行 "智慧实验室平台" 项目评审会。', status: '进行中', statusClass: 'blue-tag', source: '活动管理系统' },
-  { time: '08:15:02', type: '设备事件', typeClass: 'blue-tag', target: '大屏显示系统', content: '播放内容已更新为 "实验室科研成果展示-第15期"。', status: '在线', statusClass: 'green-tag', source: '设备物联网平台' },
-  { time: '07:52:11', type: '告警事件', typeClass: 'red-tag', target: '环境传感器 #07', content: '温湿度传感器读取异常（湿度 82%），已自动校准恢复。', status: '已恢复', statusClass: 'green-tag', source: '设备物联网平台' },
-  { time: '07:30:45', type: '成果事件', typeClass: 'purple-tag', target: '发明专利：一种智能...', content: '专利进入实质审查阶段，审查通知书已下发。', status: '审批中', statusClass: 'orange-tag', source: '科研成果系统' }
+  { time: '10:28:36', type: '告警事件', typeClass: 'red-tag', target: '实验室网络终端', content: '310 实验室网络终端心跳中断，交换机端口丢包率升高，已通知运维排查。', status: '处理中', statusClass: 'orange-tag', source: '网络监测系统' },
+  { time: '10:24:11', type: '告警事件', typeClass: 'red-tag', target: '摄像头-06', content: '摄像头-06 视频流离线，最近一次画面回传失败，疑似供电或网络链路异常。', status: '离线', statusClass: 'red-tag', source: '视频监控平台' },
+  { time: '10:15:02', type: '告警事件', typeClass: 'red-tag', target: '摄像头-03', content: '摄像头-03 画面出现明显卡顿和丢帧，当前码率低于安全阈值。', status: '异常', statusClass: 'orange-tag', source: '视频监控平台' },
+  { time: '09:58:47', type: '告警事件', typeClass: 'red-tag', target: '门禁控制器', content: '310 实验室门禁控制器短时离线，刷卡记录同步延迟超过 5 分钟。', status: '待确认', statusClass: 'orange-tag', source: '门禁管理系统' },
+  { time: '09:43:20', type: '告警事件', typeClass: 'red-tag', target: 'AI训练服务器', content: 'AI训练服务器 GPU 温度持续偏高，散热风扇转速已自动提升。', status: '处理中', statusClass: 'orange-tag', source: '设备物联网平台' },
+  { time: '09:31:08', type: '告警事件', typeClass: 'red-tag', target: '会议室投影终端', content: '401 会议室投影终端未响应远程唤醒指令，建议现场检查电源状态。', status: '待处理', statusClass: 'red-tag', source: '会议设备平台' },
+  { time: '09:12:55', type: '告警事件', typeClass: 'red-tag', target: '环境传感器 #07', content: '温湿度传感器读取异常，已触发自动校准任务。', status: '已恢复', statusClass: 'green-tag', source: '环境监测系统' },
+  { time: '08:46:19', type: '告警事件', typeClass: 'red-tag', target: '3D打印机 #02', content: '耗材余量低于 10%，系统已提醒补充耗材。', status: '已提醒', statusClass: 'blue-tag', source: '设备物联网平台' }
 ];
 
 // Device Weekly data
