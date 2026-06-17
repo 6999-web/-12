@@ -136,7 +136,7 @@
       <section class="sidebar-section glass-panel scroll-y">
         <div class="section-header">
           <h3>实验室运行事件流</h3>
-          <span class="more-link clickable" @click="triggerModal('event-logs')">查看更多 &gt;</span>
+          <span class="more-link clickable" @click="triggerModal('lab-event-logs')">查看更多 &gt;</span>
         </div>
         <div class="section-body event-list-wrapper">
           <div class="timeline-simple font-num">
@@ -580,6 +580,8 @@ const loadPrinterDashboard = async () => {
   }
 };
 
+const cleanPrinterLocation = (location) => String(location || '310实验室').replace(/\s*·\s*制造角/g, '');
+
 const printerDeviceRows = computed(() => {
   if (printerLoading.value) {
     return [{ id: 'printer-loading', name: '3D打印机同步中', type: '增材制造设备', location: '310实验室', statusText: '同步中', statusClass: 'busy' }];
@@ -601,7 +603,7 @@ const printerDeviceRows = computed(() => {
     prints: printer.prints,
     accuracy: printer.accuracy,
     share: printer.share,
-    location: printer.location,
+    location: cleanPrinterLocation(printer.location),
     statusText: printer.status,
     statusClass: 'online'
   }));

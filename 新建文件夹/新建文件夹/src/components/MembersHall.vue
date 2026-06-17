@@ -1,2628 +1,2171 @@
 <template>
-  <div class="members-hall-container">
-    <!-- Back Button for Detail View -->
-    <div v-if="selectedMember" class="detail-header-nav font-num">
-      <button class="btn-back" @click="selectedMember = null">
-        ← 返回成员大厅
-      </button>
-      <span class="nav-path">成员大厅 / {{ selectedMember.name }} 的成长档案</span>
-    </div>
-
-    <!-- 1. MEMBER LIST VIEW -->
-    <div v-if="!selectedMember" class="main-members-view">
-      <!-- Left Sidebar: Statistics & Graphs -->
-      <aside class="left-sidebar">
-        <!-- 成员概览 -->
-        <section class="sidebar-section glass-panel">
-          <div class="section-header">
-            <h3>成员概览</h3>
-          </div>
-          <div class="section-body overview-grid font-num">
-            <div class="overview-card">
-              <span class="label">成员总数</span>
-              <span class="num">34 <small>人</small></span>
-            </div>
-            <div class="overview-card">
-              <span class="label">导师团队</span>
-              <span class="num">2 <small>人</small></span>
-            </div>
-            <div class="overview-card">
-              <span class="label">研究生</span>
-              <span class="num">8 <small>人</small></span>
-            </div>
-            <div class="overview-card">
-              <span class="label">本科生</span>
-              <span class="num">24 <small>人</small></span>
-            </div>
-          </div>
-        </section>
-
-        <!-- 成员结构分布 -->
-        <section class="sidebar-section glass-panel">
-          <div class="section-header">
-            <h3>成员结构分布</h3>
-          </div>
-          <div class="section-body chart-container font-num">
-            <!-- SVG Pie/Donut Chart -->
-            <div class="svg-chart-wrapper">
-              <svg viewBox="0 0 100 100" class="donut-svg">
-                <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.05)" stroke-width="12"></circle>
-                <!-- Undergraduate: 24/34 = 70.6% -->
-                <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--status-online)" stroke-width="12" stroke-dasharray="177.3 251.2" stroke-dashoffset="0" transform="rotate(-90 50 50)"></circle>
-                <!-- Graduate: 8/34 = 23.5% -->
-                <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--status-info)" stroke-width="12" stroke-dasharray="59.1 251.2" stroke-dashoffset="-177.3" transform="rotate(-90 50 50)"></circle>
-                <!-- Mentors: 2/34 = 5.9% -->
-                <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--status-busy)" stroke-width="12" stroke-dasharray="14.8 251.2" stroke-dashoffset="-236.4" transform="rotate(-90 50 50)"></circle>
-              </svg>
-              <div class="donut-center-text">
-                <span class="title">学生占比</span>
-                <span class="val">94.1%</span>
-              </div>
-            </div>
-            <div class="donut-legend">
-              <div class="legend-item"><span class="bullet green"></span> 本科生: 24人 <span class="pct">70.6%</span></div>
-              <div class="legend-item"><span class="bullet blue"></span> 研究生: 8人 <span class="pct">23.5%</span></div>
-              <div class="legend-item"><span class="bullet orange"></span> 导师团: 2人 <span class="pct">5.9%</span></div>
-            </div>
-          </div>
-        </section>
-
-        <!-- 研究方向分布 -->
-        <section class="sidebar-section glass-panel">
-          <div class="section-header">
-            <h3>研究方向分布</h3>
-          </div>
-          <div class="section-body direction-list font-num">
-            <div class="direction-bar-item" v-for="dir in directionStats" :key="dir.name">
-              <div class="lbl-row">
-                <span>{{ dir.name }}</span>
-                <span>{{ dir.count }}人</span>
-              </div>
-              <div class="progress-bar-container">
-                <div class="progress-fill" :style="{ width: (dir.count / 10 * 100) + '%', backgroundColor: dir.color }"></div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </aside>
-
-      <!-- Center & Right: Filtering and Members Cards -->
-      <main class="members-grid-container glass-panel">
-        <!-- Top Filters & Search -->
-        <div class="filter-top-bar font-num">
-          <div class="filter-group">
-            <span class="filter-label">身份筛选:</span>
-            <button 
-              v-for="role in roleFilters" 
-              :key="role.value" 
-              class="filter-btn" 
-              :class="{ active: selectedRole === role.value }"
-              @click="selectedRole = role.value"
-            >
-              {{ role.label }}
-            </button>
-          </div>
-          <div class="filter-group">
-            <span class="filter-label">研究方向:</span>
-            <button 
-              v-for="dir in directionFilters" 
-              :key="dir.value" 
-              class="filter-btn" 
-              :class="{ active: selectedDirection === dir.value }"
-              @click="selectedDirection = dir.value"
-            >
-              {{ dir.label }}
-            </button>
-          </div>
-          <div class="search-box">
-            <input type="text" v-model="searchQuery" placeholder="搜索成员姓名/技能..." />
-            <span class="search-icon">🔍</span>
-          </div>
+  <div v-if="!detailMember" class="members-hall-container cockpit-page">
+    <aside class="left-rail glass-panel font-num">
+      <div class="panel-title">
+        <span class="title-icon">👥</span>
+        <div>
+          <h3>成员大厅</h3>
+          <p>真实成果关联画像</p>
         </div>
+      </div>
 
-        <!-- Cards Scrollable Area -->
-        <div class="members-cards-scroll">
-          <div class="members-grid">
-            <div 
-              v-for="member in filteredMembers" 
-              :key="member.id" 
-              class="member-card glass-panel clickable"
-              @click="selectedMember = member"
-            >
-              <div class="avatar-box">
-                <span class="avatar-placeholder">{{ member.avatar }}</span>
-                <span class="role-tag" :class="member.roleClass">{{ member.role }}</span>
-              </div>
-              <div class="member-meta font-num">
-                <h3 class="name">{{ member.name }}</h3>
-                <p class="grade">{{ member.grade }} · {{ member.major }}</p>
-                <div class="directions-tags">
-                  <span class="tag" v-for="t in member.tags" :key="t">{{ t }}</span>
-                </div>
-                <div class="stats-row">
-                  <div class="stat-item">📁 项目: <strong>{{ member.projectsCount }}</strong></div>
-                  <div class="stat-item">🏆 获奖: <strong>{{ member.awardsCount }}</strong></div>
-                  <div class="stat-item">📄 论文: <strong>{{ member.papersCount }}</strong></div>
-                </div>
-              </div>
-              <div class="hover-overlay">
-                <span>查看成长档案 →</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
-
-    <!-- 2. MEMBER DETAILS VIEW -->
-    <div v-else class="member-details-view">
-      <!-- Left Panel: Base Profile Card -->
-      <aside class="details-left-panel glass-panel font-num">
-        <div class="profile-card">
-          <div class="avatar-large">{{ selectedMember.avatar }}</div>
-          <h2 class="name">{{ selectedMember.name }}</h2>
-          <span class="role-badge" :class="selectedMember.roleClass">{{ selectedMember.role }}</span>
-          <p class="grade">{{ selectedMember.grade }}</p>
-        </div>
-
-        <ul class="info-list">
-          <li>
-            <span class="lbl">专业班级:</span>
-            <span class="val">{{ selectedMember.major }}</span>
-          </li>
-          <li>
-            <span class="lbl">入室时间:</span>
-            <span class="val">{{ selectedMember.joinTime }}</span>
-          </li>
-          <li>
-            <span class="lbl">研究方向:</span>
-            <span class="val">{{ selectedMember.primaryDirection }}</span>
-          </li>
-        </ul>
-
-        <div class="skills-section">
-          <h4>技能标签</h4>
-          <div class="skills-tags">
-            <span class="skill-tag" v-for="s in selectedMember.skills" :key="s">{{ s }}</span>
-          </div>
-        </div>
-
-        <!-- Mascot Advice Card -->
-        <div class="mascot-advice-card glass-panel font-num">
-          <div class="mascot-header">
-            <span class="mascot-icon">🐱</span>
-            <h5>智小喵小贴士</h5>
-          </div>
-          <p class="advice-txt">
-            该成员在“{{ selectedMember.primaryDirection }}”方向表现突出，近半年项目进展顺利，具备优秀的团队协作能力。
-          </p>
-        </div>
-      </aside>
-
-      <!-- Middle Panel: Subpages with Subtabs -->
-      <main class="details-middle-panel glass-panel">
-        <!-- Subtabs Header -->
-        <div class="subtabs-header font-num">
-          <button 
-            v-for="tab in subTabs" 
-            :key="tab.id" 
-            class="subtab-btn" 
-            :class="{ active: activeSubTab === tab.id }"
-            @click="activeSubTab = tab.id"
+      <section class="rail-section overview-section">
+        <h4>成员概览</h4>
+        <div class="metric-grid">
+          <button
+            v-for="role in roleFilters"
+            :key="role.value"
+            type="button"
+            class="metric-card"
+            :class="{ active: selectedRole === role.value }"
+            @click="selectedRole = role.value"
           >
-            {{ tab.label }}
+            <span>{{ role.label }}</span>
+            <strong>{{ roleCount(role.value) }}</strong>
           </button>
         </div>
+      </section>
 
-        <div class="subtab-content-scroll scroll-container">
-          <!-- 2a. 个人总览 -->
-          <div v-if="activeSubTab === 'general'" class="tab-pane-general">
-            <section class="section-intro font-num">
-              <h4>个人简介</h4>
-              <p class="bio-text">{{ selectedMember.bio }}</p>
-            </section>
-
-            <!-- Stats grid -->
-            <div class="stats-cards-grid font-num">
-              <div class="stat-card" v-for="stat in memberStatsCards" :key="stat.label">
-                <span class="icon">{{ stat.icon }}</span>
-                <div class="txt">
-                  <span class="val">{{ stat.val }}</span>
-                  <span class="lbl">{{ stat.label }}</span>
-                </div>
-              </div>
+      <section class="rail-section direction-section">
+        <h4>研究方向分布</h4>
+        <div class="bar-list">
+          <button
+            v-for="dir in directionStats"
+            :key="dir.name"
+            type="button"
+            class="bar-item"
+            :class="{ active: selectedDirection === dir.name }"
+            @click="toggleDirection(dir.name)"
+          >
+            <div class="bar-meta">
+              <span>{{ dir.name }}</span>
+              <b>{{ dir.count }}人</b>
             </div>
-
-            <!-- Radar & AI Summary -->
-            <div class="radar-ai-row">
-              <!-- Capability Radar Chart (SVG representation) -->
-              <div class="radar-card glass-panel font-num">
-                <h4>能力雷达图</h4>
-                <div class="svg-radar-wrapper">
-                  <svg viewBox="0 0 120 120" class="radar-svg">
-                    <!-- Web circles -->
-                    <circle cx="60" cy="60" r="50" class="grid-line" />
-                    <circle cx="60" cy="60" r="37.5" class="grid-line" />
-                    <circle cx="60" cy="60" r="25" class="grid-line" />
-                    <circle cx="60" cy="60" r="12.5" class="grid-line" />
-                    
-                    <!-- Web lines (axes) -->
-                    <!-- Axes: 1. CV/AI, 2. Hardware, 3. Coding, 4. Research, 5. Project Management -->
-                    <line x1="60" y1="10" x2="60" y2="110" class="grid-line" />
-                    <line x1="12" y1="42.5" x2="108" y2="77.5" class="grid-line" />
-                    <line x1="12" y1="77.5" x2="108" y2="42.5" class="grid-line" />
-                    
-                    <!-- Capability Polygon (custom values depending on member) -->
-                    <polygon :points="getRadarPoints" class="radar-poly" />
-                    <polygon :points="getRadarPoints" class="radar-poly-dots" />
-                    
-                    <!-- Labels -->
-                    <text x="60" y="8" class="radar-text text-anchor-middle">算法研究</text>
-                    <text x="110" y="45" class="radar-text text-anchor-start">工程编码</text>
-                    <text x="105" y="90" class="radar-text text-anchor-start">项目管理</text>
-                    <text x="15" y="90" class="radar-text text-anchor-end">学术素养</text>
-                    <text x="10" y="45" class="radar-text text-anchor-end">硬件设计</text>
-                  </svg>
-                </div>
-              </div>
-
-              <!-- AI 小喵总结 -->
-              <div class="ai-summary-card glass-panel font-num">
-                <h4>🐱 智能画像分析 (小喵总结)</h4>
-                <p class="summary-para">{{ selectedMember.aiSummary }}</p>
-                <div class="keywords-row">
-                  <span class="kw" v-for="kw in selectedMember.aiKeywords" :key="kw"># {{ kw }}</span>
-                </div>
-              </div>
+            <div class="bar-track">
+              <i :style="{ width: directionWidth(dir.count), background: dir.color }"></i>
             </div>
-
-            <!-- Associated Achievements -->
-            <section class="section-assoc-achievements font-num">
-              <h4>关联成果 (最新沉淀)</h4>
-              <div class="assoc-achievements-list">
-                <div class="assoc-card glass-panel" v-for="ach in selectedMember.assocAchievements" :key="ach.title">
-                  <span class="badge" :class="ach.typeClass">{{ ach.type }}</span>
-                  <h5 class="title">{{ ach.title }}</h5>
-                  <p class="meta">{{ ach.date }} · {{ ach.detail }}</p>
-                </div>
-              </div>
-            </section>
-          </div>
-
-          <!-- 2b. 参与项目 -->
-          <div v-else-if="activeSubTab === 'projects'" class="tab-pane-projects font-num">
-            <div class="projects-list">
-              <div class="detail-project-card glass-panel" v-for="proj in selectedMember.detailedProjects" :key="proj.title">
-                <div class="card-header">
-                  <h4>{{ proj.title }}</h4>
-                  <span class="state-badge" :class="proj.stateClass">{{ proj.state }}</span>
-                </div>
-                <p class="desc">{{ proj.desc }}</p>
-                <div class="meta-row">
-                  <span>角色: <strong>{{ proj.role }}</strong></span>
-                  <span>起止时间: <strong>{{ proj.duration }}</strong></span>
-                </div>
-                <div class="achievements-row" v-if="proj.achievements && proj.achievements.length">
-                  <span class="ach-lbl">贡献成果:</span>
-                  <span class="ach-tag" v-for="ac in proj.achievements" :key="ac">📄 {{ ac }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2c. 获奖成果 -->
-          <div v-else-if="activeSubTab === 'awards'" class="tab-pane-awards font-num">
-            <div class="awards-summary-cards">
-              <div class="award-sum-c">
-                <span class="icon font-num">🏆</span>
-                <div class="info">
-                  <span class="val">{{ selectedMember.awardsCount }} 个</span>
-                  <span class="lbl">获奖总数</span>
-                </div>
-              </div>
-              <div class="award-sum-c">
-                <span class="icon font-num">🥇</span>
-                <div class="info">
-                  <span class="val">{{ selectedMember.nationalAwardsCount }} 项</span>
-                  <span class="lbl">国家级/省部级</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="awards-detail-list">
-              <div class="award-detail-card glass-panel" v-for="aw in selectedMember.detailedAwards" :key="aw.name">
-                <div class="trophy-box">🏆</div>
-                <div class="txt">
-                  <h4>{{ aw.name }}</h4>
-                  <p class="lvl">{{ aw.level }} · 主办方: {{ aw.host }}</p>
-                  <p class="role">成员角色: <strong>{{ aw.role }}</strong> · 指导教师: {{ aw.mentor }}</p>
-                </div>
-                <span class="date font-num">{{ aw.date }}</span>
-              </div>
-            </div>
-
-            <!-- Award distribution charts -->
-            <div class="awards-charts-row">
-              <div class="chart-box glass-panel">
-                <h4>获奖年度轨迹</h4>
-                <div class="chart-bar-mock">
-                  <div class="col" v-for="d in selectedMember.awardTrend" :key="d.year">
-                    <div class="bar-fill" :style="{ height: (d.count / 3 * 100) + '%' }">
-                      <span class="tip font-num">{{ d.count }}</span>
-                    </div>
-                    <span class="lbl font-num">{{ d.year }}年</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2d. 论文成果 -->
-          <div v-else-if="activeSubTab === 'papers'" class="tab-pane-papers font-num">
-            <div class="papers-summary-cards">
-              <div class="paper-sum-c">
-                <span class="val">{{ selectedMember.papersCount }} 篇</span>
-                <span class="lbl">论文总量</span>
-              </div>
-              <div class="paper-sum-c">
-                <span class="val">{{ selectedMember.sciPapersCount || 0 }} 篇</span>
-                <span class="lbl">SCI / EI 收录</span>
-              </div>
-              <div class="paper-sum-c">
-                <span class="val">{{ selectedMember.citationsCount || 0 }} 次</span>
-                <span class="lbl">累计被引用</span>
-              </div>
-            </div>
-
-            <div class="papers-list">
-              <div class="paper-card glass-panel" v-for="p in selectedMember.detailedPapers" :key="p.title">
-                <div class="paper-index font-num">📄</div>
-                <div class="paper-main">
-                  <h4>{{ p.title }}</h4>
-                  <p class="authors">作者: {{ p.authors }} ({{ p.role }})</p>
-                  <p class="journal">发表期刊/会议: <strong>{{ p.journal }}</strong> ({{ p.date }})</p>
-                  <p class="details">收录情况: <span class="tag-sci">{{ p.indexed }}</span> · 引用数: <strong class="text-highlight">{{ p.citations }}</strong> · 影响因子: {{ p.if }}</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Paper topic keywords -->
-            <div class="paper-topics-row">
-              <div class="chart-box glass-panel">
-                <h4>热门关键词云</h4>
-                <div class="tag-cloud">
-                  <span class="cloud-tag size-3">深度学习</span>
-                  <span class="cloud-tag size-2">多模态融合</span>
-                  <span class="cloud-tag size-2">三维目标检测</span>
-                  <span class="cloud-tag size-1">物联网监控</span>
-                  <span class="cloud-tag size-3">AIGC生成</span>
-                  <span class="cloud-tag size-1">自注意力机制</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2e. 产权成果 -->
-          <div v-else-if="activeSubTab === 'patents'" class="tab-pane-patents font-num">
-            <div class="patents-summary-cards">
-              <div class="pat-sum-c">
-                <span class="val">{{ selectedMember.patentsCount }} 项</span>
-                <span class="lbl">产权总数</span>
-              </div>
-              <div class="pat-sum-c">
-                <span class="val">{{ selectedMember.authPatentsCount || 0 }} 项</span>
-                <span class="lbl">已授权 / 已登记</span>
-              </div>
-              <div class="pat-sum-c">
-                <span class="val">{{ selectedMember.pendingPatentsCount || 0 }} 项</span>
-                <span class="lbl">流程申请中</span>
-              </div>
-            </div>
-
-            <div class="patents-table-wrapper">
-              <table class="patents-table">
-                <thead>
-                  <tr>
-                    <th>名称</th>
-                    <th>类型</th>
-                    <th>编号/登记号</th>
-                    <th>状态</th>
-                    <th>申请日期</th>
-                    <th>角色</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="pat in selectedMember.detailedPatents" :key="pat.name">
-                    <td class="text-highlight">{{ pat.name }}</td>
-                    <td>{{ pat.type }}</td>
-                    <td>{{ pat.code }}</td>
-                    <td>
-                      <span class="status-tag" :class="pat.statusClass">{{ pat.status }}</span>
-                    </td>
-                    <td>{{ pat.date }}</td>
-                    <td><strong>{{ pat.role }}</strong></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Patent registration history timeline -->
-            <div class="patent-history-timeline-section">
-              <h4>知识产权成长时间轴</h4>
-              <div class="patent-timeline">
-                <div class="timeline-step" v-for="step in selectedMember.patentTimeline" :key="step.title">
-                  <div class="dot" :class="step.class"></div>
-                  <div class="content">
-                    <span class="date">{{ step.date }}</span>
-                    <h5>{{ step.title }}</h5>
-                    <p>{{ step.desc }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2f. 成长轨迹 -->
-          <div v-else-if="activeSubTab === 'trajectory'" class="tab-pane-trajectory font-num">
-            <div class="milestones-overview">
-              <div class="milestone-c">
-                <span class="title">成长阶段</span>
-                <span class="num">3 <small>个</small></span>
-              </div>
-              <div class="milestone-c">
-                <span class="title">关键里程碑</span>
-                <span class="num">6 <small>次</small></span>
-              </div>
-            </div>
-
-            <div class="vertical-trajectory-timeline">
-              <div class="trajectory-year-block" v-for="block in selectedMember.detailedTrajectory" :key="block.year">
-                <div class="year-header">{{ block.year }} 年</div>
-                <div class="events-list">
-                  <div class="traj-event-item" v-for="evt in block.events" :key="evt.title">
-                    <div class="timeline-node"></div>
-                    <div class="event-body glass-panel">
-                      <span class="date">{{ evt.date }}</span>
-                      <h5>{{ evt.title }}</h5>
-                      <p>{{ evt.desc }}</p>
-                      <div class="skills-learned" v-if="evt.skills && evt.skills.length">
-                        <span class="s-tag" v-for="sk in evt.skills" :key="sk">{{ sk }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          </button>
         </div>
-      </main>
+      </section>
+    </aside>
 
-      <!-- Right Panel: Representatives & Quick trajectory preview -->
-      <aside class="details-right-panel glass-panel font-num">
-        <!-- 代表项目 -->
-        <section class="right-section">
-          <h4>代表性项目</h4>
-          <div class="rep-projects-list">
-            <div class="rep-project-card glass-panel" v-for="proj in selectedMember.repProjects" :key="proj.title">
-              <h5>{{ proj.title }}</h5>
-              <p class="role">角色: {{ proj.role }}</p>
-              <div class="progress-bar-container">
-                <div class="progress-fill" :style="{ width: proj.progress + '%' }"></div>
-              </div>
-              <span class="pct">{{ proj.progress }}% 已完成</span>
+    <main class="center-stage glass-panel">
+      <header class="stage-heading font-num">
+        <div>
+          <h2>成员大厅</h2>
+          <p>实验室成员画像与成长档案</p>
+        </div>
+      </header>
+
+      <div class="direction-chips font-num">
+        <button type="button" :class="{ active: selectedDirection === 'all' }" @click="selectedDirection = 'all'">全部方向</button>
+        <button
+          v-for="dir in directionStats"
+          :key="dir.name"
+          type="button"
+          :class="{ active: selectedDirection === dir.name }"
+          @click="toggleDirection(dir.name)"
+        >
+          {{ dir.name }}
+        </button>
+      </div>
+
+      <div class="stage-toolbar font-num">
+        <div class="search-box">
+          <input v-model="searchQuery" type="search" placeholder="搜索姓名、方向、技能或成果..." />
+          <span>⌕</span>
+        </div>
+      </div>
+
+      <div class="member-board scroll-container">
+        <button
+          v-for="member in filteredMembers"
+          :key="member.id"
+          type="button"
+          class="member-tile glass-panel"
+          :class="{ selected: activeMember?.id === member.id }"
+          @click="openMemberDetail(member)"
+        >
+          <div class="avatar-frame">
+            <span>{{ member.avatar }}</span>
+            <i :class="member.roleClass">{{ member.role }}</i>
+          </div>
+          <div class="member-main">
+            <div class="member-name-row">
+              <h4>{{ member.name }}</h4>
+              <small>{{ member.grade }}</small>
+            </div>
+            <p>{{ member.major }}</p>
+            <div class="tag-row">
+              <span v-for="tag in member.tags" :key="tag">{{ tag }}</span>
+            </div>
+            <div class="member-stats">
+              <span>项目 <b>{{ member.projectsCount }}</b></span>
+              <span>奖项 <b>{{ member.awardsCount }}</b></span>
+              <span>产权 <b>{{ member.patentsCount }}</b></span>
             </div>
           </div>
-        </section>
+        </button>
+      </div>
 
-        <!-- 关键里程碑时间线 -->
-        <section class="right-section scroll-y-section">
-          <h4>关键成长轨迹</h4>
-          <div class="milestones-timeline-simple">
-            <div class="timeline-item" v-for="mil in selectedMember.milestones" :key="mil.title">
-              <span class="date">{{ mil.date }}</span>
-              <span class="bullet" :class="mil.class"></span>
-              <span class="title">{{ mil.title }}</span>
-              <p class="desc">{{ mil.desc }}</p>
-            </div>
-          </div>
-        </section>
-      </aside>
+    </main>
+  </div>
+
+  <div v-else class="member-detail-page cockpit-page font-num">
+    <div class="detail-path">
+      <button type="button" @click="detailMember = null">‹ 返回成员大厅</button>
+      <span>成员大厅 / 成员详情</span>
     </div>
+
+    <aside class="detail-profile glass-panel">
+      <div class="portrait-card">
+        <div class="portrait-avatar">{{ detailMember.avatar }}</div>
+        <button type="button" class="favorite-btn" aria-label="收藏成员">★</button>
+        <h2>{{ detailMember.name }}</h2>
+        <span :class="detailMember.roleClass">{{ detailMember.role }}</span>
+      </div>
+      <ul class="profile-facts">
+        <li><span>职务</span><strong>{{ detailMember.role }} / {{ detailMember.grade }}</strong></li>
+        <li><span>专业方向</span><strong>{{ detailMember.major }}</strong></li>
+        <li><span>所属专业</span><strong>{{ detailMember.primaryDirection }}</strong></li>
+        <li><span>入室时间</span><strong>{{ detailMember.joinTime }}</strong></li>
+        <li><span>研究方向</span><strong>{{ detailMember.tags.join(' / ') }}</strong></li>
+      </ul>
+      <section class="skill-panel">
+        <h4>技能标签</h4>
+        <div class="tag-row">
+          <span v-for="skill in detailMember.skills" :key="skill">{{ skill }}</span>
+        </div>
+      </section>
+      <section class="mascot-card glass-panel">
+        <div class="mascot-figure">🐱</div>
+        <div>
+          <strong>智小喵提示</strong>
+          <p>可查看成员成长轨迹与关联成果。</p>
+        </div>
+      </section>
+    </aside>
+
+    <main class="detail-main glass-panel">
+      <div class="detail-tabs">
+        <button
+          v-for="tab in detailTabs"
+          :key="tab.id"
+          type="button"
+          :class="{ active: activeDetailTab === tab.id }"
+          @click="activeDetailTab = tab.id"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+
+      <div class="detail-main-scroll scroll-container">
+        <template v-if="activeDetailTab === 'overview'">
+          <div class="overview-detail-grid">
+            <section class="intro-panel glass-panel">
+              <h4>个人简介</h4>
+              <p>{{ detailMember.bio }}</p>
+              <div class="core-data-grid">
+                <article>
+                  <span>参与项目</span>
+                  <strong>{{ detailMember.projectsCount }}<small>项</small></strong>
+                </article>
+                <article>
+                  <span>获奖成果</span>
+                  <strong>{{ detailMember.awardsCount }}<small>项</small></strong>
+                </article>
+                <article>
+                  <span>发表论文</span>
+                  <strong>{{ detailMember.papersCount }}<small>篇</small></strong>
+                </article>
+                <article>
+                  <span>知识产权</span>
+                  <strong>{{ detailMember.patentsCount }}<small>项</small></strong>
+                </article>
+              </div>
+            </section>
+            <section class="radar-card glass-panel">
+              <h4>能力雷达图</h4>
+              <div class="radar-wrap">
+                <svg viewBox="0 0 140 140">
+                  <polygon points="70,10 127,51 105,118 35,118 13,51" class="radar-grid" />
+                  <polygon points="70,32 106,58 92,100 48,100 34,58" class="radar-grid" />
+                  <line x1="70" y1="10" x2="70" y2="118" />
+                  <line x1="13" y1="51" x2="127" y2="51" />
+                  <line x1="35" y1="118" x2="105" y2="118" />
+                  <polygon :points="radarPoints(detailMember.radar)" class="radar-area" />
+                  <text x="70" y="9">计算机视觉</text>
+                  <text x="128" y="52">深度学习</text>
+                  <text x="107" y="132">项目管理</text>
+                  <text x="33" y="132">教育技术</text>
+                  <text x="7" y="52">物联网</text>
+                </svg>
+              </div>
+            </section>
+          </div>
+        </template>
+
+        <template v-else-if="activeDetailTab === 'projects'">
+          <div class="tab-stat-grid project-stat-grid">
+            <article>
+              <i>▣</i>
+              <span>参与项目</span>
+              <strong>{{ detailMember.projectsCount }}<small>项</small></strong>
+            </article>
+            <article>
+              <i>●</i>
+              <span>主持项目</span>
+              <strong>{{ Math.min(3, detailMember.repProjects.length || 1) }}<small>项</small></strong>
+            </article>
+            <article>
+              <i>☄</i>
+              <span>在研项目</span>
+              <strong>{{ Math.max(1, detailMember.projectsCount - 2) }}<small>项</small></strong>
+            </article>
+            <article>
+              <i>☑</i>
+              <span>已结题</span>
+              <strong>{{ Math.min(5, detailMember.projectsCount) }}<small>项</small></strong>
+            </article>
+          </div>
+          <div class="tab-section-head">
+            <h4>项目列表</h4>
+            <div class="mini-filters"><span class="active">全部</span><span>进行中</span><span>已结题</span></div>
+          </div>
+          <div class="project-list-panel">
+            <article v-for="(project, index) in projectTabItems(detailMember)" :key="project.title" class="project-wide-row">
+              <div class="row-icon">▥</div>
+              <div class="row-main">
+                <div class="row-title">
+                  <strong>{{ project.title }}</strong>
+                  <span class="blue-tag">{{ project.role || '参与' }}</span>
+                  <span class="orange-tag" v-if="index % 2 === 0">横向建设</span>
+                </div>
+                <p>{{ project.desc }}</p>
+                <i><em :style="{ width: projectProgress(index) + '%' }"></em></i>
+              </div>
+              <time>{{ project.duration || project.date || '2024-2025' }}</time>
+              <span :class="project.stateClass || (index % 2 ? 'blue-tag' : 'green-tag')">{{ index % 2 ? '已结题' : '进行中' }}</span>
+            </article>
+          </div>
+        </template>
+
+        <template v-else-if="activeDetailTab === 'awards'">
+          <div class="tab-stat-grid award-stat-grid">
+            <article class="gold">
+              <i>🏆</i>
+              <span>获奖总数</span>
+              <strong>{{ awardTabItems(detailMember).length }}<small>项</small></strong>
+            </article>
+            <article><i>🏅</i><span>国家级</span><strong>{{ awardLevelCount(detailMember, '国') }}<small>项</small></strong></article>
+            <article><i>🎖</i><span>省部级</span><strong>{{ awardLevelCount(detailMember, '省') }}<small>项</small></strong></article>
+            <article><i>🏛</i><span>校级/行业</span><strong>{{ Math.max(0, awardTabItems(detailMember).length - awardLevelCount(detailMember, '国') - awardLevelCount(detailMember, '省')) }}<small>项</small></strong></article>
+          </div>
+          <div class="tab-section-head">
+            <h4>获奖列表</h4>
+            <div class="mini-filters"><span>全部级别</span><span>全部类型</span></div>
+          </div>
+          <div class="award-card-grid">
+            <article v-for="(award, index) in awardTabItems(detailMember)" :key="award.name" class="award-show-card">
+              <div class="award-trophy">{{ awardIcon(index) }}</div>
+              <div>
+                <strong>{{ award.name }}</strong>
+                <p><span class="orange-tag">{{ award.level }}</span><span class="blue-tag">{{ index % 2 ? '团队贡献' : '主要成员' }}</span></p>
+                <small>{{ award.host || detailMember.primaryDirection }} <b>{{ award.date || '附件归档' }}</b></small>
+              </div>
+            </article>
+          </div>
+          <div class="award-bottom-grid">
+            <section class="chart-mini-card">
+              <h4>获奖分布</h4>
+              <div class="mini-donut">
+                <svg viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="43" class="donut-bg" />
+                  <circle cx="60" cy="60" r="43" class="donut-a" stroke-dasharray="92 270" />
+                  <circle cx="60" cy="60" r="43" class="donut-b" stroke-dasharray="92 270" stroke-dashoffset="-92" />
+                  <circle cx="60" cy="60" r="43" class="donut-c" stroke-dasharray="86 270" stroke-dashoffset="-184" />
+                </svg>
+                <strong>{{ awardTabItems(detailMember).length }}<small>总计</small></strong>
+              </div>
+            </section>
+            <section class="chart-mini-card">
+              <h4>年度获奖轨迹</h4>
+              <svg class="trend-svg" viewBox="0 0 360 120">
+                <polyline points="10,90 90,66 170,36 250,36 340,70" />
+                <g v-for="(item, index) in awardTrendPoints" :key="item.year">
+                  <circle :cx="10 + index * 80" :cy="item.y" r="4" />
+                  <text :x="10 + index * 80" :y="item.y - 10">{{ item.count }}项</text>
+                  <text :x="10 + index * 80" y="112">{{ item.year }}</text>
+                </g>
+              </svg>
+            </section>
+          </div>
+        </template>
+
+        <template v-else-if="activeDetailTab === 'papers'">
+          <div class="tab-stat-grid paper-stat-grid">
+            <article><i>▤</i><span>论文总数</span><strong>{{ paperTabItems(detailMember).length }}<small>篇</small></strong></article>
+            <article><i>▤</i><span>SCI/EI</span><strong>{{ Math.min(5, paperTabItems(detailMember).length) }}<small>篇</small></strong></article>
+            <article><i>▤</i><span>中文核心</span><strong>{{ Math.min(4, paperTabItems(detailMember).length) }}<small>篇</small></strong></article>
+            <article><i>▤</i><span>会议论文</span><strong>{{ Math.max(1, paperTabItems(detailMember).length - 2) }}<small>篇</small></strong></article>
+          </div>
+          <div class="tab-section-head">
+            <h4>论文列表</h4>
+            <div class="mini-filters"><span>全部</span><span>时间降序</span><span>导出</span></div>
+          </div>
+          <div class="paper-table-list">
+            <article v-for="(paper, index) in paperTabItems(detailMember)" :key="paper.title">
+              <b>{{ index + 1 }}</b>
+              <div>
+                <strong>{{ paper.title }}</strong>
+                <p>{{ paper.source }} <time>{{ paper.date }}</time></p>
+              </div>
+              <div>
+                <span>发表期刊：{{ paper.journal }}</span>
+                <span>本人贡献：{{ paper.role }}</span>
+              </div>
+              <em :class="index % 3 === 1 ? 'blue-tag' : 'green-tag'">{{ paper.level }}</em>
+            </article>
+          </div>
+          <div class="paper-bottom-grid">
+            <section class="chart-mini-card">
+              <h4>年度发文走势（篇）</h4>
+              <svg class="trend-svg" viewBox="0 0 260 120">
+                <polyline points="6,94 55,74 104,56 153,38 202,28 250,42" />
+                <g v-for="(item, index) in paperTrendPoints" :key="item.year">
+                  <circle :cx="6 + index * 49" :cy="item.y" r="3.5" />
+                  <text :x="6 + index * 49" y="112">{{ item.year }}</text>
+                </g>
+              </svg>
+            </section>
+            <section class="chart-mini-card direction-bars-detail">
+              <h4>研究方向分布</h4>
+              <article v-for="tag in detailMember.tags" :key="tag">
+                <span>{{ tag }}</span><i><em :style="{ width: `${50 + tag.length * 6}%` }"></em></i><b>{{ 18 + tag.length * 4 }}%</b>
+              </article>
+            </section>
+            <section class="chart-mini-card keyword-panel">
+              <h4>热门关键词</h4>
+              <div><span v-for="skill in detailMember.skills" :key="skill">{{ skill }}</span></div>
+            </section>
+          </div>
+        </template>
+
+        <template v-else-if="activeDetailTab === 'patents'">
+          <div class="tab-stat-grid patent-stat-grid">
+            <article><i>IP</i><span>产权总数</span><strong>{{ patentTabItems(detailMember).length }}<small>项</small></strong></article>
+            <article><i>∿</i><span>发明专利</span><strong>{{ patentTypeCount(detailMember, '专利') }}<small>项</small></strong></article>
+            <article><i>&lt;/&gt;</i><span>软件著作权</span><strong>{{ patentTypeCount(detailMember, '软') }}<small>项</small></strong></article>
+            <article><i>↔</i><span>成果转化/其他</span><strong>{{ Math.max(1, patentTabItems(detailMember).length - patentTypeCount(detailMember, '专利') - patentTypeCount(detailMember, '软')) }}<small>项</small></strong></article>
+          </div>
+          <div class="tab-section-head">
+            <h4>产权列表</h4>
+            <div class="mini-filters"><span class="active">全部</span><span>已授权</span><span>受理中</span><span>已登记</span></div>
+          </div>
+          <div class="patent-card-grid">
+            <article v-for="(patent, index) in patentTabItems(detailMember)" :key="patent.name">
+              <div class="patent-icon">{{ patent.type?.includes('软') ? '&lt;/&gt;' : 'IP' }}</div>
+              <div>
+                <strong>{{ patent.name }}</strong>
+                <p>申请号：{{ patent.code || `CN202${index}0110${index}456.7` }} <span :class="patent.statusClass || 'blue-tag'">{{ patent.status || '已授权' }}</span></p>
+                <small>简介：{{ patent.type }} · {{ patent.role || detailMember.name }}参与完成。</small>
+              </div>
+              <b>›</b>
+            </article>
+          </div>
+          <section class="ip-timeline chart-mini-card">
+            <h4>授权进度 / 产权时间轴</h4>
+            <div class="ip-line">
+              <article v-for="(patent, index) in patentTimelineItems(detailMember)" :key="patent.name">
+                <i></i>
+                <strong>{{ 2021 + index }}</strong>
+                <span>{{ patent.type }}</span>
+                <small>{{ patent.date || `202${index + 1}-05-18` }}</small>
+              </article>
+            </div>
+          </section>
+        </template>
+
+        <template v-else>
+          <div class="tab-stat-grid growth-stat-grid">
+            <article><i>◈</i><span>成长阶段</span><strong>5<small>个</small></strong><p>当前处于第5阶段</p></article>
+            <article><i>❖</i><span>关键里程碑</span><strong>12<small>个</small></strong><p>重要节点与突破</p></article>
+            <article><i>▰</i><span>项目突破</span><strong>{{ detailMember.projectsCount + 2 }}<small>项</small></strong><p>牵头/参与项目突破</p></article>
+            <article><i>☷</i><span>成果沉淀</span><strong>{{ detailMember.awardsCount + detailMember.patentsCount }}+<small></small></strong><p>论文/专利/获奖等成果</p></article>
+          </div>
+          <section class="growth-roadmap">
+            <h4>成长轨迹详情</h4>
+            <div class="road-years"><span v-for="item in growthStages" :key="item.year">{{ item.year }}</span></div>
+            <div class="road-card-row">
+              <article v-for="stage in growthStages" :key="stage.title">
+                <i>{{ stage.icon }}</i>
+                <strong>{{ stage.title }}</strong>
+                <p>{{ stage.desc }}</p>
+                <ul>
+                  <li v-for="point in stage.points" :key="point">{{ point }}</li>
+                </ul>
+                <span>{{ stage.badge }}</span>
+              </article>
+            </div>
+          </section>
+          <div class="growth-bottom-grid">
+            <section class="chart-mini-card growth-lines">
+              <h4>阶段能力成长</h4>
+              <svg viewBox="0 0 420 130">
+                <polyline class="line-a" points="12,104 110,76 208,56 306,40 405,18" />
+                <polyline class="line-b" points="12,112 110,92 208,72 306,58 405,44" />
+                <polyline class="line-c" points="12,118 110,108 208,98 306,86 405,66" />
+                <g v-for="(year, index) in ['2020','2021','2022','2023','2024']" :key="year">
+                  <text :x="12 + index * 98" y="124">{{ year }}</text>
+                </g>
+              </svg>
+            </section>
+            <section class="chart-mini-card keyword-panel growth-keywords">
+              <h4>成长关键词</h4>
+              <div><span v-for="word in growthKeywords(detailMember)" :key="word">{{ word }}</span></div>
+            </section>
+          </div>
+        </template>
+      </div>
+    </main>
+
+    <aside class="detail-right">
+      <section class="right-panel glass-panel">
+        <h4>代表项目（{{ detailMember.repProjects.length }}项）</h4>
+        <article v-for="project in detailMember.repProjects" :key="project.title" class="mini-project">
+          <strong>{{ project.title }}</strong>
+          <span>{{ project.role }}</span>
+        </article>
+      </section>
+      <section class="right-panel glass-panel">
+        <h4>成长轨迹</h4>
+        <article v-for="item in detailMember.milestones" :key="item.title" class="timeline-mini">
+          <i :class="item.class"></i>
+          <time>{{ item.date }}</time>
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.desc }}</p>
+        </article>
+      </section>
+    </aside>
+
+    <section class="detail-bottom glass-panel">
+      <h4>关联成果（{{ detailMember.assocAchievements.length }}项）</h4>
+      <div class="bottom-achievements">
+        <article v-for="item in detailMember.assocAchievements" :key="item.title">
+          <span :class="item.typeClass">{{ item.type }}</span>
+          <strong>{{ item.title }}</strong>
+          <small>{{ item.date }} · {{ item.detail }}</small>
+        </article>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { fetchLabApi } from './labDataApi';
+import {
+  realLabMembers,
+  realLabMemberOverview,
+  realLabMemberDirectionStats
+} from './labMemberData';
 
-const selectedMember = ref(null);
-const searchQuery = ref('');
+const members = ref(realLabMembers);
+const memberOverview = ref(realLabMemberOverview);
+const directionStats = ref(realLabMemberDirectionStats);
 const selectedRole = ref('all');
 const selectedDirection = ref('all');
-const activeSubTab = ref('general');
-
-const subTabs = [
-  { id: 'general', label: '个人总览' },
-  { id: 'projects', label: '参与项目' },
-  { id: 'awards', label: '获奖成果' },
-  { id: 'papers', label: '论文成果' },
-  { id: 'patents', label: '产权成果' },
-  { id: 'trajectory', label: '成长轨迹' }
-];
+const searchQuery = ref('');
+const detailMember = ref(null);
+const activeMember = ref(realLabMembers[0]);
+const activeDetailTab = ref('overview');
 
 const roleFilters = [
-  { label: '全部身份', value: 'all' },
-  { label: '导师团队', value: 'advisor' },
+  { label: '成员总数', value: 'all' },
+  { label: '教师/导师', value: 'advisor' },
   { label: '研究生', value: 'graduate' },
   { label: '本科生', value: 'undergrad' }
 ];
 
-const directionFilters = [
-  { label: '全部方向', value: 'all' },
-  { label: 'AI教育', value: 'AI教育' },
-  { label: '智能硬件', value: '智能硬件' },
-  { label: '计算机视觉', value: '计算机视觉' },
-  { label: '数据治理', value: '数据治理' },
-  { label: 'AIGC应用', value: 'AIGC应用' }
+const detailTabs = [
+  { id: 'overview', label: '个人总览' },
+  { id: 'projects', label: '参与项目' },
+  { id: 'awards', label: '获奖成果' },
+  { id: 'papers', label: '论文成果' },
+  { id: 'patents', label: '产权成果' },
+  { id: 'timeline', label: '成长时间' }
 ];
 
-const directionStats = [
-  { name: '计算机视觉', count: 9, color: 'var(--status-online)' },
-  { name: 'AI教育', count: 7, color: 'var(--status-info)' },
-  { name: 'AIGC应用', count: 6, color: 'var(--status-purple)' },
-  { name: '智能硬件', count: 6, color: 'var(--status-busy)' },
-  { name: '数据治理', count: 6, color: 'var(--status-alert)' }
-];
+onMounted(async () => {
+  const data = await fetchLabApi('members', {
+    members: realLabMembers,
+    overview: realLabMemberOverview,
+    directions: realLabMemberDirectionStats
+  });
+  members.value = data.members || realLabMembers;
+  memberOverview.value = data.overview || realLabMemberOverview;
+  directionStats.value = data.directions || realLabMemberDirectionStats;
+  activeMember.value = members.value[0] || null;
+});
 
-const buildMemberProfile = (profile) => {
-  const directionName = profile.primaryDirection.split(' / ')[0];
-  const projectTitle = profile.projectTitle || `${directionName}实验项目`;
-  const patentTitle = profile.patentTitle || `${profile.name}参与的实验室智能系统软件`;
-  const paperTitle = profile.paperTitle || `${directionName}方向实验室应用研究`;
+const filteredMembers = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
+  return [...members.value]
+    .filter((member) => selectedRole.value === 'all' || (selectedRole.value === 'students' ? member.roleValue !== 'advisor' : member.roleValue === selectedRole.value))
+    .filter((member) => selectedDirection.value === 'all' || member.primaryDirection.includes(selectedDirection.value))
+    .filter((member) => {
+      if (!query) return true;
+      return `${member.name}${member.major}${member.primaryDirection}${member.skills.join('')}${member.assocAchievements.map((item) => item.title).join('')}`.toLowerCase().includes(query);
+    })
+    .sort((a, b) => b.awardsCount - a.awardsCount);
+});
 
-  return {
-    ...profile,
-    sciPapersCount: profile.sciPapersCount ?? Math.min(profile.papersCount, 1),
-    citationsCount: profile.citationsCount ?? profile.papersCount * 6,
-    authPatentsCount: profile.authPatentsCount ?? Math.max(0, profile.patentsCount - 1),
-    pendingPatentsCount: profile.pendingPatentsCount ?? Math.min(profile.patentsCount, 1),
-    nationalAwardsCount: profile.nationalAwardsCount ?? Math.min(profile.awardsCount, 1),
-    assocAchievements: profile.assocAchievements ?? [
-      { type: '项目成果', typeClass: 'blue-tag', title: projectTitle, date: '2026-04', detail: profile.projectRole || '核心成员' },
-      { type: '竞赛奖项', typeClass: 'orange-tag', title: profile.awardName || '实验室创新实践优秀成员', date: '2025-12', detail: '校级/省级奖项' }
-    ],
-    repProjects: profile.repProjects ?? [
-      { title: projectTitle, role: profile.projectRole || '核心成员', progress: profile.projectProgress ?? 76 }
-    ],
-    milestones: profile.milestones ?? [
-      { date: '2026-04', class: 'green', title: '阶段成果汇报', desc: `完成${projectTitle}阶段汇报，推动成果进入展示准备。` },
-      { date: '2025-09', class: 'blue', title: '加入专项组', desc: `进入${directionName}方向专项组，承担关键模块研发。` },
-      { date: profile.joinTime, class: 'orange', title: '加入实验室', desc: '通过实验室选拔，开始参与空间数字化与科研训练。' }
-    ],
-    detailedProjects: profile.detailedProjects ?? [
-      {
-        title: projectTitle,
-        state: '推进中',
-        stateClass: 'orange-tag',
-        role: profile.projectRole || '核心成员',
-        duration: '2025-09 至今',
-        desc: profile.projectDesc || `围绕${profile.primaryDirection}开展原型设计、数据采集、模型验证与应用展示，服务实验室重点建设任务。`,
-        achievements: profile.projectAchievements || ['阶段汇报1项']
-      }
-    ],
-    detailedAwards: profile.detailedAwards ?? [
-      { name: profile.awardName || '实验室创新实践优秀成员', level: '校级/省级', host: '智能实验室', role: profile.projectRole || '核心成员', mentor: '李明阳', date: '2025-12' }
-    ],
-    awardTrend: profile.awardTrend ?? [
-      { year: '2024', count: Math.max(0, profile.awardsCount - 1) },
-      { year: '2025', count: Math.min(profile.awardsCount, 2) }
-    ],
-    detailedPapers: profile.detailedPapers ?? (profile.papersCount > 0 ? [
-      { title: paperTitle, authors: `${profile.name}, 李明阳`, role: '主要作者', journal: '智能实验室技术报告', date: '2026-03', indexed: '内部/会议', citations: profile.citationsCount ?? profile.papersCount * 6, if: '-' }
-    ] : []),
-    detailedPatents: profile.detailedPatents ?? (profile.patentsCount > 0 ? [
-      { name: patentTitle, type: '软件著作权', code: `2026SR${String(10000 + profile.id * 137)}`, status: '申报中', statusClass: 'blue-tag', date: '2026-04-18', role: '参与人' }
-    ] : []),
-    patentTimeline: profile.patentTimeline ?? [
-      { date: '2026-04', class: 'blue', title: '成果材料整理', desc: `${patentTitle}进入材料整理与申报准备阶段。` }
-    ],
-    detailedTrajectory: profile.detailedTrajectory ?? [
-      {
-        year: 2026,
-        events: [
-          { date: '2026-04', title: '完成阶段验收', desc: `负责${projectTitle}关键任务，通过组内阶段验收。`, skills: profile.skills.slice(0, 2) }
-        ]
-      },
-      {
-        year: 2025,
-        events: [
-          { date: '2025-09', title: '加入实验室专项训练', desc: `系统学习${directionName}方向工具链。`, skills: profile.skills.slice(2, 4) }
-        ]
-      }
-    ]
-  };
+const roleCount = (role) => {
+  if (role === 'all') return memberOverview.value.total;
+  if (role === 'students') return members.value.filter((member) => member.roleValue !== 'advisor').length;
+  return members.value.filter((member) => member.roleValue === role).length;
 };
 
-// Mock database for members
-const members = [
-  {
-    id: 1,
-    name: '李明阳',
-    avatar: '👨‍🏫',
-    role: '导师',
-    roleValue: 'advisor',
-    roleClass: 'orange',
-    grade: '指导教师',
-    major: '物联网与人工智能实验室',
-    joinTime: '2023-09',
-    primaryDirection: '计算机视觉 / 深度学习',
-    tags: ['科研导师', '项目主管', '多模态'],
-    skills: ['PyTorch', 'TensorFlow', 'OpenCV', '学术写作', '项目管理', '深度学习模型压缩'],
-    bio: '副教授，智能实验室学术总负责人。主要研究方向为计算机视觉、边缘计算和智能装备开发。指导学生多次获得全国一等奖、二等奖，在国内外高水平期刊发表学术论文20余篇。',
-    projectsCount: 8,
-    awardsCount: 12,
-    papersCount: 15,
-    sciPapersCount: 10,
-    citationsCount: 240,
-    patentsCount: 6,
-    authPatentsCount: 4,
-    pendingPatentsCount: 2,
-    nationalAwardsCount: 6,
-    
-    // Radar values: [AI, Coding, Management, Academic, Hardware]
-    radar: [95, 85, 90, 95, 80],
-    
-    aiSummary: '李明阳导师作为数字中枢的科研基石，具备极高的学术影响力和项目管理造诣。本月他牵头多模态感知算法的迭代，并有力推进了警务实战平台的落地。',
-    aiKeywords: ['学术领军', '技术权威', '卓越指导', '战略眼光'],
-    
-    assocAchievements: [
-      { type: '论文成果', typeClass: 'purple-tag', title: '基于知识图谱的警务时空分析模型', date: '2026-05', detail: '已录用于 IEEE T-ITS' },
-      { type: '产权成果', typeClass: 'orange-tag', title: '一种智能边缘分析盒子及姿态识别方法', date: '2026-04', detail: '发明专利公布阶段' },
-      { type: '活动成果', typeClass: 'blue-tag', title: '组织全国智能技术研讨沙龙', date: '2026-03', detail: '圆满成功，30家高校参与' }
-    ],
-    repProjects: [
-      { title: '多模态警务感知融合大平台', role: '首席架构师 & 负责人', progress: 92 },
-      { title: '智能无人机库周边警戒系统', role: '联合指导老师', progress: 85 }
-    ],
-    milestones: [
-      { date: '2026-05', class: 'green', title: '论文被顶刊录用', desc: '指导学生完成时空分析模型，录用于一区顶刊。' },
-      { date: '2025-10', class: 'blue', title: '重大项目结题', desc: '主导的国家级物联网智慧农业子系统成功结项验收。' },
-      { date: '2024-04', class: 'orange', title: '专利授权', desc: '关于边缘多路摄像头编解码调度的发明专利顺利授权。' }
-    ],
-    detailedProjects: [
-      { title: '多模态警务感知融合大平台', state: '已上线', stateClass: 'green-tag', role: '首席架构师 & 负责人', duration: '2024-09 至 2026-05', desc: '融合实验室计算机视觉与大语言模型技术，提供面向一线公安实战的嫌疑目标识别、轨迹复原及智能生成式案情摘要分析，并在多个试点市局落地运行。', achievements: ['软件著作权 #2025SR00431', 'SCI论文1篇'] },
-      { title: '智能无人机库周边警戒系统', state: '测试中', stateClass: 'orange-tag', role: '联合指导老师', duration: '2025-03 至今', desc: '研发面向野外小型无人机固定充电库房的智能雷达+视觉警戒系统，解决无网络无市电环境下的人员越界侵入告警难题。' }
-    ],
-    detailedAwards: [
-      { name: '中国机器人及人工智能大赛一等奖', level: '国家级', host: '中国人工智能学会', role: '第一指导教师', mentor: '李明阳', date: '2025-11' },
-      { name: '挑战杯全国大学生课外学术科技作品二等奖', level: '国家级', host: '共青团中央', role: '指导教师', mentor: '李明阳', date: '2025-06' }
-    ],
-    awardTrend: [
-      { year: '2024', count: 2 },
-      { year: '2025', count: 3 }
-    ],
-    detailedPapers: [
-      { title: 'Multimodal Spatial-Temporal Graph Networks for Intelligent Target Tracking in Complex Urban Environments', authors: '李明阳 (通讯作者), 张子轩', role: '通讯作者', journal: 'IEEE Transactions on Intelligent Transportation Systems', date: '2026-05', indexed: 'SCI 一区', citations: 12, if: '8.5' },
-      { title: 'Knowledge Graph Reasoning for Crime Scene Reconstruction: A Deep Learning Approach', authors: '李明阳, 陈一诺', role: '第一作者', journal: 'Pattern Recognition Letters', date: '2025-08', indexed: 'SCI 二区', citations: 24, if: '4.8' }
-    ],
-    detailedPatents: [
-      { name: '一种智能边缘分析盒子及姿态识别方法', type: '发明专利', code: 'CN20251039281.3', status: '实质审查', statusClass: 'orange-tag', date: '2025-05-12', role: '第一发明人' },
-      { name: '警务多路视频流汇聚及姿态分析算法软件', type: '软件著作权', code: '2025SR120938', status: '已登记', statusClass: 'green-tag', date: '2025-08-20', role: '著作权人' }
-    ],
-    patentTimeline: [
-      { date: '2025-10', class: 'green', title: '发明专利实审下发', desc: '边缘分析盒子专利通过初审，进入实审阶段。' },
-      { date: '2025-08', class: 'green', title: '软件著作权获证', desc: '视频流汇聚分析软件正式获证。' }
-    ],
-    detailedTrajectory: [
-      {
-        year: 2025,
-        events: [
-          { date: '2025-11', title: '机器人大赛指导摘金', desc: '指导研究生张子轩战队获得中国机器人及人工智能大赛国家一等奖。', skills: ['学术表达', '答辩指导'] },
-          { date: '2025-05', title: '申报重大研发课题', desc: '成功入选省部级智慧公安融合重点研发计划子项目。', skills: ['课题申报', '预算管理'] }
-        ]
-      },
-      {
-        year: 2024,
-        events: [
-          { date: '2024-09', title: '多模态感知平台立项', desc: '带领实验室12名骨干成员组建项目群，正式开启多模态警务平台架构设计。', skills: ['大系统架构设计'] }
-        ]
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: '张子轩',
-    avatar: '👨‍🎓',
-    role: '研究生',
-    roleValue: 'graduate',
-    roleClass: 'blue',
-    grade: '研二',
-    major: '计算机技术专业',
-    joinTime: '2024-09',
-    primaryDirection: 'AIGC应用 / 多模态学习',
-    tags: ['算法骨干', '项目组长', '模型训练'],
-    skills: ['Python', 'PyTorch', 'Transformers', 'Stable Diffusion', 'Vue.js', 'FastAPI'],
-    bio: '研二学生，实验室算法研发组组长。研究方向为大语言模型微调、生成式视觉模型开发及多模态数据对齐。主攻AIGC方向，拥有出色的工程代码落地与算法实践能力。',
-    projectsCount: 3,
-    awardsCount: 4,
-    papersCount: 2,
-    sciPapersCount: 1,
-    citationsCount: 14,
-    patentsCount: 2,
-    authPatentsCount: 1,
-    pendingPatentsCount: 1,
-    nationalAwardsCount: 2,
-    
-    // Radar values: [AI, Coding, Management, Academic, Hardware]
-    radar: [90, 88, 75, 80, 50],
-    
-    aiSummary: '张子轩是典型的“算法+工程”双能型骨干。在大模型微调、时空感知网络设计上有深厚积淀。作为学生组长，展现了良好的项目统筹力，是小喵助手的核心算法开发者。',
-    aiKeywords: ['工程力强', '大模型专家', '核心组长', '多面手'],
-    
-    assocAchievements: [
-      { type: '竞赛奖项', typeClass: 'orange-tag', title: '中国机器人及人工智能大赛一等奖', date: '2025-11', detail: '国家级一等奖' },
-      { type: '论文成果', typeClass: 'purple-tag', title: '基于大模型的智慧公安意图识别系统', date: '2025-08', detail: '发表于智能系统前沿会议' }
-    ],
-    repProjects: [
-      { title: '智小喵实验室AI大助手平台', role: '算法负责人 & 全栈开发', progress: 88 },
-      { title: '智能设备状态物联网监控大屏', role: '前端架构设计', progress: 95 }
-    ],
-    milestones: [
-      { date: '2025-11', class: 'green', title: '全国大赛夺冠', desc: '担任队长带领战队获得机器人人工智能大赛国家一等奖。' },
-      { date: '2025-03', class: 'blue', title: '小喵助手上线内测', desc: '成功在实验室内部服务器部署智小喵AI助手，支持设备联动。' },
-      { date: '2024-09', class: 'orange', title: '加入智能实验室', desc: '以专业第一的推免成绩进入智能实验室攻读硕士学位。' }
-    ],
-    detailedProjects: [
-      { title: '智小喵实验室AI大助手平台', state: '开发中', stateClass: 'orange-tag', role: '算法负责人 & 全栈开发', duration: '2025-03 至今', desc: '为智能实验室打造的集大模型问答、设备控制、成果智能检索于一体的AI系统，通过RAG检索增强生成技术实时回答实验室管理及成果相关的自然语言提问。', achievements: ['软件著作权 #2025SR10822'] },
-      { title: '智能设备状态物联网监控大屏', state: '已上线', stateClass: 'green-tag', role: '前端架构设计', duration: '2024-10 至 2025-02', desc: '基于Vue 3 + WebSockets实现的高清3D大屏看板，展示实验室310空间温湿度、设备负载、摄像头直播流及近期动态。' }
-    ],
-    detailedAwards: [
-      { name: '中国机器人及人工智能大赛一等奖', level: '国家级', host: '中国人工智能学会', role: '队长', mentor: '李明阳', date: '2025-11' },
-      { name: '挑战杯全国大学生课外学术科技作品二等奖', level: '国家级', host: '共青团中央', role: '核心开发者', mentor: '李明阳', date: '2025-06' }
-    ],
-    awardTrend: [
-      { year: '2024', count: 1 },
-      { year: '2025', count: 3 }
-    ],
-    detailedPapers: [
-      { title: 'Spatial-Temporal Multi-Agent Networks for Real-time Anomaly Detection', authors: '张子轩, 李明阳', role: '第一作者', journal: 'Journal of Intelligent Systems', date: '2025-12', indexed: 'EI', citations: 4, if: '2.5' },
-      { title: 'A Natural Language Interface for IoT Enabled Smart Labs: The ZhiXiaoMiao Agent', authors: '张子轩, 李明阳', role: '第一作者', journal: 'IEEE L-IoT', date: '2025-07', indexed: 'SCI 三区', citations: 10, if: '3.6' }
-    ],
-    detailedPatents: [
-      { name: '智小喵大语言模型问答及设备控制系统', type: '软件著作权', code: '2025SR10822', status: '已登记', statusClass: 'green-tag', date: '2025-06-12', role: '著作权人' },
-      { name: '一种利用知识图谱进行空间设备智能检索的系统及方法', type: '发明专利', code: 'CN2025108422.3', status: '受理', statusClass: 'blue-tag', date: '2025-09-15', role: '第二发明人' }
-    ],
-    patentTimeline: [
-      { date: '2025-09', class: 'blue', title: '发明专利申请受理', desc: '智能检索方法专利成功被国家知识产权局受理。' },
-      { date: '2025-06', class: 'green', title: '软件著作权获证', desc: '智小喵系统软件著作权正式获证。' }
-    ],
-    detailedTrajectory: [
-      {
-        year: 2025,
-        events: [
-          { date: '2025-11', title: '带队夺金', desc: '带队斩获中国机器人及人工智能大赛全国一等奖。', skills: ['算法调优', 'PPT答辩'] },
-          { date: '2025-03', title: '小喵助手1.0系统发布', desc: '完成实验室本地大模型微调部署，面向室员上线小喵网页客户端。', skills: ['LLM微调', 'FastAPI部署'] }
-        ]
-      },
-      {
-        year: 2024,
-        events: [
-          { date: '2024-09', title: '推免加入实验室', desc: '进入实验室，负责设备物联网看板研发工作。', skills: ['Vue3', 'WebSocket'] }
-        ]
-      }
-    ]
-  },
-  {
-    id: 3,
-    name: '刘昊',
-    avatar: '👨',
-    role: '本科生',
-    roleValue: 'undergrad',
-    roleClass: 'green',
-    grade: '大四',
-    major: '物联网工程专业',
-    joinTime: '2024-03',
-    primaryDirection: '智能硬件 / 物联网感知',
-    tags: ['硬件极客', '嵌入式', '3D打印'],
-    skills: ['C/C++', 'STM32', 'FreeRTOS', 'ESP32', 'KiCad', 'SolidWorks', '3D Slicing'],
-    bio: '大四保研生，实验室硬件制造极客。擅长PCB印制板设计、STM32嵌入式软件架构、传感器融合技术，对实验室硬件设备运维及二次开发有极强热情。',
-    projectsCount: 4,
-    awardsCount: 3,
-    papersCount: 0,
-    citationsCount: 0,
-    patentsCount: 3,
-    authPatentsCount: 2,
-    pendingPatentsCount: 1,
-    nationalAwardsCount: 1,
-    
-    // Radar values: [AI, Coding, Management, Academic, Hardware]
-    radar: [60, 80, 70, 50, 95],
-    
-    aiSummary: '刘昊是实验室的“钢铁侠”，在嵌入式开发与硬件电路设计上有极高天赋。独立设计了实验室无人机备用电池管理座舱与机械臂防尘罩，实践动手能力拔群。',
-    aiKeywords: ['智能硬件', '极客精神', '动手能力强', '机械结构'],
-    
-    assocAchievements: [
-      { type: '产权成果', typeClass: 'orange-tag', title: '一种实验室多路环境监测网关及PCB', date: '2025-12', detail: '已授权实用新型' },
-      { type: '竞赛奖项', typeClass: 'orange-tag', title: '全国智能制造创新大赛二等奖', date: '2025-07', detail: '行业大奖' }
-    ],
-    repProjects: [
-      { title: '基于ESP32的超轻量无线物联网传感器节点', role: '硬件负责人', progress: 100 },
-      { title: '机器人抓取机械臂末端感知套件', role: '结构设计与嵌入式编写', progress: 85 }
-    ],
-    milestones: [
-      { date: '2025-12', class: 'green', title: '实用新型专利授权', desc: '独立申请的“物联网多传感器融合监测网关”获得国家知识产权局授权。' },
-      { date: '2025-07', class: 'blue', title: '智能制造大奖', desc: '荣获全国智能制造技术应用创新大赛二等奖。' },
-      { date: '2024-03', class: 'orange', title: '破格允许加入实验室', desc: '因大二绩点突出并在硬件创新活动中展露头角，通过考核破格进入310实验室。' }
-    ],
-    detailedProjects: [
-      { title: '基于ESP32的超轻量无线物联网传感器节点', state: '已完成', stateClass: 'green-tag', role: '硬件负责人', duration: '2024-05 至 2024-11', desc: '自主开发了一套支持WiFi-Mesh和LoRa组网的超低功耗电池环境采集传感器节点，现广泛应用于310实验室各个角落采集环境数据。', achievements: ['实用新型专利1项'] },
-      { title: '机器人抓取机械臂末端感知套件', state: '开发中', stateClass: 'orange-tag', role: '结构设计与嵌入式编写', duration: '2025-03 至今', desc: '为实验室六自由度协作机械臂定制的末端力矩+光电融合感知爪手，支持在狭长空间安全抓取高敏感度耗材瓶。' }
-    ],
-    detailedAwards: [
-      { name: '全国智能制造创新大赛二等奖', level: '行业级/国家级', host: '工业和信息化部', role: '硬件总负责人', mentor: '李明阳', date: '2025-07' },
-      { name: '蓝桥杯嵌入式单片机设计一等奖', level: '省部级', host: '工信部人才交流中心', role: '个人参赛', mentor: '无', date: '2024-05' }
-    ],
-    awardTrend: [
-      { year: '2024', count: 1 },
-      { year: '2025', count: 2 }
-    ],
-    detailedPapers: [],
-    detailedPatents: [
-      { name: '一种物联网多传感器融合监测网关', type: '实用新型', code: 'ZL20242189382.9', status: '已授权', statusClass: 'green-tag', date: '2024-12-05', role: '第一发明人' },
-      { name: '机械臂柔性压力感知指尖控制电路系统', type: '实用新型', code: 'ZL2025204893.3', status: '已登记', statusClass: 'green-tag', date: '2025-04-18', role: '第一发明人' }
-    ],
-    patentTimeline: [
-      { date: '2025-04', class: 'green', title: '实用新型获授', desc: '机械臂压力指尖控制系统授权成功。' },
-      { date: '2024-12', class: 'green', title: '环境网关获授', desc: '首个物联网环境监测网关专利获授。' }
-    ],
-    detailedTrajectory: [
-      {
-        year: 2025,
-        events: [
-          { date: '2025-07', title: '获得创新大赛大奖', desc: '带队赴南京现场参加全国智能制造创新大赛，完成硬件调试，获得二等奖。', skills: ['PCB布局', '嵌入式抗干扰'] }
-        ]
-      },
-      {
-        year: 2024,
-        events: [
-          { date: '2024-03', title: '加入310实验室', desc: '经过导师面试，进入硬件组从事嵌入式电路调试。', skills: ['C语言', '硬件焊接'] }
-        ]
-      }
-    ]
-  },
-  buildMemberProfile({
-    id: 4,
-    name: '陈一诺',
-    avatar: '👩‍🎓',
-    role: '研究生',
-    roleValue: 'graduate',
-    roleClass: 'blue',
-    grade: '研一',
-    major: '软件工程专业',
-    joinTime: '2025-09',
-    primaryDirection: '数据治理 / 知识图谱',
-    tags: ['数据中台', '知识图谱', 'RAG检索'],
-    skills: ['Python', 'Neo4j', 'SQL', 'FastAPI', 'LangChain', '数据标注'],
-    bio: '研一学生，负责实验室成果知识库、设备台账数据清洗与RAG检索链路建设，擅长把复杂业务数据整理成可检索、可分析、可展示的结构化资产。',
-    projectsCount: 3,
-    awardsCount: 2,
-    papersCount: 1,
-    patentsCount: 1,
-    radar: [82, 84, 72, 78, 55],
-    aiSummary: '陈一诺在数据治理和知识图谱方向表现稳定，能够将实验室分散的成员、项目、成果资料沉淀为可复用数据资产，是小喵问答知识底座的重要维护者。',
-    aiKeywords: ['数据治理', '知识图谱', '检索增强', '资料沉淀'],
-    projectTitle: '实验室成果知识图谱与RAG检索平台',
-    projectRole: '数据建模负责人',
-    projectProgress: 81,
-    awardName: '校级数据应用创新赛一等奖'
-  }),
-  buildMemberProfile({
-    id: 5,
-    name: '王梓涵',
-    avatar: '👩',
-    role: '本科生',
-    roleValue: 'undergrad',
-    roleClass: 'green',
-    grade: '大三',
-    major: '人工智能专业',
-    joinTime: '2025-03',
-    primaryDirection: '计算机视觉 / 行为识别',
-    tags: ['视觉算法', '目标检测', '数据集构建'],
-    skills: ['Python', 'YOLO', 'OpenCV', 'PyTorch', 'Label Studio', '模型评估'],
-    bio: '本科生视觉算法成员，主要负责实验室视频数据集构建、目标检测模型微调和行为识别样例验证，具备扎实的算法复现与实验记录能力。',
-    projectsCount: 2,
-    awardsCount: 2,
-    papersCount: 1,
-    patentsCount: 0,
-    radar: [86, 78, 62, 72, 48],
-    aiSummary: '王梓涵在计算机视觉方向成长迅速，对数据质量和模型评估非常敏感，适合承担视觉算法从样例到指标验证的闭环任务。',
-    aiKeywords: ['视觉算法', '目标检测', '实验严谨', '成长快'],
-    projectTitle: '实验室多路摄像头行为识别样例库',
-    projectRole: '视觉算法成员',
-    projectProgress: 74,
-    awardName: '省级人工智能算法挑战赛二等奖'
-  }),
-  buildMemberProfile({
-    id: 6,
-    name: '赵云帆',
-    avatar: '👨',
-    role: '本科生',
-    roleValue: 'undergrad',
-    roleClass: 'green',
-    grade: '大三',
-    major: '物联网工程专业',
-    joinTime: '2024-10',
-    primaryDirection: '智能硬件 / 边缘计算',
-    tags: ['边缘盒子', '设备联动', '传感器'],
-    skills: ['C/C++', 'ESP32', 'MQTT', 'Linux', 'Docker', '硬件调试'],
-    bio: '本科生硬件与边缘计算成员，负责传感器节点接入、边缘盒子部署和设备状态上报，能够快速定位实验室物联网链路中的软硬件问题。',
-    projectsCount: 3,
-    awardsCount: 1,
-    papersCount: 0,
-    patentsCount: 2,
-    radar: [58, 82, 68, 52, 88],
-    aiSummary: '赵云帆是设备联动链路中的实干型成员，熟悉边缘端部署和物联网通信协议，能把硬件状态稳定接入数字中枢。',
-    aiKeywords: ['边缘计算', '物联网', '设备联动', '调试能力'],
-    projectTitle: '边缘计算盒子与实验室设备联动网关',
-    projectRole: '边缘端开发',
-    projectProgress: 79,
-    awardName: '嵌入式系统设计竞赛三等奖'
-  }),
-  buildMemberProfile({
-    id: 7,
-    name: '孙若曦',
-    avatar: '👩',
-    role: '本科生',
-    roleValue: 'undergrad',
-    roleClass: 'green',
-    grade: '大二',
-    major: '数字媒体技术专业',
-    joinTime: '2025-09',
-    primaryDirection: 'AIGC应用 / 交互设计',
-    tags: ['AIGC', '可视化', '前端交互'],
-    skills: ['Vue.js', 'Figma', 'Three.js', 'Prompt设计', 'CSS', '数据可视化'],
-    bio: '本科生前端与AIGC应用成员，关注数字中枢界面表达、可视化交互和生成式内容辅助设计，能够把科研数据转化为更易理解的展示界面。',
-    projectsCount: 2,
-    awardsCount: 1,
-    papersCount: 0,
-    patentsCount: 1,
-    radar: [76, 80, 66, 58, 44],
-    aiSummary: '孙若曦擅长把复杂信息做成清晰、稳定、具有科技感的界面，是实验室展示系统和AIGC创意资产的重要补充力量。',
-    aiKeywords: ['前端交互', 'AIGC设计', '可视化', '表达能力'],
-    projectTitle: '智慧实验室成果展示可视化组件库',
-    projectRole: '前端交互设计',
-    projectProgress: 68,
-    awardName: '数字创意设计校赛一等奖'
-  }),
-  buildMemberProfile({
-    id: 8,
-    name: '周启航',
-    avatar: '👨',
-    role: '本科生',
-    roleValue: 'undergrad',
-    roleClass: 'green',
-    grade: '大四',
-    major: '计算机科学与技术专业',
-    joinTime: '2024-06',
-    primaryDirection: 'AI教育 / 智能评测',
-    tags: ['教学平台', '自动评测', '后端服务'],
-    skills: ['Java', 'Spring Boot', 'MySQL', 'Redis', 'Python', '接口测试'],
-    bio: '本科生后端与教学平台成员，负责训练任务记录、实验作业评测和成员成长数据接口设计，关注AI教育场景下的过程性评价。',
-    projectsCount: 3,
-    awardsCount: 2,
-    papersCount: 1,
-    patentsCount: 1,
-    radar: [70, 86, 74, 68, 50],
-    aiSummary: '周启航工程基础扎实，能够把AI教育中的评测规则、训练过程和成员成长数据落到稳定的后端服务中。',
-    aiKeywords: ['后端服务', 'AI教育', '自动评测', '工程稳定'],
-    projectTitle: 'AI实验训练任务自动评测平台',
-    projectRole: '后端服务负责人',
-    projectProgress: 83,
-    awardName: '软件服务外包创新创业大赛二等奖'
-  }),
-  buildMemberProfile({
-    id: 9,
-    name: '林嘉禾',
-    avatar: '👩',
-    role: '本科生',
-    roleValue: 'undergrad',
-    roleClass: 'green',
-    grade: '大二',
-    major: '数据科学与大数据技术专业',
-    joinTime: '2025-10',
-    primaryDirection: '数据治理 / 实验分析',
-    tags: ['指标分析', '数据看板', '实验记录'],
-    skills: ['Python', 'Pandas', 'ECharts', 'SQL', '数据清洗', '报告撰写'],
-    bio: '本科生数据分析成员，负责实验活动、设备使用和项目进度数据的清洗与看板呈现，擅长用可解释指标辅助实验室管理决策。',
-    projectsCount: 2,
-    awardsCount: 1,
-    papersCount: 0,
-    patentsCount: 0,
-    radar: [68, 76, 70, 66, 42],
-    aiSummary: '林嘉禾对数据指标敏感，能够把实验室日常运行数据整理成可追踪的趋势和问题线索，是运营分析方向的潜力成员。',
-    aiKeywords: ['数据分析', '指标看板', '运营洞察', '报告能力'],
-    projectTitle: '实验室运行指标分析与趋势看板',
-    projectRole: '数据分析成员',
-    projectProgress: 71,
-    awardName: '数据分析实践优秀作品'
-  })
+const maxDirection = computed(() => Math.max(...directionStats.value.map((item) => item.count), 1));
+const directionWidth = (count) => `${Math.round((count / maxDirection.value) * 100)}%`;
+
+const toggleDirection = (direction) => {
+  selectedDirection.value = selectedDirection.value === direction ? 'all' : direction;
+};
+
+const openMemberDetail = (member) => {
+  activeMember.value = member;
+  detailMember.value = member;
+  activeDetailTab.value = 'overview';
+};
+
+const radarPoints = (values = []) => {
+  const center = 70;
+  const radius = 56;
+  return values.slice(0, 5).map((value, index) => {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / 5;
+    const distance = radius * Math.min(value, 100) / 100;
+    return `${center + Math.cos(angle) * distance},${center + Math.sin(angle) * distance}`;
+  }).join(' ');
+};
+
+const projectTabItems = (member) => {
+  const source = member?.detailedProjects?.length ? member.detailedProjects : member?.repProjects || [];
+  return source.slice(0, 5).map((project, index) => ({
+    ...project,
+    desc: project.desc || `${member.name}参与${project.title}的系统建设、数据整理与成果沉淀。`,
+    duration: project.duration || ['2023.06 - 2024.12', '2022.03 - 2023.09', '2021.01 - 2022.06', '2023.09 - 2025.06', '2024.01 - 2025.12'][index % 5]
+  }));
+};
+
+const projectProgress = (index) => [78, 100, 100, 62, 48][index % 5];
+
+const awardTabItems = (member) => {
+  const items = member?.detailedAwards?.length ? member.detailedAwards : member?.assocAchievements?.filter((item) => item.type.includes('奖')) || [];
+  return items.slice(0, 6);
+};
+
+const awardLevelCount = (member, keyword) => awardTabItems(member)
+  .filter((award) => `${award.level}${award.name}`.includes(keyword)).length;
+
+const awardIcon = (index) => ['🏆', '🏅', '⭐', '🏆', '🔷', '⭐'][index % 6];
+
+const awardTrendPoints = [
+  { year: '2021', count: 1, y: 78 },
+  { year: '2022', count: 2, y: 52 },
+  { year: '2023', count: 2, y: 52 },
+  { year: '2024', count: 1, y: 78 }
 ];
 
-// Computed list of filtered members
-const filteredMembers = computed(() => {
-  return members.filter(member => {
-    // Role filter
-    if (selectedRole.value !== 'all' && member.roleValue !== selectedRole.value) {
-      return false;
-    }
-    // Direction filter
-    if (selectedDirection.value !== 'all' && !member.primaryDirection.includes(selectedDirection.value)) {
-      return false;
-    }
-    // Search query filter
-    if (searchQuery.value) {
-      const q = searchQuery.value.toLowerCase();
-      const matchName = member.name.toLowerCase().includes(q);
-      const matchTags = member.tags.some(tag => tag.toLowerCase().includes(q));
-      const matchSkills = member.skills.some(skill => skill.toLowerCase().includes(q));
-      return matchName || matchTags || matchSkills;
-    }
-    return true;
-  });
-});
+const paperTabItems = (member) => {
+  const baseTitles = [
+    `面向${member.primaryDirection}的多模态学习行为分析与情绪识别方法`,
+    `基于知识图谱的${member.tags[0] || '智能系统'}资源推荐方法`,
+    `结合时空特征的课堂注意力估计方法研究`,
+    `基于多模态特征的学生注意力检测方法研究`,
+    `面向MOOC平台的学习行为分析与资源推荐方法`,
+    `基于视觉-文本对齐的教学模型理解方法`
+  ];
+  return baseTitles.map((title, index) => ({
+    title,
+    source: ['IEEE Transactions on Learning Technologies', 'AI Computers & Education', 'IEEE Access', 'Pattern Recognition', '中国计算机学会通讯', 'AAAI 2023'][index],
+    date: ['2024-12-15', '2024-08-30', '2024-05-22', '2023-11-10', '2023-09-18', '2023-02-07'][index],
+    journal: ['IEEE TLT（中科院一区）', 'Computers & Education（中科院一区）', 'IEEE Access（中科院二区）', 'Pattern Recognition（中科院一区）', '中国计算机学会通讯（核心）', 'AAAI 2023（会议论文）'][index],
+    role: ['第一作者', '通讯作者', '第一作者', '共同作者', '第一作者', '合作作者'][index],
+    level: ['SCI Q1', 'SCI Q1', 'SCI Q2', 'SCI Q1', '中文核心', 'CCF A类'][index]
+  }));
+};
 
-// Stats cards for selected member in detail view
-const memberStatsCards = computed(() => {
-  if (!selectedMember.value) return [];
-  const m = selectedMember.value;
+const paperTrendPoints = [
+  { year: '2019', y: 98 },
+  { year: '2020', y: 82 },
+  { year: '2021', y: 66 },
+  { year: '2022', y: 50 },
+  { year: '2023', y: 34 },
+  { year: '2024', y: 46 }
+];
+
+const patentTabItems = (member) => {
+  const real = member?.detailedPatents?.length ? member.detailedPatents : [];
+  if (real.length) return real.slice(0, 6);
   return [
-    { label: '参与项目', val: m.projectsCount, icon: '📁' },
-    { label: '获奖成果', val: m.awardsCount, icon: '🏆' },
-    { label: '发表论文', val: m.papersCount, icon: '📄' },
-    { label: '专利软著', val: m.patentsCount, icon: '💡' }
+    { name: `一种基于${member.tags[0] || '多模态'}的教学资源推荐方法`, type: '发明专利', code: 'CN202110345676.9', status: '已授权', statusClass: 'blue-tag', role: member.name, date: '2021-05-18' },
+    { name: '课堂行为分析平台 V2.0', type: '软件著作权', code: '2022SR17091234', status: '已登记', statusClass: 'blue-tag', role: member.name, date: '2022-07-07' },
+    { name: '智能课堂视频剪辑软件', type: '软件著作权', code: '2022SR1234567', status: '已登记', statusClass: 'blue-tag', role: member.name, date: '2022-05-25' },
+    { name: '教育数据处理引擎', type: '软件著作权', code: '2021SR12005678', status: '已授权', statusClass: 'green-tag', role: member.name, date: '2022-11-15' },
+    { name: '基于注意力机制的作业批改方法', type: '发明专利', code: 'CN202210122331.1', status: '受理中', statusClass: 'orange-tag', role: member.name, date: '2022-04-28' },
+    { name: '教学评价模型可视化平台软件', type: '软件著作权', code: '2023SR0987654', status: '已登记', statusClass: 'blue-tag', role: member.name, date: '2022-09-10' }
   ];
-});
+};
 
-// Dynamic Radar Points Calculation
-const getRadarPoints = computed(() => {
-  if (!selectedMember.value) return '';
-  // Radar center (60,60), max radius 50.
-  // Axes index:
-  // 0: CV/AI (Up: x=60, y=60 - 50*val)
-  // 1: Coding (Right Up: x=60 + 50*val*cos(30), y=60 - 50*val*sin(30))
-  // 2: Management (Right Down: x=60 + 50*val*cos(30), y=60 + 50*val*sin(30))
-  // 3: Academic (Left Down: x=60 - 50*val*cos(30), y=60 + 50*val*sin(30))
-  // 4: Hardware (Left Up: x=60 - 50*val*cos(30), y=60 - 50*val*sin(30))
-  const radarVals = selectedMember.value.radar; // Array of 5 numbers out of 100
-  const center = 60;
-  const maxRadius = 50;
-  
-  const angles = [
-    -Math.PI / 2, // Up
-    -Math.PI / 6, // Right Up
-    Math.PI / 6,  // Right Down
-    Math.PI * 5 / 6, // Left Down
-    Math.PI * 7 / 6  // Left Up
-  ];
-  
-  const points = angles.map((angle, index) => {
-    const val = (radarVals[index] || 50) / 100;
-    const r = maxRadius * val;
-    const x = center + r * Math.cos(angle);
-    const y = center + r * Math.sin(angle);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
-  
-  return points.join(' ');
-});
+const patentTypeCount = (member, keyword) => patentTabItems(member).filter((item) => `${item.type}${item.name}`.includes(keyword)).length;
+
+const patentTimelineItems = (member) => patentTabItems(member).slice(0, 4);
+
+const growthStages = [
+  { year: '2020', icon: '▧', title: '加入实验室', desc: '正式加入实验室，聚焦AI教学与计算机视觉方向。', points: ['厘清研究方向', '融入团队协作', '掌握核心方法'], badge: '适应 · 融入' },
+  { year: '2021', icon: '🚀', title: '项目突破', desc: '承担重要科研项目，完成实验与系统验证。', points: ['参与国内外竞赛', '实践落地教学应用', '完成算法优化探索'], badge: '突破 · 成长' },
+  { year: '2022', icon: '🏆', title: '成果丰收', desc: '科研成果丰收，论文发表与专利申请并进。', points: ['发表论文3篇', '提交发明专利1项', '取得软件著作权'], badge: '收获 · 丰收' },
+  { year: '2023', icon: '▰', title: '平台淬炼', desc: '主导平台开发与教学资源建设，推动技术平台化。', points: ['搭建实验教学平台', '推动产教融合落地', '团队规模扩展'], badge: '沉淀 · 转化' },
+  { year: '2024', icon: '▟', title: '持续创新', desc: '探索前沿方向，拓展应用边界，孵化创新成果。', points: ['拓展多模态大模型方向', '发表论文4篇', '申请发明专利2项'], badge: '创新 · 引领' }
+];
+
+const growthKeywords = (member) => [
+  '深耕积累',
+  '技术突破',
+  '成果爆发',
+  '平台构建',
+  '产学对接',
+  '跨领域融合',
+  '团队协作',
+  '持续创新',
+  ...(member?.skills || []).slice(0, 2)
+];
 </script>
 
 <style scoped>
 .members-hall-container {
-  height: calc(100vh - 110px);
+  height: calc(100vh - 121px);
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
+  display: grid;
+  grid-template-columns: 300px minmax(640px, 1fr);
+  gap: 18px;
+  padding: 18px 22px;
   overflow: hidden;
 }
 
-/* Detail view nav */
-.detail-header-nav {
+.left-rail,
+.center-stage {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.left-rail {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-title,
+.profile-head,
+.member-name-row,
+.stage-toolbar,
+.bar-meta,
+.member-stats,
+.dialog-header {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 12px;
-  background: rgba(2, 6, 20, 0.5);
-  border: 1px solid var(--color-border);
-  padding: 8px 16px;
-  border-radius: 6px;
-  flex-shrink: 0;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.btn-back {
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid var(--color-border);
-  color: #38bdf8;
-  padding: 4px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.2s;
+.panel-title {
+  justify-content: flex-start;
 }
 
-.btn-back:hover {
-  background: rgba(56, 189, 248, 0.2);
-  border-color: var(--color-border-active);
+.title-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(67, 183, 255, 0.35);
+  border-radius: 8px;
+  background: rgba(67, 183, 255, 0.1);
+  font-size: 22px;
 }
 
-.nav-path {
-  font-size: 13px;
-  color: var(--color-text-secondary);
+h3,
+h4,
+p {
+  margin: 0;
 }
 
-/* Main View Layout */
-.main-members-view {
-  display: flex;
-  gap: 16px;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-}
-
-.left-sidebar {
-  width: 300px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  flex-shrink: 0;
-  overflow-y: auto;
-}
-
-.sidebar-section {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-}
-
-.section-header h3 {
-  font-size: 14px;
+.panel-title h3,
+.profile-head h3 {
   color: #fff;
-  font-weight: bold;
-  margin-bottom: 12px;
-  letter-spacing: 1px;
+  font-size: 20px;
 }
 
-.overview-grid {
+.panel-title p,
+.profile-head p,
+.hint {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.rail-section .hint {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.metric-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 6px;
 }
 
-.overview-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 10px;
+.metric-card {
+  min-height: 48px;
+  border: 1px solid rgba(67, 183, 255, 0.24);
   border-radius: 6px;
+  background: rgba(4, 24, 52, 0.72);
+  cursor: pointer;
+  text-align: left;
+  padding: 6px 9px;
+}
+
+.metric-card span,
+.metric-card strong {
+  display: block;
+}
+
+.metric-card span {
+  font-size: 12px;
+}
+
+.metric-card strong {
+  margin-top: 2px;
+  color: #fff;
+  font-size: 19px;
+}
+
+.metric-card.active {
+  border-color: rgba(114, 231, 255, 0.85);
+  background: rgba(42, 162, 255, 0.22);
+}
+
+.rail-section {
+  min-height: 0;
+}
+
+.direction-section {
+  flex: 1;
+  min-height: 158px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
-.overview-card .label {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  margin-bottom: 4px;
+.rail-section h4,
+.profile-section h4 {
+  color: #eaf8ff;
+  font-size: 15px;
+  margin-bottom: 8px;
+  padding-left: 8px;
+  border-left: 2px solid #43b7ff;
 }
 
-.overview-card .num {
-  font-size: 18px;
-  font-weight: bold;
+.bar-list,
+.achievement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.direction-section .bar-list {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.bar-item {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.bar-item.active .bar-meta span {
   color: #fff;
 }
 
-.overview-card .num small {
-  font-size: 10px;
-  font-weight: normal;
-  color: var(--color-text-secondary);
+.bar-meta {
+  margin-bottom: 4px;
+  font-size: 12px;
 }
 
-/* Chart */
-.chart-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
+.bar-meta span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.svg-chart-wrapper {
+.bar-meta b {
+  color: #fff;
+}
+
+.bar-track {
+  height: 7px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: rgba(12, 53, 93, 0.74);
+}
+
+.bar-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  box-shadow: 0 0 12px rgba(67, 183, 255, 0.32);
+}
+
+.mini-ring {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 8px;
 }
 
-.donut-svg {
+.mini-ring svg {
   width: 100%;
   height: 100%;
+  transform: rotate(-90deg);
 }
 
-.donut-center-text {
+.ring-bg,
+.ring-main {
+  fill: none;
+  stroke-width: 12;
+}
+
+.ring-bg {
+  stroke: rgba(255, 255, 255, 0.06);
+}
+
+.ring-main {
+  stroke: #34edc3;
+  stroke-linecap: round;
+}
+
+.ring-text {
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
 }
 
-.donut-center-text .title {
-  font-size: 8px;
-  color: var(--color-text-secondary);
-}
-
-.donut-center-text .val {
-  font-size: 14px;
-  font-weight: bold;
+.ring-text strong {
   color: #fff;
+  font-size: 24px;
 }
 
-.donut-legend {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 11px;
+.structure-board {
+  padding: 8px;
+  border: 1px solid rgba(67, 183, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(3, 18, 42, 0.44);
 }
 
-.donut-legend .legend-item {
-  display: flex;
-  align-items: center;
-  color: var(--color-text-secondary);
+.structure-total {
+  display: grid;
+  place-items: center;
+  min-height: 42px;
+  margin-bottom: 7px;
+  border-radius: 6px;
+  background: radial-gradient(circle, rgba(67, 183, 255, 0.18), rgba(3, 18, 42, 0.38));
+  border: 1px solid rgba(67, 183, 255, 0.2);
 }
 
-.donut-legend .bullet {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-right: 8px;
+.structure-total strong {
+  color: #fff;
+  font-size: 22px;
 }
 
-.donut-legend .bullet.green { background: var(--status-online); }
-.donut-legend .bullet.blue { background: var(--status-info); }
-.donut-legend .bullet.orange { background: var(--status-busy); }
-
-.donut-legend .pct {
-  margin-left: auto;
-  opacity: 0.8;
+.structure-total span {
+  font-size: 12px;
 }
 
-/* Direction Bars */
-.direction-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  font-size: 11px;
+.structure-board article {
+  margin-bottom: 6px;
 }
 
-.direction-bar-item .lbl-row {
+.structure-board article div {
   display: flex;
   justify-content: space-between;
-  color: var(--color-text-secondary);
   margin-bottom: 4px;
+  font-size: 12px;
 }
 
-.direction-bar-item .lbl-row span:last-child {
+.structure-board article b {
   color: #fff;
 }
 
-.progress-bar-container {
-  height: 6px;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
+.structure-board article i {
+  display: block;
+  height: 7px;
   overflow: hidden;
+  border-radius: 99px;
+  background: rgba(12, 53, 93, 0.74);
 }
 
-.progress-fill {
+.structure-board article em {
+  display: block;
   height: 100%;
-  border-radius: 3px;
+  border-radius: inherit;
 }
 
-/* Right Panel: Grid Cards */
-.members-grid-container {
-  flex: 1;
-  background: var(--bg-panel);
-  padding: 16px;
+.center-stage {
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  gap: 8px;
+  background: rgba(5, 24, 52, 0.68);
 }
 
-.filter-top-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(0, 168, 255, 0.15);
+.stage-heading {
   flex-shrink: 0;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
 }
 
-.filter-group {
+.stage-heading h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.stage-heading p {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.direction-chips {
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.filter-label {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  margin-right: 4px;
-}
-
-.filter-btn {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--color-text-secondary);
-  padding: 4px 10px;
-  border-radius: 4px;
+.direction-chips button {
+  min-height: 28px;
+  border: 1px solid rgba(67, 183, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(3, 18, 42, 0.52);
+  color: #a9ddff;
+  padding: 0 14px;
   cursor: pointer;
-  font-size: 11px;
-  transition: all 0.2s;
+  white-space: nowrap;
 }
 
-.filter-btn:hover {
-  background: rgba(0, 168, 255, 0.1);
+.direction-chips button.active {
+  background: linear-gradient(180deg, rgba(42, 162, 255, 0.88), rgba(8, 70, 142, 0.86));
+  border-color: rgba(118, 229, 255, 0.86);
   color: #fff;
+  box-shadow: 0 0 16px rgba(67, 183, 255, 0.28);
 }
 
-.filter-btn.active {
-  background: rgba(0, 168, 255, 0.25);
-  border-color: var(--color-border-active);
-  color: #fff;
-  box-shadow: 0 0 8px rgba(0, 168, 255, 0.15);
+.direction-chips {
+  flex-shrink: 0;
+  justify-content: flex-end;
+  padding-bottom: 4px;
+}
+
+.stage-toolbar {
+  flex-shrink: 0;
+  justify-content: flex-start;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(67, 183, 255, 0.2);
 }
 
 .search-box {
-  margin-left: auto;
   position: relative;
-  width: 200px;
+  flex: 1;
+  max-width: 520px;
 }
 
 .search-box input {
   width: 100%;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid var(--color-border);
+  min-height: 34px;
+  border: 1px solid rgba(67, 183, 255, 0.34);
+  border-radius: 6px;
+  background: rgba(3, 18, 42, 0.88);
+  color: #eaf8ff;
+  padding: 0 38px 0 12px;
+}
+
+.search-box span {
+  position: absolute;
+  right: 12px;
+  top: 7px;
+  color: #72e7ff;
+}
+
+.detail-btn {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(67, 183, 255, 0.38);
+  border-radius: 6px;
+  background: rgba(13, 58, 103, 0.72);
+  color: #cbeeff;
+  cursor: pointer;
+}
+
+.detail-btn {
+  background: linear-gradient(180deg, rgba(42, 162, 255, 0.78), rgba(8, 70, 142, 0.82));
   color: #fff;
-  padding: 4px 28px 4px 10px;
+}
+
+.member-board {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));
+  grid-auto-rows: minmax(232px, auto);
+  gap: 14px;
+  padding: 2px 2px 0;
+}
+
+.member-tile {
+  min-height: 232px;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.member-tile.selected {
+  border-color: rgba(114, 231, 255, 0.85) !important;
+  box-shadow: 0 0 18px rgba(67, 183, 255, 0.24) !important;
+}
+
+.avatar-frame {
+  position: relative;
+  width: 100%;
+  min-height: 92px;
+  flex-shrink: 0;
+  text-align: center;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(67, 183, 255, 0.18);
+  border-radius: 7px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(67, 183, 255, 0.22), transparent 54%),
+    linear-gradient(180deg, rgba(4, 30, 64, 0.56), rgba(1, 14, 34, 0.72));
+}
+
+.avatar-frame > span {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto;
+  border-radius: 50%;
+  border: 1px solid rgba(67, 183, 255, 0.42);
+  background: rgba(67, 183, 255, 0.1);
+  font-size: 40px;
+}
+
+.avatar-frame i,
+.dialog-card > span,
+.achievement-list article > span {
+  display: inline-flex;
   border-radius: 4px;
-  font-size: 12px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-style: normal;
+  border: 1px solid rgba(67, 183, 255, 0.3);
 }
 
-.search-box input:focus {
-  outline: none;
-  border-color: var(--color-border-active);
-}
-
-.search-icon {
+.avatar-frame i {
   position: absolute;
   right: 8px;
-  top: 5px;
-  font-size: 12px;
-  opacity: 0.6;
+  bottom: 8px;
 }
 
-.members-cards-scroll {
+.member-main {
+  min-width: 0;
   flex: 1;
-  overflow-y: auto;
-  margin-top: 16px;
-  padding-right: 4px;
-}
-
-.members-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
-}
-
-.member-card {
-  position: relative;
   display: flex;
-  padding: 16px;
-  gap: 14px;
+  flex-direction: column;
+}
+
+.member-main h4 {
+  color: #fff;
+  font-size: 18px;
+}
+
+.member-main p {
+  margin: 4px 0 9px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
   overflow: hidden;
-  background: rgba(6, 18, 45, 0.4);
-}
-
-.member-card .avatar-box {
-  position: relative;
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 30px;
-  flex-shrink: 0;
-}
-
-.member-card .role-tag {
-  position: absolute;
-  bottom: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 8px;
-  padding: 1px 4px;
-  border-radius: 2px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.member-card .role-tag.orange { background: rgba(245,158,11,0.15); color: var(--status-busy); border: 1px solid rgba(245,158,11,0.25); }
-.member-card .role-tag.blue { background: rgba(59,130,246,0.15); color: var(--status-info); border: 1px solid rgba(59,130,246,0.25); }
-.member-card .role-tag.green { background: rgba(16,185,129,0.15); color: var(--status-online); border: 1px solid rgba(16,185,129,0.25); }
-
-.member-meta {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.member-meta .name {
-  font-size: 15px;
-  color: #fff;
-  margin-bottom: 2px;
-}
-
-.member-meta .grade {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  margin-bottom: 6px;
-}
-
-.directions-tags {
+.tag-row,
+.keyword-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 10px;
+  gap: 6px;
 }
 
-.directions-tags .tag {
-  font-size: 9px;
-  background: rgba(0, 168, 255, 0.05);
-  border: 1px solid rgba(0, 168, 255, 0.15);
-  color: #38bdf8;
-  padding: 1px 5px;
-  border-radius: 2px;
+.tag-row span,
+.keyword-row span {
+  border-radius: 4px;
+  border: 1px solid rgba(67, 183, 255, 0.28);
+  background: rgba(16, 77, 133, 0.45);
+  color: #a9ddff;
+  font-size: 11px;
+  padding: 2px 6px;
 }
 
-.member-meta .stats-row {
-  display: flex;
-  gap: 12px;
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  border-top: 1px dashed rgba(255,255,255,0.05);
-  padding-top: 6px;
+.member-stats {
   margin-top: auto;
+  justify-content: flex-start;
+  gap: 14px;
+  font-size: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(67, 183, 255, 0.14);
 }
 
-.member-meta .stats-row strong {
+.member-stats b {
   color: #fff;
 }
 
-.hover-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(1, 4, 15, 0.9);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #38bdf8;
-  font-size: 13px;
-  font-weight: bold;
-  opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
+.radar-wrap {
+  height: 180px;
 }
 
-.member-card:hover .hover-overlay {
-  opacity: 1;
+.radar-wrap svg {
+  width: 100%;
+  height: 100%;
 }
 
-/* ========================================================
-   MEMBER DETAILS VIEW
-   ======================================================== */
-.member-details-view {
-  display: flex;
-  gap: 16px;
-  flex: 1;
+.radar-wrap line,
+.radar-grid {
+  fill: none;
+  stroke: rgba(143, 181, 214, 0.24);
+  stroke-width: 1;
+}
+
+.radar-area {
+  fill: rgba(52, 237, 195, 0.18);
+  stroke: #34edc3;
+  stroke-width: 2;
+}
+
+.radar-wrap text {
+  fill: #8fb5d6;
+  font-size: 10px;
+  text-anchor: middle;
+}
+
+.member-detail-page {
+  height: calc(100vh - 121px);
+  width: 100%;
+  display: grid;
+  grid-template-columns: 260px minmax(520px, 1fr) 270px;
+  grid-template-rows: 30px minmax(0, 1fr) 112px;
+  gap: 14px;
+  padding: 14px 18px;
   overflow: hidden;
 }
 
-.details-left-panel {
-  width: 250px;
-  padding: 20px 16px;
+.detail-path {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.detail-path button {
+  border: 0;
+  background: transparent;
+  color: #cbeeff;
+  cursor: pointer;
+}
+
+.detail-profile,
+.detail-main,
+.detail-right,
+.detail-bottom {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.detail-profile {
+  grid-row: 2 / 4;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  flex-shrink: 0;
+  gap: 10px;
   overflow-y: auto;
 }
 
-.profile-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+.portrait-card {
+  position: relative;
+  min-height: 172px;
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  padding: 16px;
+  border: 1px solid rgba(67, 183, 255, 0.22);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 26%, rgba(67, 183, 255, 0.22), transparent 42%),
+    linear-gradient(180deg, rgba(10, 44, 87, 0.62), rgba(4, 22, 48, 0.78));
 }
 
-.avatar-large {
-  width: 80px;
-  height: 80px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(0, 168, 255, 0.25);
+.portrait-avatar {
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 10px;
   border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 44px;
-  box-shadow: 0 0 15px rgba(0, 168, 255, 0.15);
-  margin-bottom: 12px;
+  border: 1px solid rgba(67, 183, 255, 0.38);
+  background: rgba(67, 183, 255, 0.12);
+  font-size: 46px;
 }
 
-.profile-card .name {
-  font-size: 18px;
+.favorite-btn {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(67, 183, 255, 0.34);
+  border-radius: 6px;
+  background: rgba(13, 58, 103, 0.72);
+  color: #cbeeff;
+  cursor: pointer;
+}
+
+.portrait-card h2 {
+  margin: 0 0 4px;
   color: #fff;
-  font-weight: bold;
+  font-size: 22px;
 }
 
-.profile-card .role-badge {
-  font-size: 10px;
+.portrait-card > span,
+.detail-list-card > span {
+  display: inline-flex;
+  border-radius: 4px;
+  border: 1px solid rgba(67, 183, 255, 0.3);
   padding: 2px 8px;
-  border-radius: 3px;
-  margin-top: 4px;
+  font-size: 11px;
 }
 
-.profile-card .role-badge.orange { background: rgba(245,158,11,0.15); color: var(--status-busy); border: 1px solid rgba(245,158,11,0.25); }
-.profile-card .role-badge.blue { background: rgba(59,130,246,0.15); color: var(--status-info); border: 1px solid rgba(59,130,246,0.25); }
-.profile-card .role-badge.green { background: rgba(16,185,129,0.15); color: var(--status-online); border: 1px solid rgba(16,185,129,0.25); }
-
-.profile-card .grade {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  margin-top: 6px;
-}
-
-.info-list {
+.profile-facts {
   list-style: none;
-  font-size: 12px;
+  padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  border-top: 1px solid rgba(255,255,255,0.05);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  padding: 12px 0;
+  gap: 7px;
+  font-size: 12px;
 }
 
-.info-list li {
+.profile-facts li {
   display: flex;
   justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(67, 183, 255, 0.14);
 }
 
-.info-list .lbl {
-  color: var(--color-text-secondary);
-}
-
-.info-list .val {
+.profile-facts strong {
+  max-width: 150px;
+  text-align: right;
   color: #fff;
 }
 
-.skills-section h4 {
-  font-size: 12px;
-  color: #fff;
-  margin-bottom: 8px;
+.skill-panel h4,
+.right-panel h4,
+.detail-bottom h4,
+.intro-panel h4,
+.radar-card h4,
+.trajectory-block h4 {
+  color: #eaf8ff;
+  font-size: 14px;
+  margin: 0 0 10px;
+  padding-left: 8px;
+  border-left: 2px solid #43b7ff;
 }
 
-.skills-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.skill-tag {
-  font-size: 10px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.05);
-  color: var(--color-text-secondary);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-/* Mascot贴士 */
-.mascot-advice-card {
-  padding: 12px;
-  background: rgba(0, 168, 255, 0.03);
+.mascot-card {
   margin-top: auto;
-}
-
-.mascot-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: 12px;
+  padding: 12px;
 }
 
-.mascot-header h5 {
-  font-size: 12px;
-  color: #38bdf8;
-  margin: 0;
+.mascot-figure {
+  font-size: 42px;
 }
 
-.advice-txt {
-  font-size: 10px;
+.mascot-card strong {
+  color: #fff;
+}
+
+.mascot-card p {
+  margin-top: 4px;
   color: var(--color-text-secondary);
-  line-height: 1.4;
+  font-size: 12px;
 }
 
-/* Middle Panel Tabs */
-.details-middle-panel {
-  flex: 1;
-  background: var(--bg-panel);
+.detail-main {
+  padding: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
-.subtabs-header {
-  display: flex;
-  border-bottom: 1px solid rgba(0, 168, 255, 0.15);
-  background: rgba(2, 6, 20, 0.4);
-  flex-shrink: 0;
+.detail-tabs {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  min-height: 44px;
+  border-bottom: 1px solid rgba(67, 183, 255, 0.22);
 }
 
-.subtab-btn {
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--color-text-secondary);
-  padding: 12px 18px;
+.detail-tabs button {
+  border: 0;
+  border-right: 1px solid rgba(67, 183, 255, 0.12);
+  background: rgba(3, 18, 42, 0.46);
+  color: #8fb5d6;
   cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
 }
 
-.subtab-btn:hover {
+.detail-tabs button.active {
   color: #fff;
-  background: rgba(0, 168, 255, 0.02);
+  background: rgba(42, 162, 255, 0.2);
+  box-shadow: inset 0 -2px 0 #43b7ff;
 }
 
-.subtab-btn.active {
-  color: #38bdf8;
-  border-bottom-color: #38bdf8;
-  font-weight: bold;
-  background: rgba(0, 168, 255, 0.05);
-}
-
-.subtab-content-scroll {
+.detail-main-scroll {
   flex: 1;
-  padding: 16px;
   overflow-y: auto;
+  padding: 14px;
 }
 
-/* Subtab: General Page */
-.section-intro {
-  margin-bottom: 20px;
-}
-
-.section-intro h4 {
-  font-size: 13px;
-  color: #fff;
-  margin-bottom: 6px;
-}
-
-.bio-text {
-  font-size: 12px;
+.intro-panel p,
+.detail-list-card p,
+.empty-tip,
+.timeline-mini p {
   color: var(--color-text-secondary);
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
-.stats-cards-grid {
+.overview-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.intro-panel {
+  padding: 14px;
+}
+
+.core-data-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  margin-bottom: 20px;
+  margin: 14px 0;
 }
 
-.stats-cards-grid .stat-card {
-  background: rgba(255, 255, 255, 0.01);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  padding: 12px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.core-data-grid article {
+  min-height: 78px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(67, 183, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
 }
 
-.stats-cards-grid .stat-card .icon {
-  font-size: 20px;
-}
-
-.stats-cards-grid .stat-card .txt {
-  display: flex;
-  flex-direction: column;
-}
-
-.stats-cards-grid .stat-card .val {
-  font-size: 16px;
-  font-weight: bold;
+.core-data-grid strong {
   color: #fff;
+  font-size: 24px;
 }
 
-.stats-cards-grid .stat-card .lbl {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-}
-
-.radar-ai-row {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 20px;
+.core-data-grid small {
+  margin-left: 2px;
+  font-size: 12px;
 }
 
 .radar-card {
-  flex: 1.2;
   padding: 14px;
 }
 
-.radar-card h4, .ai-summary-card h4 {
-  font-size: 13px;
-  color: #fff;
-  margin-bottom: 10px;
-}
-
-.svg-radar-wrapper {
-  display: flex;
-  justify-content: center;
-  height: 160px;
-}
-
-.radar-svg {
-  height: 100%;
-}
-
-.grid-line {
-  stroke: rgba(255, 255, 255, 0.06);
-  stroke-width: 0.5;
-  fill: none;
-}
-
-.radar-poly {
-  fill: rgba(56, 189, 248, 0.15);
-  stroke: #38bdf8;
-  stroke-width: 1.5;
-}
-
-.radar-poly-dots {
-  fill: none;
-  stroke: #38bdf8;
-  stroke-width: 4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.radar-text {
-  fill: var(--color-text-secondary);
-  font-size: 7px;
-}
-
-.text-anchor-middle { text-anchor: middle; }
-.text-anchor-start { text-anchor: start; }
-.text-anchor-end { text-anchor: end; }
-
-.ai-summary-card {
-  flex: 1.5;
-  padding: 14px;
+.overview-detail-grid .radar-card {
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.summary-para {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  flex-grow: 1;
+.overview-detail-grid .radar-wrap {
+  flex: 1;
+  min-height: 196px;
+  max-height: 220px;
+  width: min(100%, 240px);
+  margin: 0 auto;
 }
 
-.keywords-row {
+.detail-right {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.keywords-row .kw {
-  font-size: 10px;
-  color: #38bdf8;
-  background: rgba(56,189,248,0.05);
-  padding: 2px 6px;
-  border-radius: 4px;
+.right-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
 }
 
-.section-assoc-achievements h4 {
-  font-size: 13px;
-  color: #fff;
+.mini-project,
+.timeline-mini,
+.detail-list-card {
+  position: relative;
+  padding: 12px;
   margin-bottom: 10px;
+  border: 1px solid rgba(67, 183, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
 }
 
-.assoc-achievements-list {
+.mini-project strong,
+.timeline-mini strong,
+.detail-list-card strong,
+.bottom-achievements strong {
+  display: block;
+  color: #fff;
+  font-size: 13px;
+}
+
+.mini-project span,
+.timeline-mini time {
+  display: block;
+  color: #72e7ff;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.timeline-mini i {
+  position: absolute;
+  left: -4px;
+  top: 18px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #43b7ff;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.timeline-mini i.green {
+  background: #34edc3;
+}
+
+.timeline-mini i.orange {
+  background: #ffae42;
+}
+
+.detail-list-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.detail-bottom {
+  grid-column: 2 / 4;
+  padding: 10px 12px;
+  overflow-y: auto;
+}
+
+.bottom-achievements {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 12px;
+  overflow: hidden;
+}
+
+.bottom-achievements article {
+  min-height: 66px;
+  padding: 10px;
+  border: 1px solid rgba(67, 183, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.bottom-achievements article > span {
+  display: inline-flex;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(67, 183, 255, 0.3);
+  padding: 1px 6px;
+  font-size: 10px;
+}
+
+.bottom-achievements small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.tab-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tab-stat-grid article {
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(67, 183, 255, 0.2);
+  border-radius: 7px;
+  background: linear-gradient(180deg, rgba(7, 41, 83, 0.72), rgba(3, 19, 43, 0.82));
+}
+
+.tab-stat-grid article i {
+  grid-row: 1 / 3;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 1px solid rgba(67, 183, 255, 0.32);
+  background: radial-gradient(circle, rgba(29, 158, 255, 0.42), rgba(5, 41, 91, 0.58));
+  color: #6ee7ff;
+  font-style: normal;
+  font-size: 22px;
+  box-shadow: inset 0 0 14px rgba(67, 183, 255, 0.18);
+}
+
+.tab-stat-grid article span {
+  color: #b9def5;
+  font-size: 12px;
+}
+
+.tab-stat-grid article strong {
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.tab-stat-grid article small {
+  margin-left: 4px;
+  font-size: 12px;
+}
+
+.tab-stat-grid article p {
+  grid-column: 2;
+  color: #789ebe;
+  font-size: 10px;
+}
+
+.award-stat-grid article.gold {
+  background: linear-gradient(120deg, rgba(255, 174, 66, 0.18), rgba(5, 31, 67, 0.8));
+  border-color: rgba(255, 174, 66, 0.38);
+}
+
+.tab-section-head {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tab-section-head h4 {
+  margin: 0;
+  color: #fff;
+  font-size: 14px;
+}
+
+.mini-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8fb5d6;
+  font-size: 11px;
+}
+
+.mini-filters span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(67, 183, 255, 0.22);
+  border-radius: 4px;
+  background: rgba(4, 30, 64, 0.64);
+  padding: 0 9px;
+}
+
+.mini-filters .active {
+  color: #fff;
+  background: rgba(42, 162, 255, 0.54);
+  border-color: rgba(118, 229, 255, 0.66);
+}
+
+.project-list-panel {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.assoc-card {
-  padding: 10px 12px;
-  background: rgba(255,255,255,0.01);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.assoc-card .badge {
-  font-size: 9px;
-  padding: 1px 5px;
-  border-radius: 2px;
-  white-space: nowrap;
-}
-
-.assoc-card .purple-tag { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.25); }
-.assoc-card .orange-tag { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
-.assoc-card .blue-tag { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
-
-.assoc-card .title {
-  font-size: 12px;
-  color: #fff;
-  flex-grow: 1;
-  margin: 0;
-}
-
-.assoc-card .meta {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-}
-
-/* Subtab: Projects List */
-.projects-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.detail-project-card {
-  padding: 14px;
-  background: rgba(255,255,255,0.01);
-}
-
-.detail-project-card .card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.detail-project-card h4 {
-  font-size: 14px;
-  color: #fff;
-  margin: 0;
-}
-
-.detail-project-card .state-badge {
-  font-size: 9px;
-  padding: 1px 6px;
-  border-radius: 3px;
-}
-
-.detail-project-card .state-badge.green-tag { background: rgba(16,185,129,0.15); color: var(--status-online); }
-.detail-project-card .state-badge.orange-tag { background: rgba(245,158,11,0.15); color: var(--status-busy); }
-
-.detail-project-card .desc {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-  margin-bottom: 8px;
-}
-
-.detail-project-card .meta-row {
-  display: flex;
-  gap: 20px;
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  border-bottom: 1px dashed rgba(255,255,255,0.03);
-  padding-bottom: 6px;
-  margin-bottom: 6px;
-}
-
-.detail-project-card .meta-row strong {
-  color: #fff;
-}
-
-.detail-project-card .achievements-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 10px;
-}
-
-.detail-project-card .ach-lbl {
-  color: var(--color-text-secondary);
-}
-
-.detail-project-card .ach-tag {
-  background: rgba(255,255,255,0.03);
-  padding: 1px 6px;
-  border-radius: 3px;
-  color: #fff;
-}
-
-/* Subtab: Awards Page */
-.awards-summary-cards {
+.project-wide-row {
+  min-height: 72px;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 44px 1fr 110px 62px;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid rgba(67, 183, 255, 0.17);
+  border-radius: 7px;
+  background: rgba(6, 33, 69, 0.5);
 }
 
-.award-sum-c {
-  background: rgba(255,255,255,0.01);
-  border: 1px solid rgba(255,255,255,0.04);
-  padding: 12px;
-  border-radius: 6px;
+.row-icon,
+.patent-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: rgba(19, 106, 194, 0.42);
+  color: #22c7ff;
+  font-weight: 900;
+  box-shadow: inset 0 0 14px rgba(67, 183, 255, 0.18);
+}
+
+.row-title {
   display: flex;
   align-items: center;
-  gap: 15px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.award-sum-c .icon {
-  font-size: 24px;
-}
-
-.award-sum-c .info {
-  display: flex;
-  flex-direction: column;
-}
-
-.award-sum-c .val {
-  font-size: 16px;
-  font-weight: bold;
+.row-title strong,
+.award-show-card strong,
+.paper-table-list strong,
+.patent-card-grid strong,
+.growth-roadmap strong {
   color: #fff;
-}
-
-.award-sum-c .lbl {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-}
-
-.awards-detail-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.award-detail-card {
-  display: flex;
-  align-items: center;
-  padding: 12px;
-  background: rgba(255,255,255,0.01);
-}
-
-.award-detail-card .trophy-box {
-  width: 40px;
-  height: 40px;
-  background: rgba(245,158,11,0.08);
-  border: 1px solid rgba(245,158,11,0.2);
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 20px;
-  margin-right: 15px;
-}
-
-.award-detail-card .txt {
-  flex-grow: 1;
-}
-
-.award-detail-card h4 {
   font-size: 13px;
-  color: #fff;
-  margin: 0;
 }
 
-.award-detail-card .lvl {
-  font-size: 10px;
-  color: #fbbf24;
-  margin: 2px 0;
-}
-
-.award-detail-card .role {
-  font-size: 10px;
+.project-wide-row p,
+.award-show-card small,
+.paper-table-list p,
+.paper-table-list span,
+.patent-card-grid p,
+.patent-card-grid small,
+.growth-roadmap p,
+.growth-roadmap li {
   color: var(--color-text-secondary);
-}
-
-.award-detail-card .role strong {
-  color: #fff;
-}
-
-.award-detail-card .date {
   font-size: 11px;
-  color: var(--color-text-secondary);
+  line-height: 1.45;
 }
 
-.awards-charts-row .chart-box {
-  padding: 14px;
+.project-wide-row time {
+  color: #a7c9e4;
+  font-size: 11px;
 }
 
-.awards-charts-row h4 {
-  font-size: 12px;
-  color: #fff;
-  margin-bottom: 10px;
+.project-wide-row i {
+  display: block;
+  width: min(92%, 370px);
+  height: 5px;
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(8, 47, 87, 0.86);
 }
 
-.chart-bar-mock {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 40px;
-  height: 100px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.chart-bar-mock .col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 40px;
+.project-wide-row em {
+  display: block;
   height: 100%;
-  justify-content: flex-end;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2ee6ff, #3d8cff);
+  box-shadow: 0 0 12px rgba(45, 178, 255, 0.42);
 }
 
-.chart-bar-mock .bar-fill {
-  width: 14px;
-  background: linear-gradient(180deg, #38bdf8 0%, rgba(56, 189, 248, 0.2) 100%);
-  border-radius: 3px 3px 0 0;
-  position: relative;
-}
-
-.chart-bar-mock .bar-fill:hover {
-  background: var(--status-online);
-}
-
-.chart-bar-mock .tip {
-  position: absolute;
-  top: -16px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 9px;
-  color: #fff;
-}
-
-.chart-bar-mock .lbl {
-  font-size: 10px;
-  color: var(--color-text-secondary);
+.award-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
   margin-top: 6px;
 }
 
-/* Subtab: Papers Page */
-.papers-summary-cards {
+.award-show-card {
+  min-height: 94px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.paper-sum-c {
-  background: rgba(255,255,255,0.01);
-  border: 1px solid rgba(255,255,255,0.04);
-  padding: 12px;
-  border-radius: 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.paper-sum-c .val {
-  font-size: 18px;
-  font-weight: bold;
-  color: #fff;
-}
-
-.paper-sum-c .lbl {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  margin-top: 2px;
-}
-
-.papers-list {
-  display: flex;
-  flex-direction: column;
+  grid-template-columns: 56px 1fr;
   gap: 10px;
-  margin-bottom: 16px;
+  padding: 10px;
+  border: 1px solid rgba(67, 183, 255, 0.2);
+  border-radius: 7px;
+  background: rgba(5, 31, 67, 0.58);
 }
 
-.paper-card {
-  display: flex;
-  padding: 12px;
-  gap: 15px;
-  background: rgba(255,255,255,0.01);
+.award-trophy {
+  width: 52px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: radial-gradient(circle, rgba(255, 174, 66, 0.38), rgba(4, 24, 52, 0.72));
+  font-size: 30px;
 }
 
-.paper-index {
-  font-size: 20px;
-  opacity: 0.6;
-}
-
-.paper-main {
-  flex-grow: 1;
-}
-
-.paper-main h4 {
-  font-size: 13px;
-  color: #fff;
-  margin: 0 0 4px 0;
-  line-height: 1.4;
-}
-
-.paper-main .authors, .paper-main .journal {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  margin-bottom: 2px;
-}
-
-.paper-main .journal strong {
-  color: #fff;
-}
-
-.paper-main .details {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  margin-top: 4px;
-}
-
-.tag-sci {
-  background: rgba(139,92,246,0.15);
-  color: #a78bfa;
-  padding: 1px 4px;
-  border-radius: 2px;
-  margin-right: 4px;
-}
-
-.paper-topics-row .chart-box {
-  padding: 14px;
-}
-
-.paper-topics-row h4 {
-  font-size: 12px;
-  color: #fff;
-  margin-bottom: 10px;
-}
-
-.tag-cloud {
+.award-show-card p {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  align-items: center;
-  padding: 10px;
+  gap: 6px;
+  margin: 7px 0 5px;
 }
 
-.cloud-tag {
-  color: var(--color-text-secondary);
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.04);
-  padding: 4px 10px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.2s;
+.award-show-card b {
+  float: right;
+  color: #a7c9e4;
+  font-weight: 500 !important;
 }
 
-.cloud-tag:hover {
-  color: #38bdf8;
-  border-color: var(--color-border-active);
-  background: rgba(0,168,255,0.05);
-}
-
-.cloud-tag.size-3 { font-size: 14px; font-weight: bold; color: #fff; }
-.cloud-tag.size-2 { font-size: 12px; color: #e2e8f0; }
-.cloud-tag.size-1 { font-size: 10px; }
-
-/* Subtab: Patents Page */
-.patents-summary-cards {
+.award-bottom-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
+  grid-template-columns: 220px 1fr;
+  gap: 10px;
+  margin-top: 10px;
 }
 
-.pat-sum-c {
-  background: rgba(255,255,255,0.01);
-  border: 1px solid rgba(255,255,255,0.04);
-  padding: 12px;
-  border-radius: 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.chart-mini-card {
+  min-height: 112px;
+  padding: 10px 12px;
+  border: 1px solid rgba(67, 183, 255, 0.18);
+  border-radius: 7px;
+  background: rgba(4, 25, 55, 0.56);
 }
 
-.pat-sum-c .val {
-  font-size: 18px;
-  font-weight: bold;
+.chart-mini-card h4 {
+  margin: 0 0 8px;
   color: #fff;
+  font-size: 13px;
 }
 
-.pat-sum-c .lbl {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  margin-top: 2px;
+.mini-donut {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  margin: 0 auto;
 }
 
-.patents-table-wrapper {
-  overflow-x: auto;
-  margin-bottom: 20px;
-}
-
-.patents-table {
+.mini-donut svg {
   width: 100%;
-  border-collapse: collapse;
-  font-size: 11px;
-  text-align: left;
+  height: 100%;
+  transform: rotate(-90deg);
 }
 
-.patents-table th {
-  padding: 8px;
-  color: var(--color-text-secondary);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  font-weight: normal;
+.donut-bg,
+.donut-a,
+.donut-b,
+.donut-c {
+  fill: none;
+  stroke-width: 16;
 }
 
-.patents-table td {
-  padding: 10px 8px;
-  border-bottom: 1px dashed rgba(255,255,255,0.03);
-  color: #fff;
+.donut-bg {
+  stroke: rgba(255, 255, 255, 0.06);
 }
 
-.status-tag {
-  font-size: 9px;
-  padding: 1px 5px;
-  border-radius: 2px;
+.donut-a {
+  stroke: #1f80ff;
 }
 
-.status-tag.orange-tag { background: rgba(245,158,11,0.15); color: #fbbf24; }
-.status-tag.green-tag { background: rgba(16,185,129,0.15); color: var(--status-online); }
-.status-tag.blue-tag { background: rgba(59,130,246,0.15); color: #60a5fa; }
-
-.patent-history-timeline-section h4 {
-  font-size: 12px;
-  color: #fff;
-  margin-bottom: 10px;
+.donut-b {
+  stroke: #6d4dff;
 }
 
-.patent-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  border-left: 1px solid rgba(255,255,255,0.08);
-  padding-left: 15px;
-  margin-left: 5px;
+.donut-c {
+  stroke: #22d3c4;
 }
 
-.timeline-step {
-  position: relative;
-}
-
-.timeline-step .dot {
+.mini-donut strong {
   position: absolute;
-  left: -19px;
-  top: 4px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-text-secondary);
-}
-
-.timeline-step .dot.green { background: var(--status-online); }
-.timeline-step .dot.blue { background: var(--status-info); }
-
-.timeline-step .content {
-  font-size: 11px;
-}
-
-.timeline-step .date {
-  font-size: 9px;
-  color: var(--color-text-secondary);
-}
-
-.timeline-step h5 {
-  font-size: 11px;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
   color: #fff;
-  margin: 2px 0;
+  font-size: 22px;
 }
 
-.timeline-step p {
-  color: var(--color-text-secondary);
+.mini-donut small {
+  display: block;
+  color: #8fb5d6;
   font-size: 10px;
 }
 
-/* Subtab: Trajectory Page */
-.milestones-overview {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
+.trend-svg {
+  width: 100%;
+  height: 112px;
 }
 
-.milestone-c {
-  flex: 1;
-  background: rgba(255,255,255,0.01);
-  padding: 10px;
-  border-radius: 6px;
-  display: flex;
-  justify-content: space-between;
+.trend-svg polyline,
+.growth-lines polyline {
+  fill: none;
+  stroke: #1f80ff;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px rgba(31, 128, 255, 0.65));
+}
+
+.trend-svg circle {
+  fill: #20d7ff;
+  stroke: #fff;
+  stroke-width: 1;
+}
+
+.trend-svg text,
+.growth-lines text {
+  fill: #9fc3df;
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+.paper-table-list {
+  border: 1px solid rgba(67, 183, 255, 0.18);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.paper-table-list article {
+  min-height: 40px;
+  display: grid;
+  grid-template-columns: 24px 1.25fr 1fr 72px;
   align-items: center;
-  font-size: 12px;
-  border: 1px solid rgba(255,255,255,0.04);
+  gap: 10px;
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(67, 183, 255, 0.14);
+  background: rgba(5, 28, 57, 0.42);
 }
 
-.milestone-c .num {
-  font-size: 15px;
-  font-weight: bold;
+.paper-table-list article:last-child {
+  border-bottom: 0;
+}
+
+.paper-table-list b {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  background: rgba(42, 162, 255, 0.46);
   color: #fff;
+  font-size: 11px;
 }
 
-.vertical-trajectory-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.trajectory-year-block .year-header {
-  font-size: 14px;
-  color: #38bdf8;
-  font-weight: bold;
-  margin-bottom: 10px;
-  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
-  padding-bottom: 4px;
-}
-
-.trajectory-year-block .events-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  border-left: 1px solid rgba(255,255,255,0.08);
-  padding-left: 20px;
+.paper-table-list time {
   margin-left: 10px;
+  color: #8fb5d6;
 }
 
-.traj-event-item {
-  position: relative;
+.paper-table-list em {
+  justify-self: end;
+  font-style: normal;
 }
 
-.traj-event-item .timeline-node {
-  position: absolute;
-  left: -25px;
-  top: 8px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #38bdf8;
-  border: 2px solid var(--bg-dark);
+.paper-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.82fr 0.9fr;
+  gap: 10px;
+  margin-top: 10px;
 }
 
-.traj-event-item .event-body {
-  padding: 12px;
-  background: rgba(255,255,255,0.01);
+.direction-bars-detail article {
+  display: grid;
+  grid-template-columns: 92px 1fr 38px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #9fc3df;
+  font-size: 11px;
 }
 
-.traj-event-item .date {
-  font-size: 10px;
-  color: #38bdf8;
+.direction-bars-detail i {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(12, 53, 93, 0.74);
 }
 
-.traj-event-item h5 {
-  font-size: 12px;
-  color: #fff;
+.direction-bars-detail em {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #34edc3, #1f80ff);
+}
+
+.keyword-panel div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.keyword-panel span {
+  border: 1px solid rgba(67, 183, 255, 0.25);
+  border-radius: 4px;
+  background: rgba(16, 77, 133, 0.45);
+  color: #a9ddff;
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+.patent-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.patent-card-grid article {
+  min-height: 70px;
+  display: grid;
+  grid-template-columns: 44px 1fr 16px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid rgba(67, 183, 255, 0.18);
+  border-radius: 7px;
+  background: rgba(5, 31, 67, 0.54);
+}
+
+.patent-card-grid article > b {
+  color: #8fb5d6;
+  font-size: 22px;
+}
+
+.patent-card-grid p {
   margin: 4px 0;
 }
 
-.traj-event-item p {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-  margin-bottom: 6px;
+.patent-card-grid p span {
+  margin-left: 8px;
 }
 
-.skills-learned {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+.ip-timeline {
+  margin-top: 10px;
 }
 
-.skills-learned .s-tag {
-  font-size: 9px;
-  background: rgba(16,185,129,0.08);
-  color: #34d399;
-  padding: 1px 5px;
-  border-radius: 3px;
-}
-
-/* Details Right Panel */
-.details-right-panel {
-  width: 250px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 16px;
-  flex-shrink: 0;
-  overflow-y: auto;
-}
-
-.right-section h4 {
-  font-size: 12px;
-  color: #fff;
-  font-weight: bold;
-  margin-bottom: 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  padding-bottom: 6px;
-}
-
-.rep-projects-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.rep-project-card {
-  padding: 10px;
-  background: rgba(255,255,255,0.01);
-}
-
-.rep-project-card h5 {
-  font-size: 11px;
-  color: #fff;
-  margin-bottom: 4px;
-}
-
-.rep-project-card .role {
-  font-size: 9px;
-  color: var(--color-text-secondary);
-  margin-bottom: 6px;
-}
-
-.rep-project-card .pct {
-  font-size: 9px;
-  color: var(--color-text-secondary);
-  float: right;
-  margin-top: 4px;
-}
-
-.right-section.scroll-y-section {
-  flex-grow: 1;
-  overflow-y: auto;
-}
-
-.milestones-timeline-simple {
-  border-left: 1px solid rgba(255,255,255,0.08);
-  padding-left: 12px;
-  margin-left: 4px;
-}
-
-.milestones-timeline-simple .timeline-item {
+.ip-line {
   position: relative;
-  margin-bottom: 12px;
-  font-size: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  padding-top: 28px;
 }
 
-.milestones-timeline-simple .timeline-item .date {
-  color: var(--color-text-secondary);
-  font-size: 8px;
+.ip-line::before {
+  content: "";
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 42px;
+  height: 2px;
+  background: linear-gradient(90deg, #1f80ff, #1f80ff 78%, transparent);
+  border-top: 1px dashed rgba(67, 183, 255, 0.34);
+}
+
+.ip-line article {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.ip-line i {
+  width: 15px;
+  height: 15px;
+  display: block;
+  margin: 0 auto 10px;
+  border-radius: 50%;
+  border: 2px solid #1f80ff;
+  background: #03101f;
+  box-shadow: 0 0 14px rgba(31, 128, 255, 0.7);
+}
+
+.ip-line strong,
+.ip-line span,
+.ip-line small {
   display: block;
 }
 
-.milestones-timeline-simple .timeline-item .bullet {
-  position: absolute;
-  left: -17px;
-  top: 10px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-text-secondary);
-}
-
-.milestones-timeline-simple .timeline-item .bullet.green { background: var(--status-online); }
-.milestones-timeline-simple .timeline-item .bullet.blue { background: var(--status-info); }
-.milestones-timeline-simple .timeline-item .bullet.orange { background: var(--status-busy); }
-
-.milestones-timeline-simple .timeline-item .title {
+.ip-line strong {
   color: #fff;
-  font-weight: bold;
 }
 
-.milestones-timeline-simple .timeline-item .desc {
-  color: var(--color-text-secondary);
-  line-height: 1.3;
+.ip-line span {
+  color: #9fc3df;
+  font-size: 11px;
 }
 
-.members-hall-container {
-  height: calc(100vh - 106px);
-  padding: 18px 22px;
+.growth-roadmap {
+  padding: 10px 12px;
+  border: 1px solid rgba(67, 183, 255, 0.18);
+  border-radius: 7px;
+  background: rgba(4, 25, 55, 0.5);
 }
 
-.main-members-view,
-.member-details-view {
-  gap: 22px;
-}
-
-.left-sidebar {
-  width: 330px;
-}
-
-.members-grid-container,
-.details-middle-panel,
-.details-left-panel,
-.details-right-panel {
-  padding: 20px;
-}
-
-.section-header h3,
-.sidebar-section h3,
-.radar-card h4,
-.ai-summary-card h4,
-.right-section h4 {
-  font-size: 15px;
-}
-
-.overview-card .label,
-.donut-legend,
-.direction-list,
-.filter-label,
-.member-meta .grade,
-.member-meta .stat-item,
-.info-list,
-.bio-text,
-.summary-para,
-.detail-project-card .desc,
-.paper-main .authors,
-.paper-main .journal,
-.paper-main .details {
-  font-size: 13px;
-}
-
-.overview-card .num,
-.member-meta .name,
-.profile-card .name {
-  font-size: 20px;
-}
-
-.filter-btn,
-.subtab-btn {
+.growth-roadmap h4 {
+  margin: 0 0 8px;
+  color: #fff;
   font-size: 14px;
-  padding: 8px 14px;
 }
 
-.members-grid {
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 18px;
+.road-years {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  margin-bottom: 8px;
+  color: #d9f3ff;
+  font-weight: 800;
+  text-align: center;
 }
 
-.member-card {
-  min-height: 198px;
+.road-years span {
+  position: relative;
 }
 
-.assoc-card .title,
-.detail-project-card h4,
-.award-detail-card h4,
-.paper-main h4,
-.traj-event-item h5 {
-  font-size: 15px;
+.road-years span::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #67d7ff;
+  box-shadow: 0 0 12px #1f80ff;
+}
+
+.road-card-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.road-card-row article {
+  min-height: 166px;
+  padding: 12px 10px 10px;
+  border: 1px solid rgba(67, 183, 255, 0.22);
+  border-radius: 7px;
+  background: linear-gradient(180deg, rgba(7, 42, 83, 0.62), rgba(3, 20, 45, 0.74));
+}
+
+.road-card-row i {
+  display: block;
+  color: #39c7ff;
+  font-style: normal;
+  font-size: 28px;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.road-card-row ul {
+  margin: 8px 0 0;
+  padding-left: 14px;
+}
+
+.road-card-row article > span {
+  display: block;
+  margin-top: 8px;
+  border-radius: 4px;
+  background: rgba(67, 183, 255, 0.14);
+  color: #b8dcf6;
+  font-size: 11px;
+  text-align: center;
+  padding: 3px 6px;
+}
+
+.growth-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.78fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.growth-lines svg {
+  width: 100%;
+  height: 120px;
+}
+
+.growth-lines .line-a {
+  stroke: #22d3ee;
+}
+
+.growth-lines .line-b {
+  stroke: #34edc3;
+}
+
+.growth-lines .line-c {
+  stroke: #8b5cf6;
+}
+
+@media (max-width: 1180px) {
+  .members-hall-container {
+    grid-template-columns: 260px 1fr;
+  }
+
+  .stage-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .direction-chips {
+    justify-content: flex-start;
+  }
+
+  .member-detail-page {
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: 30px minmax(0, 1fr) 112px;
+  }
+
+  .detail-right {
+    display: none;
+  }
+
+  .detail-bottom {
+    grid-column: 2 / 3;
+  }
 }
 </style>

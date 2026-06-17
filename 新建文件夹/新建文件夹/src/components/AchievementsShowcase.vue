@@ -1,1891 +1,1587 @@
 <template>
-  <div class="achievements-container">
-    <!-- Left Sidebar: Achievements Categories -->
-    <aside class="left-sidebar glass-panel font-num">
-      <div class="sidebar-header">
-        <h3>🏆 成果中心</h3>
-      </div>
-      <div class="nav-list">
-        <button 
-          v-for="cat in categories" 
-          :key="cat.id" 
-          class="nav-btn" 
-          :class="{ active: activeCategory === cat.id }"
-          @click="activeCategory = cat.id"
-        >
-          <span class="icon">{{ cat.icon }}</span>
-          <span class="lbl">{{ cat.label }}</span>
-        </button>
-      </div>
-
-      <!-- Quick Stats Widget -->
-      <div class="sidebar-footer-widget glass-panel">
-        <h5>运行动态</h5>
-        <div class="metric-row">
-          <span>附件奖项:</span>
-          <strong class="green-text">{{ awardsSummary.total }} 项</strong>
+  <div class="achievements-container cockpit-page font-num">
+    <aside class="achievement-sidebar glass-panel">
+      <h3>成果中心</h3>
+      <button
+        v-for="item in categories"
+        :key="item.id"
+        type="button"
+        class="side-nav"
+        :class="{ active: activeCategory === item.id }"
+        @click="activeCategory = item.id"
+      >
+        <span>{{ item.icon }}</span>
+        <b>{{ item.label }}</b>
+      </button>
+      <div class="side-cube">
+        <div class="side-mascot">
+          <span></span>
+          <img src="/assets/mascot-cutout.png" alt="智小喵" draggable="false" />
         </div>
-        <div class="metric-row">
-          <span>产权附件:</span>
-          <strong class="orange-text">{{ patentsList.length }} 项</strong>
-        </div>
+        <p>数据更新：5分钟前</p>
       </div>
     </aside>
 
-    <!-- Main Content Area based on Selected Tab -->
-    <main class="main-content-panel glass-panel">
-      <!-- 1. 成果总览 SUBPAGE -->
-      <div v-if="activeCategory === 'overview'" class="tab-pane-overview font-num">
-        <!-- Top Metrics Cards -->
-        <div class="overview-stats-grid">
-          <div class="stat-card" v-for="stat in overviewStats" :key="stat.label" :class="stat.class">
-            <span class="icon">{{ stat.icon }}</span>
-            <div class="txt">
-              <span class="val">{{ stat.val }}</span>
-              <span class="lbl">{{ stat.label }}</span>
+    <main class="achievement-workspace">
+      <section v-if="activeCategory === 'overview'" class="overview-page">
+        <div class="metric-strip">
+          <article v-for="stat in overviewCards" :key="stat.label" class="metric-card glass-panel">
+            <div class="metric-icon" :class="stat.class">
+              <img v-if="stat.image" :src="stat.image" :alt="stat.label" />
+              <span v-else>{{ stat.icon }}</span>
             </div>
-          </div>
+            <div>
+              <span>{{ stat.label }}</span>
+              <strong>{{ stat.value }}</strong>
+              <small>较上月 ↑ {{ stat.delta }}</small>
+            </div>
+          </article>
         </div>
 
-        <div class="overview-body-grid">
-          <!-- Left: Charts & Graphs -->
-          <div class="left-charts-col">
-            <!-- Classification Share (Donut SVG) -->
-            <div class="chart-box glass-panel">
-              <h4>成果分类占比</h4>
-              <div class="donut-chart-wrapper">
-                <svg viewBox="0 0 100 100" class="donut-svg">
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.03)" stroke-width="12"></circle>
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#10b981" stroke-width="12" :stroke-dasharray="donutSegment(achievementSummary.patents)" stroke-dashoffset="0" transform="rotate(-90 50 50)"></circle>
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#fbbf24" stroke-width="12" :stroke-dasharray="donutSegment(achievementSummary.awards)" :stroke-dashoffset="donutOffset(achievementSummary.patents)" transform="rotate(-90 50 50)"></circle>
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="#8b5cf6" stroke-width="12" :stroke-dasharray="donutSegment(achievementSummary.projects)" :stroke-dashoffset="donutOffset(achievementSummary.patents + achievementSummary.awards)" transform="rotate(-90 50 50)"></circle>
+        <div class="overview-layout">
+          <section class="overview-left glass-panel">
+            <h4>成果分类概览</h4>
+            <div class="donut-row">
+              <div class="big-donut">
+                <svg viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="44" class="donut-bg" />
+                  <circle cx="60" cy="60" r="44" class="donut-paper" :stroke-dasharray="donutPart(papers.length)" />
+                  <circle cx="60" cy="60" r="44" class="donut-patent" :stroke-dasharray="donutPart(patents.length)" :stroke-dashoffset="donutOffset(papers.length)" />
+                  <circle cx="60" cy="60" r="44" class="donut-award" :stroke-dasharray="donutPart(awards.length)" :stroke-dashoffset="donutOffset(papers.length + patents.length)" />
+                  <circle cx="60" cy="60" r="44" class="donut-project" :stroke-dasharray="donutPart(projects.length)" :stroke-dashoffset="donutOffset(papers.length + patents.length + awards.length)" />
                 </svg>
-                <div class="donut-center-txt">
-                  <span class="num">{{ achievementSummary.total }}</span>
-                  <span class="lbl">成果总量</span>
-                </div>
+                <div><strong>{{ summary.total }}</strong><span>总计</span></div>
               </div>
-              <div class="legend-list">
-                <div class="legend-item"><span class="bullet" style="background:#10b981"></span> 专利软著: {{ achievementSummary.patents }}项 ({{ achievementPercent(achievementSummary.patents) }}%)</div>
-                <div class="legend-item"><span class="bullet" style="background:#fbbf24"></span> 竞赛获奖: {{ achievementSummary.awards }}项 ({{ achievementPercent(achievementSummary.awards) }}%)</div>
-                <div class="legend-item"><span class="bullet" style="background:#8b5cf6"></span> 项目成果: {{ achievementSummary.projects }}项 ({{ achievementPercent(achievementSummary.projects) }}%)</div>
+              <div class="donut-legend">
+                <span><i class="blue"></i>论文成果 {{ papers.length }}</span>
+                <span><i class="green"></i>专利软著 {{ patents.length }}</span>
+                <span><i class="orange"></i>竞赛获奖 {{ awards.length }}</span>
+                <span><i class="purple"></i>项目成果 {{ projects.length }}</span>
               </div>
             </div>
+            <h4>类别趋势（近6个月）</h4>
+            <svg class="trend-chart" viewBox="0 0 300 150">
+              <polyline class="line blue" points="12,104 66,92 120,88 174,70 228,68 286,48" />
+              <polyline class="line green" points="12,118 66,106 120,98 174,84 228,76 286,60" />
+              <polyline class="line orange" points="12,128 66,118 120,108 174,98 228,90 286,78" />
+              <polyline class="line purple" points="12,136 66,132 120,126 174,118 228,114 286,106" />
+              <g v-for="(m, index) in ['12月','1月','2月','3月','4月','5月']" :key="m">
+                <text :x="12 + index * 54" y="145">{{ m }}</text>
+              </g>
+            </svg>
+          </section>
 
-            <!-- Growth Trend (SVG Line) -->
-            <div class="chart-box glass-panel">
-              <h4>成果季度增长趋势</h4>
-              <div class="line-chart-wrapper">
-                <svg viewBox="0 0 100 40" class="line-svg">
-                  <!-- Grid lines -->
-                  <line x1="0" y1="10" x2="100" y2="10" stroke="rgba(255,255,255,0.03)" stroke-width="0.5" />
-                  <line x1="0" y1="20" x2="100" y2="20" stroke="rgba(255,255,255,0.03)" stroke-width="0.5" />
-                  <line x1="0" y1="30" x2="100" y2="30" stroke="rgba(255,255,255,0.03)" stroke-width="0.5" />
-                  
-                  <!-- Area path under line -->
-                  <path d="M 0,38 L 20,32 L 40,24 L 60,18 L 80,12 L 100,6 L 100,38 Z" fill="rgba(56, 189, 248, 0.08)" />
-                  <!-- Trend line -->
-                  <path d="M 0,38 L 20,32 L 40,24 L 60,18 L 80,12 L 100,6" fill="none" stroke="#38bdf8" stroke-width="1.5" />
-                  
-                  <!-- Dots -->
-                  <circle cx="20" cy="32" r="1.5" fill="#38bdf8" />
-                  <circle cx="40" cy="24" r="1.5" fill="#38bdf8" />
-                  <circle cx="60" cy="18" r="1.5" fill="#38bdf8" />
-                  <circle cx="80" cy="12" r="1.5" fill="#38bdf8" />
-                  <circle cx="100" cy="6" r="1.5" fill="#38bdf8" />
-                </svg>
-                <div class="axis-labels">
-                  <span>25-Q1</span>
-                  <span>25-Q2</span>
-                  <span>25-Q3</span>
-                  <span>25-Q4</span>
-                  <span>26-Q1</span>
+          <section class="overview-feature-grid">
+            <article class="feature-card glass-panel" @click="openDetail('论文成果', featuredPaper)">
+              <header><h4>最新论文</h4><button type="button" @click.stop="activeCategory = 'papers'">更多 ›</button></header>
+              <div class="paper-preview">
+                <div>
+                  <strong>{{ featuredPaper.title }}</strong>
+                  <p>{{ featuredPaper.journal }}</p>
                 </div>
               </div>
-            </div>
+              <small>发表期刊：{{ featuredPaper.source }}</small>
+              <span class="status green">已录用</span>
+            </article>
+
+            <article class="feature-card glass-panel" @click="openDetail('产权成果', featuredPatent)">
+              <header><h4>最新专利/软著</h4><button type="button" @click.stop="activeCategory = 'patents'">更多 ›</button></header>
+              <div class="double-cert">
+                <img v-if="featuredPatent.image" :src="featuredPatent.image" :alt="featuredPatent.name" />
+                <img v-if="secondPatent.image" :src="secondPatent.image" :alt="secondPatent.name" />
+                <span v-if="!featuredPatent.image">证书附件</span>
+              </div>
+              <strong>{{ featuredPatent.name }}</strong>
+              <span class="status green">{{ featuredPatent.status || '已登记' }}</span>
+            </article>
+
+            <article class="feature-card glass-panel" @click="openDetail('获奖成果', featuredAward)">
+              <header><h4>最新竞赛成果</h4><button type="button" @click.stop="activeCategory = 'awards'">更多 ›</button></header>
+              <img v-if="featuredAward.image" class="wide-img" :src="featuredAward.image" :alt="featuredAward.name" />
+              <strong>{{ featuredAward.name }}</strong>
+              <span class="status orange">已获奖</span>
+            </article>
+
+            <article class="feature-card glass-panel" @click="openDetail('项目成果', featuredProject)">
+              <header><h4>最新项目成果</h4><button type="button" @click.stop="activeCategory = 'projects'">更多 ›</button></header>
+              <img v-if="featuredProject.cover" class="wide-img" :src="featuredProject.cover" :alt="featuredProject.title" />
+              <strong>{{ featuredProject.title }}</strong>
+              <span class="status green">已上线</span>
+            </article>
+          </section>
+
+          <section class="latest-panel glass-panel">
+            <header><h4>最新成果动态</h4></header>
+            <article v-for="item in latestLogs" :key="item.title" @click="openDetail(item.type, item)">
+              <i :class="item.class">{{ item.icon }}</i>
+              <div>
+                <strong>{{ item.title }}</strong>
+                <p>{{ item.type }}　{{ item.date }}</p>
+              </div>
+              <span :class="['status', item.class]">{{ item.state }}</span>
+            </article>
+          </section>
+        </div>
+      </section>
+
+      <section v-else-if="activeCategory === 'projects'" class="category-page projects-page">
+        <header class="category-head">
+          <div><h2>项目成果</h2><p>从不同方向展示实验室项目产出与落地应用成果</p></div>
+          <select v-model="selectedDirection"><option v-for="direction in directions" :key="direction.value" :value="direction.value">{{ direction.label }}</option></select>
+        </header>
+        <div class="project-layout">
+          <div class="project-cards">
+            <article v-for="project in filteredProjects.slice(0, 6)" :key="project.id" class="project-card glass-panel" @click="openDetail('项目成果', project)">
+              <img v-if="project.cover" :src="project.cover" :alt="project.title" />
+              <div v-else class="empty-cover">项目附件</div>
+              <h4>{{ project.title }}</h4>
+              <p>{{ project.desc }}</p>
+              <div class="card-foot">
+                <span v-for="member in project.members.slice(0, 4)" :key="member">{{ member.slice(0, 1) }}</span>
+                <b>🏆 {{ project.awardsCount }}</b>
+                <b>📄 {{ project.patentsCount }}</b>
+              </div>
+            </article>
           </div>
-
-          <!-- Middle: Latest Representative Achievements -->
-          <div class="mid-cards-col">
-            <div class="glass-panel main-rec-box">
-              <h4>最新代表性成果</h4>
-              <div class="latest-cards-list">
-                <!-- 1. Patent -->
-                <div class="latest-c-card" @click="activeCategory = 'patents'">
-                  <div class="icon-tag patent">💡 专利</div>
-                  <div class="info">
-                    <h5>{{ featuredPatent.name }}</h5>
-                    <p class="desc">{{ featuredPatent.type }} · {{ featuredPatent.code }} · {{ featuredPatent.status }}</p>
-                  </div>
-                  <span class="date">{{ featuredPatent.date }}</span>
-                </div>
-
-                <!-- 2. Award -->
-                <div class="latest-c-card" @click="activeCategory = 'awards'">
-                  <div class="icon-tag award">🏆 奖项</div>
-                  <div class="info">
-                    <h5>{{ featuredAward.name }}</h5>
-                    <p class="desc">{{ featuredAward.level }} · 参赛成员：{{ featuredAward.team }}</p>
-                  </div>
-                  <span class="date">{{ featuredAward.date }}</span>
-                </div>
-
-                <!-- 3. Project -->
-                <div class="latest-c-card" @click="activeCategory = 'projects'">
-                  <div class="icon-tag project">📁 项目</div>
-                  <div class="info">
-                    <h5>{{ featuredProject.title }}</h5>
-                    <p class="desc">来源：实验室竞赛成果_附件 · 关联 {{ featuredProject.patentsCount }} 项产权</p>
-                  </div>
-                  <span class="date">附件归档</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right: Real-time update logs -->
-          <div class="right-logs-col">
-            <section class="glass-panel logs-box scroll-y">
-              <h4>最新成果动态</h4>
-              <div class="timeline-logs font-num">
-                <div class="log-item" v-for="log in latestLogs" :key="log.time">
-                  <span class="time">{{ log.time }}</span>
-                  <span class="bullet" :class="log.class"></span>
-                  <p class="txt"><strong>{{ log.user }}</strong> {{ log.action }} <span class="text-highlight">《{{ log.title }}》</span></p>
-                </div>
+          <aside class="right-stack">
+            <section class="glass-panel stats-box">
+              <header><h4>项目成果统计</h4></header>
+              <div class="project-stat-grid scroll-container">
+                <article v-for="dir in directionCounts" :key="dir.name"><i>▣</i><strong>{{ dir.count }}</strong><span>{{ dir.name }}</span></article>
               </div>
             </section>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- 2. 项目成果 SUBPAGE -->
-      <div v-else-if="activeCategory === 'projects'" class="tab-pane-projects font-num">
-        <div class="projects-content-wrapper">
-          <div class="main-projects-list">
-            <!-- Search & Filters -->
-            <div class="filter-top-bar">
-              <div class="filter-group">
-                <span class="lbl">方向筛选:</span>
-                <button 
-                  v-for="dir in projectDirections" 
-                  :key="dir.value"
-                  class="filter-btn"
-                  :class="{ active: selectedProjDir === dir.value }"
-                  @click="selectedProjDir = dir.value"
-                >
-                  {{ dir.label }}
-                </button>
+            <section class="glass-panel relation-box">
+              <header><h4>项目成果关联</h4></header>
+              <div class="relation-orbit">
+                <span>项目成果</span>
+                <i class="top">奖项成果<br>{{ awards.length }}项</i>
+                <i class="left">成果展厅<br>{{ projects.length }}项</i>
+                <i class="right">论文成果<br>{{ papers.length }}篇</i>
+                <i class="bottom">知识产权<br>{{ patents.length }}项</i>
               </div>
-            </div>
-
-            <!-- Projects List -->
-            <div class="projects-cards-scroll scroll-container">
-              <div class="projects-list-view">
-                <div class="proj-list-row certificate-layout-row glass-panel" v-for="proj in filteredProjects" :key="proj.title">
-                  <aside class="certificate-side">
-                    <span class="direction-badge static">{{ proj.direction }}</span>
-                    <div class="certificate-side-stats">
-                      <span>产权 {{ proj.patents }}</span>
-                      <span>奖项 {{ proj.awards }}</span>
-                    </div>
-                    <a
-                      v-if="proj.pdfUrl"
-                      class="pdf-open-link"
-                      :href="proj.pdfUrl"
-                      target="_blank"
-                      rel="noopener"
-                    >
-                      打开PDF附件
-                    </a>
-                  </aside>
-                  <div class="cover-image-container">
-                    <img v-if="proj.cover" :src="proj.cover" class="cover-img" alt="项目图" loading="lazy" decoding="async" />
-                    <div v-else class="project-no-image">PDF 附件</div>
-                  </div>
-                  <div class="proj-meta">
-                    <h4>{{ proj.title }}</h4>
-                    <p class="desc">{{ proj.desc }}</p>
-                    <div class="team-row">
-                      <span>成员:</span>
-                      <span class="member" v-for="m in proj.members" :key="m">👤 {{ m }}</span>
-                    </div>
-                    <div class="assoc-stats-row">
-                      <span>💡 产权: <strong>{{ proj.patents }}</strong></span>
-                      <span>🏆 奖项: <strong>{{ proj.awards }}</strong></span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right: Project Stats & AI Query -->
-          <aside class="projects-right-sidebar">
-            <div class="chart-box glass-panel">
-              <h4>项目分类统计</h4>
-              <div class="simple-bar-chart">
-                <div class="chart-bar-item" v-for="c in projectDirectionCounts" :key="c.name">
-                  <div class="lbl-row">
-                    <span>{{ c.name }}</span>
-                    <span>{{ c.count }}个</span>
-                  </div>
-                  <div class="progress-bar-container">
-                    <div class="progress-fill" :style="{ width: projectDirectionBarWidth(c.count) }"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- AI Assistant Shortcut -->
-            <div class="ai-query-box glass-panel">
-              <div class="header">
-                <span class="icon">🐱</span>
-                <h5>小喵成果助手</h5>
-              </div>
-              <p class="desc">有什么关于项目成果想知道的？问小喵：</p>
-              <ul class="questions">
-                <li>• 哪些项目成果已经在公安实战落地？</li>
-                <li>• 智能硬件方向有几个已结项的项目？</li>
-              </ul>
-              <button class="btn-ask-ai">询问小喵 →</button>
-            </div>
+            </section>
+            <section class="glass-panel assistant-box"><b>AI助手</b><p>可以为你推荐相关项目成果、统计分布趋势、生成成果报表。</p><button type="button">问问小喵</button></section>
           </aside>
         </div>
-      </div>
+      </section>
 
-      <!-- 3. 奖项成果 SUBPAGE -->
-      <div v-else-if="activeCategory === 'awards'" class="tab-pane-awards font-num">
-        <div class="awards-body-grid">
-          <!-- Left: Big Featured Award -->
-          <div class="featured-award-col">
-            <div class="glass-panel featured-award-card">
-              <div class="badge-tag">🏆 重点成果展示</div>
-              <div class="image-box">
-                <img :src="displayedAward.image || featuredProject.cover" alt="获奖证书" class="featured-img" style="opacity: 1; object-fit: contain; background-color:#0d1d40;" />
-                <div class="img-overlay">
-                  <h4>{{ displayedAward.name }}</h4>
-                  <span class="rank">{{ displayedAward.level }}</span>
-                </div>
-              </div>
-              <div class="details">
-                <p class="title"><strong>获奖项目:</strong> {{ featuredProject.title }}</p>
-                <p class="team"><strong>参赛成员:</strong> {{ displayedAward.team }}</p>
-                <p class="mentor"><strong>指导教师:</strong> {{ displayedAward.mentor }}</p>
-                <p class="desc">
-                  {{ displayedAward.sourceFile || featuredProject.desc }}
-                </p>
-                <a
-                  v-if="displayedAward.pdfUrl"
-                  class="pdf-open-link featured-pdf-link"
-                  :href="displayedAward.pdfUrl"
-                  target="_blank"
-                  rel="noopener"
-                >
-                  打开PDF附件
-                </a>
-              </div>
+      <section v-else-if="activeCategory === 'awards'" class="category-page awards-page">
+        <div class="award-metrics">
+          <article v-for="stat in awardCards" :key="stat.label" class="metric-card glass-panel">
+            <div class="metric-icon" :class="stat.class">
+              <img v-if="stat.image" :src="stat.image" :alt="stat.label" />
+              <span v-else>{{ stat.icon }}</span>
             </div>
-          </div>
-
-          <!-- Right: List of other awards & Pie Stats -->
-          <div class="other-awards-col">
-            <div class="stats-top-row">
-              <div class="sum-card">
-                <span class="num">{{ awardsSummary.total }} <small>项</small></span>
-                <span class="lbl">累计奖项</span>
-              </div>
-              <div class="sum-card">
-                <span class="num">{{ awardsSummary.nationalFirst }} <small>项</small></span>
-                <span class="lbl">国家一等奖</span>
-              </div>
+            <div>
+              <span>{{ stat.label }}</span>
+              <strong>{{ stat.value }}</strong>
+              <small>较上月 ↑ {{ stat.delta }}</small>
             </div>
-
-            <div class="awards-list-box glass-panel">
-              <h4>竞赛获奖列表</h4>
-              <div class="awards-scroll scroll-container">
-                <div
-                  class="award-row-card glass-panel"
-                  v-for="aw in awardsList"
-                  :key="aw.id || aw.name"
-                  :class="{ active: activeAwardKey === (aw.id || aw.name) }"
-                  @click="selectedAward = aw"
-                >
-                  <span class="medal">🥇</span>
-                  <div class="award-thumb-wrap">
-                    <img v-if="aw.image" :src="aw.image" :alt="aw.name" class="award-thumb-img" loading="lazy" decoding="async" />
-                    <span v-else class="no-thumb">PDF</span>
-                  </div>
-                  <div class="txt">
-                    <h5>{{ aw.name }}</h5>
-                    <p class="lvl">{{ aw.level }} · 主办单位: {{ aw.host }}</p>
-                    <p class="team">成员: {{ aw.team }} · 指导: {{ aw.mentor }}</p>
-                    <a
-                      v-if="aw.pdfUrl"
-                      class="pdf-open-link award-pdf-link"
-                      :href="aw.pdfUrl"
-                      target="_blank"
-                      rel="noopener"
-                      @click.stop
-                    >
-                      打开PDF
-                    </a>
-                  </div>
-                  <span class="date">{{ aw.date }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          </article>
         </div>
-      </div>
-
-      <!-- 4. 产权成果 SUBPAGE -->
-      <div v-else-if="activeCategory === 'patents'" class="tab-pane-patents font-num">
-        <div class="patents-grid-layout">
-          <!-- Left: Big Patent Certificate Card -->
-          <div class="cert-col">
-            <div class="glass-panel cert-card">
-              <div class="cert-header">💡 代表性知识产权</div>
-              <div class="cert-image-preview">
-                <img v-if="displayedPatent.image" :src="displayedPatent.image" alt="知识产权附件" class="cert-real-img" decoding="async" />
-                <div v-else class="cert-no-image">附件暂无图片</div>
-                <div class="badge-stamp">已授权</div>
-                <span class="cert-title">{{ displayedPatent.type }}</span>
-                <span class="pat-name">《{{ displayedPatent.name }}》</span>
+        <div class="award-layout-main">
+          <section class="award-feature glass-panel">
+            <header><h3>{{ featuredAward.name }}</h3></header>
+            <div class="award-detail-row">
+              <div class="award-showcase">
+                <img v-if="featuredAward.image" class="cert-main" :src="featuredAward.image" :alt="featuredAward.name" />
+                <div v-else class="award-placeholder">证书附件</div>
               </div>
-              <ul class="meta-details">
-                <li><span>专利类型:</span> <strong>{{ displayedPatent.type }}</strong></li>
-                <li><span>申请号:</span> <strong>{{ displayedPatent.code }}</strong></li>
-                <li><span>授权公告号:</span> <strong>{{ displayedPatent.status }}</strong></li>
-                <li><span>专利权人:</span> <strong>智慧实验室</strong></li>
-                <li><span>第一发明人:</span> <strong>{{ displayedPatent.role }}</strong></li>
-                <li><span>关联项目:</span> <strong>{{ featuredProject.title }}</strong></li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- Right: List / Table of Patents -->
-          <div class="table-col">
-            <div class="table-actions-row">
-              <h3>知识产权台账</h3>
-              <div class="actions font-num">
-                <select class="select-year"><option>2026年</option><option>2025年</option></select>
-                <button class="btn-export">📥 导出数据</button>
+              <div class="award-info">
+                <p><b>比赛名称</b><span>{{ featuredAward.name }}</span></p>
+                <p><b>获奖项目</b><span>{{ featuredProject.title }}</span></p>
+                <p><b>参赛成员</b><span>{{ featuredAward.team }}</span></p>
+                <p><b>获奖等级</b><span>{{ featuredAward.level }}</span></p>
+                <p><b>获奖时间</b><span>{{ featuredAward.date || '附件归档' }}</span></p>
               </div>
             </div>
-
-            <div class="table-box glass-panel scroll-container">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>附件图</th>
-                    <th>产权名称</th>
-                    <th>类型</th>
-                    <th>编号/登记号</th>
-                    <th>来源</th>
-                    <th>当前状态</th>
-                    <th>角色</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="pat in patentsList"
-                    :key="pat.name"
-                    :class="{ active: displayedPatent.name === pat.name }"
-                    @click="selectedPatent = pat"
-                  >
-                    <td>
-                      <img v-if="pat.image" :src="pat.image" :alt="pat.name" class="patent-thumb-img" loading="lazy" decoding="async" />
-                      <span v-else class="no-thumb compact">无图</span>
-                    </td>
-                    <td class="text-highlight">{{ pat.name }}</td>
-                    <td>{{ pat.type }}</td>
-                    <td>{{ pat.code }}</td>
-                    <td>{{ pat.date }}</td>
-                    <td><span class="status-tag" :class="pat.statusClass">{{ pat.status }}</span></td>
-                    <td><strong>{{ pat.role }}</strong></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+          </section>
+          <aside class="award-side scroll-container">
+            <section class="glass-panel donut-box"><h4>奖项级别统计</h4><div class="small-donut"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="42" class="donut-bg" /><circle cx="60" cy="60" r="42" class="donut-award" stroke-dasharray="98 260" /><circle cx="60" cy="60" r="42" class="donut-paper" stroke-dasharray="86 260" stroke-dashoffset="-98" /><circle cx="60" cy="60" r="42" class="donut-project" stroke-dasharray="76 260" stroke-dashoffset="-184" /></svg><strong>{{ awards.length }}</strong></div></section>
+            <section class="glass-panel table-box"><h4>竞赛成果列表</h4><div class="award-list-scroll scroll-container"><table><tbody><tr v-for="award in awards" :key="award.name" @click="openDetail('获奖成果', award)"><td>{{ award.name }}</td><td>{{ award.level }}</td><td>{{ award.date || '归档' }}</td><td><span class="status green">已获奖</span></td></tr></tbody></table></div></section>
+          </aside>
         </div>
-      </div>
+      </section>
 
+      <section v-else-if="activeCategory === 'patents'" class="category-page patents-page">
+        <header class="category-head"><div><h2>产权成果总览</h2><p>展示实验室在专利、软著、商标等产权方面的成果与分布情况</p></div><button type="button">导出数据</button></header>
+        <div class="patent-metrics">
+          <article v-for="stat in patentCards" :key="stat.label" class="metric-card glass-panel">
+            <div class="metric-icon" :class="stat.class">
+              <img v-if="stat.image" :src="stat.image" :alt="stat.label" />
+              <span v-else>{{ stat.icon }}</span>
+            </div>
+            <div>
+              <span>{{ stat.label }}</span>
+              <strong>{{ stat.value }}</strong>
+              <small>较上月 ↑ {{ stat.delta }}</small>
+            </div>
+          </article>
+        </div>
+        <div class="patent-main-grid">
+          <section class="glass-panel cert-display">
+            <h4>证书展示 / 代表成果展示</h4>
+            <div class="cert-body">
+              <img v-if="featuredPatent.image" :src="featuredPatent.image" :alt="featuredPatent.name" />
+              <div class="cert-info">
+                <span class="status green">{{ featuredPatent.status || '已登记' }}</span>
+                <p><b>成果名称</b>{{ featuredPatent.name }}</p>
+                <p><b>成果类型</b>{{ featuredPatent.type }}</p>
+                <p><b>登记号/专利号</b>{{ featuredPatent.code }}</p>
+                <p><b>权利人/作者</b>{{ featuredPatent.role }}</p>
+              </div>
+            </div>
+          </section>
+          <section class="glass-panel patent-list"><h4>知识产权成果列表</h4><div class="patent-list-scroll scroll-container"><table><thead><tr><th>成果名称</th><th>类型</th><th>编号</th><th>时间</th><th>状态</th></tr></thead><tbody><tr v-for="patent in patents.slice(0, 8)" :key="patent.name" @click="openDetail('产权成果', patent)"><td>{{ patent.name }}</td><td>{{ patent.type }}</td><td>{{ patent.code }}</td><td>{{ patent.date }}</td><td><span class="status green">{{ patent.status }}</span></td></tr></tbody></table></div></section>
+        </div>
+      </section>
+
+      <section v-else class="category-page papers-page">
+        <header class="category-head"><div><h2>论文成果总览</h2><p>展示实验室各类期刊、会议上发表的论文成果与分布情况</p></div><button type="button">导出数据</button></header>
+        <div class="paper-metrics">
+          <article v-for="stat in paperCards" :key="stat.label" class="metric-card glass-panel">
+            <div class="metric-icon" :class="stat.class">
+              <img v-if="stat.image" :src="stat.image" :alt="stat.label" />
+              <span v-else>{{ stat.icon }}</span>
+            </div>
+            <div>
+              <span>{{ stat.label }}</span>
+              <strong>{{ stat.value }}</strong>
+              <small>较上月 ↑ {{ stat.delta }}</small>
+            </div>
+          </article>
+        </div>
+        <div class="paper-main-grid">
+          <aside class="paper-left">
+            <section class="glass-panel"><h4>论文类别分布</h4><div class="small-donut"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="42" class="donut-bg" /><circle cx="60" cy="60" r="42" class="donut-paper" stroke-dasharray="104 260" /><circle cx="60" cy="60" r="42" class="donut-patent" stroke-dasharray="78 260" stroke-dashoffset="-104" /><circle cx="60" cy="60" r="42" class="donut-project" stroke-dasharray="52 260" stroke-dashoffset="-182" /></svg><strong>{{ papers.length }}</strong></div></section>
+            <section class="glass-panel bars-box"><h4>研究主题分布</h4><article v-for="topic in paperTopics" :key="topic.name"><span>{{ topic.name }}</span><i><em :style="{ width: topic.value + '%' }"></em></i><b>{{ topic.count }}</b></article></section>
+          </aside>
+          <section class="glass-panel paper-feature"><h4>最新论文 / 代表论文展示</h4><div class="paper-doc"><strong>{{ featuredPaper.title }}</strong><p>{{ featuredPaper.abstract }}</p></div></section>
+          <section class="glass-panel paper-table"><h4>论文成果列表</h4><div class="paper-table-scroll scroll-container"><table><thead><tr><th>论文题目</th><th>第一作者</th><th>类型</th><th>分区</th><th>发表时间</th><th>状态</th></tr></thead><tbody><tr v-for="paper in papers" :key="paper.title" @click="openDetail('论文成果', paper)"><td>{{ paper.title }}</td><td>{{ paper.author }}</td><td>{{ paper.type }}</td><td>{{ paper.zone }}</td><td>{{ paper.date }}</td><td><span class="status blue">已发表</span></td></tr></tbody></table></div></section>
+        </div>
+      </section>
     </main>
+
+    <footer class="achievement-footer glass-panel">
+      <span>快捷入口 ›</span><span>最近访问：公安智慧教育训练平台</span><span>智能警情研判分析平台</span><span>实验室数字中枢</span><span>使用指南</span><span>数据中心</span><span>权限管理</span><b>系统运行状态：● 正常运行</b>
+    </footer>
+
+    <div v-if="detailResult" class="detail-dialog-overlay" @click="detailResult = null">
+      <section class="result-dialog glass-panel" @click.stop>
+        <button type="button" class="dialog-close" @click="detailResult = null">×</button>
+        <h3>成果详情</h3>
+        <div class="dialog-body">
+          <div class="dialog-media">
+            <img v-if="detailImage" :src="detailImage" :alt="detailTitle" />
+            <span v-else>{{ detailType }}</span>
+            <small>⌕ 点击预览大图</small>
+          </div>
+          <div class="dialog-info">
+            <p><span>成果名称</span><strong>{{ detailTitle }}</strong></p>
+            <p><span>成果类型</span><strong>{{ detailType }}</strong></p>
+            <p><span>当前状态</span><strong class="green-text">{{ detailResult.status || detailResult.state || '已归档' }}</strong></p>
+            <p><span>成果时间</span><strong>{{ detailResult.date || detailResult.timeline || '附件归档' }}</strong></p>
+            <p><span>来源项目</span><strong>{{ detailResult.direction || detailResult.host || detailResult.source || '实验室成果附件' }}</strong></p>
+            <p><span>关联成员</span><strong>{{ detailMembers }}</strong></p>
+          </div>
+        </div>
+        <section class="dialog-desc">
+          <h4>成果简介</h4>
+          <p>{{ detailDesc }}</p>
+        </section>
+        <div class="dialog-actions">
+          <button type="button">查看来源项目</button>
+          <button type="button">查看附件</button>
+          <button type="button" @click="detailResult = null">关闭</button>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { fetchLabApi } from './labDataApi';
 import {
+  getDirectionCounts,
+  realAchievementProjects,
   realAwardsList,
   realPatentsList,
-  realAchievementProjects,
-  realProjectDirections,
-  getDirectionCounts,
-  getOverviewStats
+  realProjectDirections
 } from './labAchievementData';
 
+const awards = ref(realAwardsList);
+const patents = ref(realPatentsList);
+const projects = ref(realAchievementProjects);
+const directions = ref(realProjectDirections);
 const activeCategory = ref('overview');
-const selectedProjDir = ref('all');
-const selectedAward = ref(null);
-const selectedPatent = ref(null);
+const selectedDirection = ref('all');
+const detailResult = ref(null);
+const detailType = ref('');
 
-const categories = [
-  { id: 'overview', label: '成果总览', icon: '📊' },
-  { id: 'projects', label: '项目成果', icon: '📁' },
-  { id: 'awards', label: '奖项成果', icon: '🏆' },
-  { id: 'patents', label: '产权成果', icon: '💡' }
-];
+const papers = ref([
+  { title: 'Multimodal Perception and Optimization for Intelligent Collaborative Management in Smart Laboratories', author: '李浩', type: 'SCI', zone: '一区', date: '2026-04', source: 'IEEE Transactions on Industrial Informatics', journal: 'IEEE TII', status: '已发表', abstract: '围绕智能实验室多模态感知、协同优化与资源调度开展研究，支撑实验室运行数据的智能化管理。' },
+  { title: '基于数字孪生的实验室设备状态感知与预测维护方法', author: '王欣宇', type: 'EI', zone: '核心', date: '2026-03', source: 'Computers & Education', journal: 'C&E', status: '已发表', abstract: '结合设备运行数据和孪生建模方法，实现实验室设备状态预测和维护策略优化。' },
+  { title: '实验室安全生命网智能联系统设计与实现', author: '赵明辉', type: '核心', zone: '核心', date: '2026-02', source: 'IEEE Access', journal: 'IEEE Access', status: '已发表', abstract: '构建面向实验室安全的多源感知与智能预警系统，提高安全监测与响应效率。' },
+  { title: '基于知识图谱的实验室知识管理系统构建', author: '刘宇辰', type: 'SCI', zone: '二区', date: '2025-12', source: 'Pattern Recognition', journal: 'PR', status: '已发表', abstract: '面向科研成果、项目和成员画像，构建实验室知识图谱和关联检索能力。' },
+  { title: '面向科研实验室的说明图像处理与应用研究', author: '张蕾', type: '会议论文', zone: '-', date: '2025-11', source: 'AAAI 2025', journal: 'AAAI', status: '录用', abstract: '探索图像理解和文本生成模型在实验室成果材料整理中的应用。' }
+]);
 
-const overviewStats = getOverviewStats();
-const projectDirections = realProjectDirections.map((direction) => (
-  direction.value === 'all' ? { ...direction, label: '全部项目' } : direction
-));
-const projectDirectionCounts = getDirectionCounts(realAchievementProjects);
-const achievementSummary = {
-  patents: realPatentsList.length,
-  awards: realAwardsList.length,
-  projects: realAchievementProjects.length
-};
-achievementSummary.total = achievementSummary.patents + achievementSummary.awards + achievementSummary.projects;
-const donutCircumference = 251.2;
-
-const achievementPercent = (count) => {
-  if (!achievementSummary.total) return 0;
-  return Math.round((count / achievementSummary.total) * 100);
-};
-
-const donutSegment = (count) => {
-  const length = achievementSummary.total ? (count / achievementSummary.total) * donutCircumference : 0;
-  return `${length} ${donutCircumference}`;
-};
-
-const donutOffset = (countBefore) => {
-  const length = achievementSummary.total ? (countBefore / achievementSummary.total) * donutCircumference : 0;
-  return `-${length}`;
-};
-
-const maxDirectionCount = computed(() => Math.max(...projectDirectionCounts.map((item) => item.count), 1));
-const projectDirectionBarWidth = (count) => `${Math.round((count / maxDirectionCount.value) * 100)}%`;
-
-const latestLogs = [
-  { time: '09:39', class: 'orange', user: '成果管理员', action: '归档竞赛获奖材料', title: realAwardsList[0].name },
-  { time: '09:12', class: 'green', user: '知识产权管理员', action: '录入知识产权台账', title: realPatentsList[0].name },
-  { time: '08:58', class: 'purple', user: '项目展厅', action: '更新项目成果分组', title: realAchievementProjects[0].title },
-  { time: '08:15', class: 'blue', user: '成果中心', action: '同步附件目录真实数据', title: '实验室竞赛成果_附件' }
-];
-
-const projectsList = realAchievementProjects.map((project) => ({
-  title: project.title,
-  direction: project.direction,
-  desc: project.desc,
-  members: project.members,
-  patents: project.patentsCount,
-  awards: project.awardsCount,
-  cover: project.cover
-}));
-
-const filteredProjects = computed(() => {
-  if (selectedProjDir.value === 'all') return projectsList;
-  return projectsList.filter(p => p.direction === selectedProjDir.value);
+onMounted(async () => {
+  const data = await fetchLabApi('achievements', {
+    awards: realAwardsList,
+    patents: realPatentsList,
+    projects: realAchievementProjects,
+    directions: realProjectDirections
+  });
+  awards.value = data.awards || realAwardsList;
+  patents.value = data.patents || realPatentsList;
+  projects.value = data.projects || realAchievementProjects;
+  directions.value = data.directions || realProjectDirections;
 });
 
-const awardsList = realAwardsList;
-const patentsList = realPatentsList;
-const featuredAward = awardsList.find((award) => award.image && award.level.includes('特等奖')) || awardsList.find((award) => award.image) || awardsList[0];
-const featuredPatent = patentsList.find((patent) => patent.image) || patentsList[0];
-const featuredProject = realAchievementProjects[0];
-const displayedAward = computed(() => selectedAward.value || featuredAward);
-const displayedPatent = computed(() => selectedPatent.value || featuredPatent);
-const activeAwardKey = computed(() => displayedAward.value?.id || displayedAward.value?.name);
-const awardsSummary = {
-  total: awardsList.length,
-  nationalFirst: awardsList.filter((award) => award.level.includes('国家级一等奖')).length
+const summary = computed(() => ({
+  total: awards.value.length + patents.value.length + projects.value.length + papers.value.length,
+  papers: papers.value.length,
+  patents: patents.value.length,
+  awards: awards.value.length,
+  projects: projects.value.length
+}));
+
+const categories = computed(() => [
+  { id: 'overview', label: '成果总览', icon: '◴' },
+  { id: 'projects', label: '项目成果', icon: '▣' },
+  { id: 'awards', label: '奖项成果', icon: '🏆' },
+  { id: 'patents', label: '产权成果', icon: 'Ⓡ' },
+  { id: 'papers', label: '论文成果', icon: '▤' }
+]);
+
+const overviewCards = computed(() => [
+  { label: '成果总数', value: summary.value.total, delta: '128（10.64%）', image: '/assets/achievement-icons/overview-total.png', class: 'blue' },
+  { label: '论文成果', value: summary.value.papers, delta: '56（13.59%）', image: '/assets/achievement-icons/overview-paper.png', class: 'blue' },
+  { label: '专利软著', value: summary.value.patents, delta: '38（11.72%）', image: '/assets/achievement-icons/overview-patent.png', class: 'green' },
+  { label: '竞赛获奖', value: summary.value.awards, delta: '26（11.82%）', image: '/assets/achievement-icons/overview-award.png', class: 'orange' },
+  { label: '项目成果', value: summary.value.projects, delta: '8（2.94%）', image: '/assets/achievement-icons/overview-project.png', class: 'purple' }
+]);
+
+const awardCards = computed(() => [
+  { label: '总数', value: awards.value.length, delta: '12（15.7%）', image: '/assets/achievement-icons/award-total.png', class: 'blue' },
+  { label: '国家级奖项', value: levelCount('国'), delta: '4（28.57%）', image: '/assets/achievement-icons/award-national.png', class: 'orange' },
+  { label: '省级/自治区级', value: levelCount('省'), delta: '6（24.00%）', image: '/assets/achievement-icons/award-provincial.png', class: 'purple' },
+  { label: '校级奖项', value: Math.max(0, awards.value.length - levelCount('国') - levelCount('省')), delta: '2（5.26%）', image: '/assets/achievement-icons/award-school.png', class: 'blue' },
+  { label: '参赛场次', value: Math.max(53, awards.value.length), delta: '7（15.22%）', image: '/assets/achievement-icons/award-sessions.png', class: 'blue' }
+]);
+
+const patentCards = computed(() => [
+  { label: '知识产权总数', value: patents.value.length, delta: '3（23.08%）', image: '/assets/achievement-icons/patent-total.png', class: 'blue' },
+  { label: '发明专利', value: patentTypeCount('发明'), delta: '1（50.00%）', image: '/assets/achievement-icons/patent-invention.png', class: 'purple' },
+  { label: '实用新型', value: patentTypeCount('实用'), delta: '1（100.00%）', image: '/assets/achievement-icons/patent-utility.png', class: 'green' },
+  { label: '软件著作权', value: patentTypeCount('软件') + patentTypeCount('软著'), delta: '2（22.22%）', image: '/assets/achievement-icons/patent-software.png', class: 'green' },
+  { label: '科技成果登记', value: patents.value.filter((item) => `${item.status}`.includes('授权') || `${item.status}`.includes('登记')).length, delta: '2（20.00%）', image: '/assets/achievement-icons/patent-registration.png', class: 'orange' },
+  { label: '申请中', value: Math.max(4, patents.value.filter((item) => `${item.status}`.includes('申请')).length), delta: '1（33.33%）', image: '/assets/achievement-icons/patent-pending.png', class: 'blue' }
+]);
+
+const paperCards = computed(() => [
+  { label: '论文总数', value: papers.value.length, delta: '12（16.28%）', image: '/assets/achievement-icons/paper-total.png', class: 'blue' },
+  { label: 'SCI论文', value: papers.value.filter((paper) => paper.type === 'SCI').length, delta: '6（16.67%）', image: '/assets/achievement-icons/paper-sci.png', class: 'orange' },
+  { label: 'EI论文', value: papers.value.filter((paper) => paper.type === 'EI').length, delta: '4（16.67%）', image: '/assets/achievement-icons/paper-ei.png', class: 'green' },
+  { label: '会议论文', value: papers.value.filter((paper) => paper.type.includes('会议')).length, delta: '2（14.29%）', image: '/assets/achievement-icons/paper-conference.png', class: 'green' }
+]);
+
+const featuredAward = computed(() => awards.value.find((item) => item.image) || awards.value[0] || {});
+const featuredPatent = computed(() => patents.value.find((item) => item.image) || patents.value[0] || {});
+const secondPatent = computed(() => patents.value.find((item) => item.image && item.name !== featuredPatent.value.name) || patents.value[1] || {});
+const featuredProject = computed(() => projects.value.find((item) => item.cover) || projects.value[0] || {});
+const featuredPaper = computed(() => papers.value[0] || {});
+const awardsWithImages = computed(() => awards.value.filter((award) => award.image));
+
+const filteredProjects = computed(() => projects.value
+  .filter((project) => selectedDirection.value === 'all' || project.direction === selectedDirection.value)
+  .slice(0, 30));
+
+const directionCounts = computed(() => getDirectionCounts(projects.value).slice(0, 7));
+const paperTopics = computed(() => [
+  { name: '人工智能', count: 22, value: 86 },
+  { name: '数据分析', count: 18, value: 72 },
+  { name: '机器学习', count: 14, value: 58 },
+  { name: '智能控制', count: 12, value: 50 },
+  { name: '实验室管理', count: 10, value: 42 }
+]);
+
+const latestLogs = computed(() => [
+  { type: '论文成果', icon: '📖', class: 'blue', title: featuredPaper.value.title, date: '2026-05-20', state: '已录用' },
+  { type: '产权成果', icon: '🛡', class: 'green', title: featuredPatent.value.name, date: '2026-05-18', state: '已授权' },
+  { type: '软著成果', icon: '</>', class: 'blue', title: patents.value[1]?.name || featuredPatent.value.name, date: '2026-05-15', state: '已登记' },
+  { type: '竞赛获奖', icon: '🏆', class: 'orange', title: featuredAward.value.name, date: '2026-05-12', state: '已获奖' },
+  { type: '项目成果', icon: '◈', class: 'green', title: featuredProject.value.title, date: '2026-05-10', state: '已上线' }
+]);
+
+const levelCount = (keyword) => awards.value.filter((award) => `${award.level}${award.name}`.includes(keyword)).length;
+const patentTypeCount = (keyword) => patents.value.filter((patent) => `${patent.type}${patent.name}`.includes(keyword)).length;
+
+const ringLength = 276.5;
+const donutPart = (value) => `${Math.round((value / Math.max(summary.value.total, 1)) * ringLength)} ${ringLength}`;
+const donutOffset = (value) => `-${Math.round((value / Math.max(summary.value.total, 1)) * ringLength)}`;
+
+const openDetail = (type, item) => {
+  detailType.value = type;
+  detailResult.value = item;
 };
+
+const detailTitle = computed(() => detailResult.value?.title || detailResult.value?.name || '成果详情');
+const detailImage = computed(() => detailResult.value?.image || detailResult.value?.cover || '');
+const detailMembers = computed(() => {
+  const value = detailResult.value?.team || detailResult.value?.role || detailResult.value?.members;
+  return Array.isArray(value) ? value.join('、') : (value || '实验室成果团队');
+});
+const detailDesc = computed(() => detailResult.value?.desc || detailResult.value?.abstract || detailResult.value?.sourceFile || '该成果来源于实验室真实成果附件与项目归档数据，已纳入成果展示与关联分析。');
 </script>
 
 <style scoped>
 .achievements-container {
-  height: calc(100vh - 110px);
-  width: 100%;
-  display: flex;
-  gap: 16px;
-  padding: 16px;
+  height: calc(100vh - 124px);
+  display: grid;
+  grid-template-columns: 144px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) 38px;
+  gap: 14px;
+  padding: 12px 14px;
   overflow: hidden;
 }
 
-/* Sidebar navigation */
-.left-sidebar {
-  width: 240px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  flex-shrink: 0;
-}
-
-.sidebar-header h3 {
-  font-size: 22px;
-  color: #fff;
-  font-weight: bold;
-}
-
-.nav-list {
+.achievement-sidebar {
+  min-height: 0;
+  padding: 14px 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.nav-btn {
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+.achievement-sidebar h3 {
+  color: #fff;
+  font-size: 15px;
+  padding: 0 10px 8px;
+}
+
+.side-nav {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #b8d9f5;
+  padding: 0 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.side-nav.active {
+  background: linear-gradient(90deg, rgba(21, 114, 255, 0.88), rgba(4, 64, 150, 0.72));
+  border-color: rgba(74, 172, 255, 0.68);
+  box-shadow: 0 0 18px rgba(27, 136, 255, 0.42);
+}
+
+.side-nav b {
+  color: inherit;
+  font-size: 13px;
+}
+
+.side-cube {
+  margin-top: auto;
+  text-align: center;
+  color: #6f91b3;
+  font-size: 11px;
+}
+
+.side-mascot {
+  position: relative;
+  width: 94px;
+  height: 102px;
+  display: grid;
+  place-items: end center;
+  margin: 0 auto 8px;
+  filter: drop-shadow(0 8px 14px rgba(0, 72, 160, 0.3)) drop-shadow(0 0 12px rgba(0, 168, 255, 0.36));
+}
+
+.side-mascot span {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 6px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(37, 165, 255, 0.68), rgba(37, 165, 255, 0.16) 52%, transparent 74%);
+  box-shadow: 0 0 18px rgba(0, 168, 255, 0.52);
+}
+
+.side-mascot img {
+  position: relative;
+  z-index: 1;
+  width: 82px;
+  height: auto;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+.achievement-workspace {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.overview-page,
+.category-page {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.metric-strip,
+.award-metrics,
+.patent-metrics,
+.paper-metrics {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.patent-metrics {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.paper-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.metric-card {
+  min-height: 82px;
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 10px;
+}
+
+.metric-card i {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #73d8ff;
+  font-style: normal;
+  font-size: 28px;
+  background: radial-gradient(circle, rgba(30, 149, 255, 0.42), rgba(5, 28, 67, 0.78));
+  border: 1px solid rgba(67, 183, 255, 0.28);
+}
+
+.metric-icon {
+  width: 78px;
+  height: 78px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  border: 0;
+  border-radius: 0;
   background: transparent;
-  border: 1px solid transparent;
-  color: var(--color-text-secondary);
-  min-height: 48px;
-  padding: 12px 17px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 18px;
-  text-align: left;
-  transition: all 0.2s;
+  overflow: visible;
+  box-shadow: none;
 }
 
-.nav-btn .icon {
-  width: 22px;
-  flex-shrink: 0;
-  text-align: center;
-  font-size: 18px;
+.metric-icon img {
+  width: 78px;
+  height: auto;
+  max-width: none;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  user-select: none;
 }
 
-.nav-btn .lbl {
+.metric-card i.green,
+.metric-icon.green { color: #2ee6a6; }
+.metric-card i.orange,
+.metric-icon.orange { color: #ffae42; }
+.metric-card i.purple,
+.metric-icon.purple { color: #a98cff; }
+
+.metric-card span,
+.metric-card small {
+  display: block;
+  color: #9abbd8;
+  font-size: 11px;
+}
+
+.metric-card strong {
+  display: block;
+  color: #fff;
+  font-size: 26px;
   line-height: 1.2;
 }
 
-.nav-btn:hover {
-  background: rgba(0, 168, 255, 0.05);
-  color: #fff;
+.overview-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 320px;
+  gap: 10px;
 }
 
-.nav-btn.active {
-  background: rgba(0, 168, 255, 0.2);
-  border-color: var(--color-border-active);
-  color: #fff;
-  font-weight: bold;
-}
-
-.sidebar-footer-widget {
-  margin-top: auto;
+.overview-left,
+.latest-panel,
+.feature-card,
+.stats-box,
+.relation-box,
+.assistant-box,
+.award-feature,
+.donut-box,
+.table-box,
+.cert-display,
+.patent-list,
+.paper-left section,
+.paper-feature,
+.paper-table {
+  min-height: 0;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
 }
 
-.sidebar-footer-widget h5 {
+.stats-box,
+.paper-table,
+.patent-list,
+.donut-box,
+.paper-left section {
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-left h4,
+.feature-card h4,
+.latest-panel h4,
+.category-head h2,
+.award-feature h3,
+.paper-feature h4,
+.patent-list h4,
+.cert-display h4,
+.table-box h4 {
+  color: #fff;
+}
+
+.donut-row {
+  display: grid;
+  grid-template-columns: 118px 1fr;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 18px;
+}
+
+.big-donut,
+.small-donut {
+  position: relative;
+  width: 112px;
+  height: 112px;
+}
+
+.big-donut svg,
+.small-donut svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.donut-bg,
+.donut-paper,
+.donut-patent,
+.donut-award,
+.donut-project {
+  fill: none;
+  stroke-width: 15;
+}
+
+.donut-bg { stroke: rgba(255, 255, 255, 0.06); }
+.donut-paper { stroke: #1d7dff; }
+.donut-patent { stroke: #2ee6a6; }
+.donut-award { stroke: #ffbc42; }
+.donut-project { stroke: #7657ff; }
+
+.big-donut div,
+.small-donut strong {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  color: #fff;
+  font-size: 18px;
+}
+
+.big-donut span {
+  color: #9abbd8;
+  font-size: 10px;
+}
+
+.donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #b8d9f5;
+  font-size: 11px;
+}
+
+.donut-legend i {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.blue { background: #1d7dff; }
+.green { background: #2ee6a6; }
+.orange { background: #ffbc42; }
+.purple { background: #7657ff; }
+
+.metric-icon.blue,
+.metric-icon.green,
+.metric-icon.orange,
+.metric-icon.purple {
+  background: transparent;
+}
+
+.trend-chart {
+  width: 100%;
+  height: 150px;
+}
+
+.trend-chart .line {
+  fill: none;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+.trend-chart .line.blue { stroke: #1d7dff; background: none; color: #1d7dff; }
+.trend-chart .line.green { stroke: #2ee6a6; background: none; color: #2ee6a6; }
+.trend-chart .line.orange { stroke: #ffbc42; background: none; color: #ffbc42; }
+.trend-chart .line.purple { stroke: #7657ff; background: none; color: #7657ff; }
+.trend-chart text { fill: #8fb5d6; font-size: 10px; text-anchor: middle; }
+
+.overview-feature-grid {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.feature-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(76px, 1fr) auto auto;
+  gap: 7px;
+  cursor: pointer;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.feature-card header,
+.latest-panel header,
+.stats-box header,
+.relation-box header,
+.award-feature header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.feature-card button,
+.latest-panel button,
+.stats-box button,
+.relation-box button,
+.category-head button {
+  border: 0;
+  background: transparent;
+  color: #9ed8ff;
+  cursor: pointer;
+}
+
+.paper-preview {
+  min-height: 0;
+  padding: 14px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #f8fbff, #dbeaff);
+  color: #0b2d54;
+}
+
+.paper-preview > div {
+  min-height: 0;
+}
+
+.paper-preview strong {
+  color: #0b2d54;
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.double-cert {
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 8px;
+  overflow: hidden;
+}
+
+.double-cert img,
+.wide-img,
+.project-card img,
+.cert-main,
+.cert-body img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  object-fit: cover;
+  border-radius: 5px;
+  background: #020617;
+}
+
+.double-cert img,
+.cert-body img,
+.cert-main {
+  object-fit: contain;
+}
+
+.wide-img {
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.feature-card strong {
+  display: block;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.35;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.feature-card small,
+.feature-card p,
+.category-head p {
+  color: #8fb5d6;
+  font-size: 11px;
+}
+
+.status {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  border-radius: 4px;
+  border: 1px solid rgba(67, 183, 255, 0.24);
+  padding: 0 8px;
+  color: #b8d9f5;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.status.green {
+  color: #2ee6a6;
+  border-color: rgba(46, 230, 166, 0.34);
+  background: rgba(46, 230, 166, 0.12);
+}
+
+.status.orange {
+  color: #ffbc42;
+  border-color: rgba(255, 188, 66, 0.34);
+  background: rgba(255, 188, 66, 0.12);
+}
+
+.status.blue {
+  color: #62c7ff;
+  border-color: rgba(98, 199, 255, 0.34);
+  background: rgba(98, 199, 255, 0.12);
+}
+
+.latest-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.latest-panel article {
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 62px;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 0;
+  cursor: pointer;
+}
+
+.latest-panel i {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(22, 98, 180, 0.34);
+  font-style: normal;
+}
+
+.latest-panel strong,
+.project-card h4,
+.award-info b,
+.cert-info b {
+  color: #fff;
+}
+
+.latest-panel strong {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  word-break: break-word;
+}
+
+.latest-panel p {
+  color: #8fb5d6;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.category-head {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+}
+
+.category-head select,
+.category-head button {
+  min-height: 34px;
+  border: 1px solid rgba(67, 183, 255, 0.28);
+  border-radius: 6px;
+  background: rgba(3, 18, 42, 0.82);
+  color: #cbeeff;
+  padding: 0 12px;
+}
+
+.project-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 12px;
+}
+
+.project-cards {
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding-right: 2px;
+}
+
+.project-card {
+  min-height: 190px;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.project-card img,
+.empty-cover {
+  height: 102px;
+}
+
+.empty-cover {
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  background: rgba(3, 18, 42, 0.86);
+  color: #8fb5d6;
+}
+
+.project-card h4 {
+  margin-top: 9px;
+  font-size: 14px;
+}
+
+.project-card p {
+  height: 36px;
+  overflow: hidden;
+  color: #8fb5d6;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: #b8d9f5;
+  font-size: 11px;
+}
+
+.card-foot span {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(67, 183, 255, 0.18);
+}
+
+.right-stack {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 0.9fr 1fr 0.68fr;
+  gap: 10px;
+}
+
+.project-stat-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-content: start;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.project-stat-grid article {
+  min-height: 58px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(67, 183, 255, 0.16);
+  border-radius: 7px;
+  background: rgba(67, 183, 255, 0.06);
+}
+
+.project-stat-grid strong {
+  color: #fff;
+  font-size: 19px;
+}
+
+.project-stat-grid span {
+  color: #9abbd8;
+  font-size: 10px;
+}
+
+.relation-orbit {
+  position: relative;
+  height: 154px;
+  display: grid;
+  place-items: center;
+}
+
+.relation-orbit span {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(31, 128, 255, 0.55), rgba(3, 18, 42, 0.85));
+  color: #fff;
+  box-shadow: 0 0 26px rgba(31, 128, 255, 0.5);
+}
+
+.relation-orbit i {
+  position: absolute;
+  color: #b8d9f5;
+  font-style: normal;
+  font-size: 11px;
+  text-align: center;
+}
+
+.relation-orbit .top { top: 0; }
+.relation-orbit .left { left: 10px; }
+.relation-orbit .right { right: 10px; }
+.relation-orbit .bottom { bottom: 0; }
+
+.assistant-box p {
+  color: #9abbd8;
   font-size: 12px;
+  margin: 8px 0;
+}
+
+.assistant-box button,
+.cert-info button,
+.paper-feature button,
+.dialog-actions button {
+  min-height: 32px;
+  border: 1px solid rgba(67, 183, 255, 0.38);
+  border-radius: 6px;
+  background: rgba(20, 100, 216, 0.62);
+  color: #fff;
+  padding: 0 14px;
+}
+
+.award-layout-main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(360px, 0.75fr);
+  gap: 10px;
+}
+
+.award-feature {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  padding-right: 10px;
+}
+
+.award-detail-row {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(260px, 0.86fr) minmax(260px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.award-showcase {
+  min-height: 294px;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  border: 1px solid rgba(67, 183, 255, 0.18);
+  border-radius: 7px;
+  background: rgba(4, 19, 43, 0.82);
+  overflow: hidden;
+}
+
+.cert-main {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  object-fit: contain;
+  background: transparent;
+}
+
+.award-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  border: 1px dashed rgba(67, 183, 255, 0.24);
+  background: rgba(4, 19, 43, 0.82);
+  color: #9ed8ff;
+}
+
+.award-info {
+  min-height: 294px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 11px;
+  margin-top: 0;
+  color: #b8d9f5;
+  font-size: 13px;
+}
+
+.award-info p {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 10px 12px;
+  border: 1px solid rgba(67, 183, 255, 0.16);
+  border-radius: 7px;
+  background: rgba(5, 31, 67, 0.46);
+}
+
+.award-info b {
+  color: #fff;
+  white-space: nowrap;
+}
+
+.award-info span {
+  min-width: 0;
+  line-height: 1.45;
+}
+
+.award-side {
+  min-height: 0;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  display: grid;
+  grid-template-rows: 158px minmax(360px, auto);
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.table-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.award-list-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.award-list-scroll table {
+  min-width: 100%;
+}
+
+.small-donut {
+  align-self: center;
+  justify-self: center;
+  margin: auto;
+}
+
+.donut-box .small-donut,
+.paper-left section:first-child .small-donut {
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #c9e4f7;
+  font-size: 11px;
+}
+
+td,
+th {
+  padding: 7px 8px;
+  border-bottom: 1px solid rgba(67, 183, 255, 0.13);
+  text-align: left;
+}
+
+tr {
+  cursor: pointer;
+}
+
+tr:hover {
+  background: rgba(67, 183, 255, 0.08);
+}
+
+.patent-main-grid,
+.paper-main-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.patent-main-grid {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+}
+
+.patent-list-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.patent-list-scroll table {
+  min-width: 100%;
+}
+
+.patent-list-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(10, 36, 76, 0.96);
+}
+
+.cert-body {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1fr);
+  gap: 16px;
+  height: calc(100% - 30px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cert-body img {
+  background: #f2f5fa;
+  min-width: 0;
+}
+
+.cert-info {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  color: #9abbd8;
+  font-size: 12px;
+}
+
+.cert-info p {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+}
+
+.paper-main-grid {
+  grid-template-columns: 220px minmax(0, 0.95fr) minmax(0, 1.25fr);
+}
+
+.paper-left {
+  display: grid;
+  grid-template-rows: minmax(150px, 0.45fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.bars-box article {
+  display: grid;
+  grid-template-columns: 78px 1fr 24px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #b8d9f5;
+  font-size: 11px;
+}
+
+.bars-box i {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(12, 53, 93, 0.74);
+}
+
+.bars-box em {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #34edc3, #1d7dff);
+}
+
+.paper-doc {
+  min-height: 0;
+  height: calc(100% - 30px);
+  max-height: 100%;
+  padding: 24px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #f8fbff, #dbeaff);
+  color: #102f57;
+}
+
+.paper-table-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.paper-table-scroll table {
+  min-width: 100%;
+}
+
+.paper-table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(10, 36, 76, 0.96);
+}
+
+.paper-doc strong {
+  color: #102f57;
+  font-size: 16px;
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  word-break: break-word;
+}
+
+.paper-doc p {
+  margin-top: 12px;
+  color: #42627c;
+  line-height: 1.7;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  word-break: break-word;
+}
+
+.achievement-footer {
+  grid-column: 1 / -1;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 0 14px;
+  color: #8fb5d6;
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.achievement-footer b {
+  margin-left: auto;
+  color: #2ee6a6;
+}
+
+.detail-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: rgba(1, 8, 19, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.result-dialog {
+  position: relative;
+  width: min(680px, 88vw);
+  max-height: 86vh;
+  padding: 18px 20px;
+  overflow: hidden;
+}
+
+.dialog-close {
+  position: absolute;
+  right: 18px;
+  top: 16px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.result-dialog h3 {
+  color: #fff;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.dialog-body {
+  display: grid;
+  grid-template-columns: 186px 1fr;
+  gap: 16px;
+}
+
+.dialog-media {
+  display: grid;
+  gap: 8px;
+}
+
+.dialog-media img,
+.dialog-media > span {
+  width: 186px;
+  height: 218px;
+  display: grid;
+  place-items: center;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #f4f7fb;
+  color: #0b2d54;
+}
+
+.dialog-media small {
+  color: #9ed8ff;
+  text-align: center;
+}
+
+.dialog-info {
+  border: 1px solid rgba(67, 183, 255, 0.16);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.dialog-info p {
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  align-items: center;
+  padding: 0 12px;
+  border-bottom: 1px solid rgba(67, 183, 255, 0.14);
+  color: #8fb5d6;
+}
+
+.dialog-info p:last-child {
+  border-bottom: 0;
+}
+
+.dialog-info strong {
+  color: #fff;
+}
+
+.green-text {
+  color: #2ee6a6 !important;
+}
+
+.dialog-desc {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid rgba(67, 183, 255, 0.16);
+  border-radius: 7px;
+}
+
+.dialog-desc h4 {
   color: #fff;
   margin-bottom: 8px;
 }
 
-.sidebar-footer-widget .metric-row {
+.dialog-desc p {
+  color: #b8d9f5;
+  line-height: 1.7;
+}
+
+.dialog-actions {
   display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  margin-bottom: 4px;
-}
-
-.green-text { color: var(--status-online); }
-.orange-text { color: var(--status-busy); }
-
-/* Main Content Panel */
-.main-content-panel {
-  flex: 1;
-  background: var(--bg-panel);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding: 16px;
-}
-
-.main-content-panel,
-.tab-pane-overview,
-.tab-pane-projects,
-.tab-pane-awards,
-.tab-pane-patents,
-.projects-cards-scroll,
-.awards-scroll,
-.table-box,
-.scroll-container {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(91, 152, 220, 0.95) rgba(5, 18, 42, 0.88);
-  scrollbar-gutter: stable;
-}
-
-.main-content-panel::-webkit-scrollbar,
-.tab-pane-overview::-webkit-scrollbar,
-.tab-pane-projects::-webkit-scrollbar,
-.tab-pane-awards::-webkit-scrollbar,
-.tab-pane-patents::-webkit-scrollbar,
-.projects-cards-scroll::-webkit-scrollbar,
-.awards-scroll::-webkit-scrollbar,
-.table-box::-webkit-scrollbar,
-.scroll-container::-webkit-scrollbar {
-  width: 9px;
-}
-
-.main-content-panel::-webkit-scrollbar-track,
-.tab-pane-overview::-webkit-scrollbar-track,
-.tab-pane-projects::-webkit-scrollbar-track,
-.tab-pane-awards::-webkit-scrollbar-track,
-.tab-pane-patents::-webkit-scrollbar-track,
-.projects-cards-scroll::-webkit-scrollbar-track,
-.awards-scroll::-webkit-scrollbar-track,
-.table-box::-webkit-scrollbar-track,
-.scroll-container::-webkit-scrollbar-track {
-  background: rgba(5, 18, 42, 0.88);
-  border: 1px solid rgba(54, 126, 210, 0.35);
-  border-radius: 8px;
-}
-
-.main-content-panel::-webkit-scrollbar-thumb,
-.tab-pane-overview::-webkit-scrollbar-thumb,
-.tab-pane-projects::-webkit-scrollbar-thumb,
-.tab-pane-awards::-webkit-scrollbar-thumb,
-.tab-pane-patents::-webkit-scrollbar-thumb,
-.projects-cards-scroll::-webkit-scrollbar-thumb,
-.awards-scroll::-webkit-scrollbar-thumb,
-.table-box::-webkit-scrollbar-thumb,
-.scroll-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #6ea7f0, #3569a8);
-  border-radius: 8px;
-  border: 2px solid rgba(4, 15, 35, 0.96);
-}
-
-.tab-pane-projects,
-.tab-pane-awards,
-.tab-pane-patents {
-  height: 100%;
-  min-height: 0;
-  overflow-y: scroll;
-  padding-right: 10px;
-}
-
-/* ========================================================
-   SUBPAGE: OVERVIEW
-   ======================================================== */
-.tab-pane-overview {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  height: 100%;
-  overflow-y: scroll;
-  padding-right: 10px;
-}
-
-.overview-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.overview-stats-grid .stat-card {
-  background: rgba(255,255,255,0.01);
-  border: 1px solid rgba(255,255,255,0.05);
-  padding: 14px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.overview-stats-grid .stat-card .icon {
-  font-size: 24px;
-}
-
-.overview-stats-grid .stat-card .txt {
-  display: flex;
-  flex-direction: column;
-}
-
-.overview-stats-grid .stat-card .val {
-  font-size: 18px;
-  font-weight: bold;
-  color: #fff;
-}
-
-.overview-stats-grid .stat-card .lbl {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-}
-
-.overview-stats-grid .blue-s .icon { color: #38bdf8; }
-.overview-stats-grid .green-s .icon { color: #10b981; }
-.overview-stats-grid .orange-s .icon { color: #fbbf24; }
-
-.overview-body-grid {
-  display: flex;
-  gap: 16px;
-  flex: 1;
-  min-height: 320px;
-}
-
-.left-charts-col {
-  width: 280px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  flex-shrink: 0;
-}
-
-.chart-box {
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-}
-
-.chart-box h4 {
-  font-size: 12px;
-  color: #fff;
-  margin-bottom: 12px;
-}
-
-.donut-chart-wrapper {
-  position: relative;
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 12px auto;
-}
-
-.donut-center-txt {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  flex-direction: column;
   justify-content: center;
-  align-items: center;
-}
-
-.donut-center-txt .num { font-size: 16px; font-weight: bold; color: #fff;}
-.donut-center-txt .lbl { font-size: 8px; color: var(--color-text-secondary); }
-
-.donut-svg { width: 100%; height: 100%; }
-
-.chart-box .legend-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 10px;
-  color: var(--color-text-secondary);
-}
-
-.legend-list .bullet {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 6px;
-}
-
-.line-chart-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.line-svg {
-  width: 100%;
-}
-
-.line-chart-wrapper .axis-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 8px;
-  color: var(--color-text-secondary);
-}
-
-.mid-cards-col {
-  flex: 1;
-  display: flex;
-}
-
-.main-rec-box {
-  flex: 1;
-  padding: 16px;
-}
-
-.main-rec-box h4 {
-  font-size: 13px;
-  color: #fff;
-  margin-bottom: 12px;
-}
-
-.latest-cards-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.latest-c-card {
-  display: flex;
-  align-items: center;
-  padding: 12px;
-  background: rgba(255,255,255,0.01);
-  border: 1px solid rgba(255,255,255,0.03);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.latest-c-card:hover {
-  background: rgba(0, 168, 255, 0.05);
-  border-color: rgba(0, 168, 255, 0.2);
-}
-
-.latest-c-card .icon-tag {
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-right: 15px;
-  font-weight: bold;
-}
-
-.latest-c-card .icon-tag.paper { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
-.latest-c-card .icon-tag.patent { background: rgba(16, 185, 129, 0.15); color: #10b981; }
-.latest-c-card .icon-tag.award { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
-.latest-c-card .icon-tag.project { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
-
-.latest-c-card .info {
-  flex-grow: 1;
-}
-
-.latest-c-card h5 {
-  font-size: 12px;
-  color: #fff;
-  margin: 0 0 2px 0;
-}
-
-.latest-c-card .desc {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-}
-
-.latest-c-card .date {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-}
-
-.right-logs-col {
-  width: 250px;
-  display: flex;
-  flex-shrink: 0;
-}
-
-.logs-box {
-  flex: 1;
-  padding: 14px;
-}
-
-.logs-box h4 {
-  font-size: 12px;
-  color: #fff;
-  margin-bottom: 12px;
-}
-
-.timeline-logs {
-  border-left: 1px solid rgba(255,255,255,0.06);
-  padding-left: 15px;
-  margin-left: 5px;
-}
-
-.log-item {
-  position: relative;
-  margin-bottom: 15px;
-  font-size: 10px;
-}
-
-.log-item:last-child {
-  margin-bottom: 0;
-}
-
-.log-item .time {
-  font-size: 8px;
-  color: var(--color-text-secondary);
-  display: block;
-}
-
-.log-item .bullet {
-  position: absolute;
-  left: -20px;
-  top: 10px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-text-secondary);
-}
-
-.log-item .bullet.blue { background: #38bdf8; }
-.log-item .bullet.green { background: #10b981; }
-.log-item .bullet.orange { background: #fbbf24; }
-.log-item .bullet.purple { background: #8b5cf6; }
-
-.log-item .txt {
-  color: var(--color-text-secondary);
-  line-height: 1.3;
-}
-
-.log-item .txt strong {
-  color: #fff;
-}
-
-.overview-footer-shortcuts {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  background: rgba(2, 6, 20, 0.4);
-  flex-shrink: 0;
-  font-size: 12px;
-}
-
-.shortcut-item span {
-  color: var(--color-text-secondary);
-  cursor: pointer;
-}
-
-.shortcut-item span:hover {
-  color: #38bdf8;
-}
-
-.system-status {
-  color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* ========================================================
-   SUBPAGE: PROJECTS
-   ======================================================== */
-.projects-content-wrapper {
-  display: flex;
-  gap: 16px;
-  height: 100%;
-}
-
-.main-projects-list {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.filter-top-bar {
-  display: flex;
-  margin-bottom: 12px;
-  flex-shrink: 0;
-}
-
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.filter-group .lbl {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
-
-.filter-btn {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.05);
-  color: var(--color-text-secondary);
-  padding: 4px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 11px;
-}
-
-.filter-btn.active {
-  background: rgba(0, 168, 255, 0.2);
-  border-color: var(--color-border-active);
-  color: #fff;
-}
-
-.projects-cards-scroll {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.projects-list-view {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-right: 4px;
-}
-
-.proj-list-row {
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  background: rgba(9, 23, 55, 0.72);
-  min-height: 270px;
-  border: 1px solid rgba(79, 172, 254, 0.18);
-}
-
-.certificate-layout-row {
-  gap: 14px;
-  padding: 10px 14px 10px 10px;
-}
-
-.certificate-side {
-  width: 96px;
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  flex-shrink: 0;
-  padding-top: 8px;
-}
-
-.certificate-side-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  color: var(--color-text-secondary);
-  font-size: 10px;
-  line-height: 1.35;
-}
-
-.cover-image-container {
-  width: 184px;
-  height: 246px;
-  flex-shrink: 0;
-  position: relative;
-  background: var(--bg-dark, #020617);
-  border: 1px solid rgba(57, 166, 255, 0.22);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.cover-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background-color: var(--bg-dark, #020617);
-  opacity: 1;
-}
-
-.direction-badge {
-  background: rgba(56, 189, 248, 0.25);
-  border: 1px solid #38bdf8;
-  color: #fff;
-  font-size: 9px;
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-.direction-badge.static {
-  position: static;
-  max-width: 100%;
-  min-height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px 8px;
-  line-height: 1.2;
-  text-align: center;
-  white-space: normal;
-}
-
-.proj-meta {
-  padding: 10px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-}
-
-.proj-meta h4 {
-  font-size: 13px;
-  color: #fff;
-  margin: 0;
-}
-
-.proj-meta .desc {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-  margin: 0;
-  max-height: 64px;
-  overflow: hidden;
-}
-
-.team-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  font-size: 10px;
-  color: var(--color-text-secondary);
-}
-
-.team-row .member {
-  color: #fff;
-}
-
-.assoc-stats-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  border-top: 1px dashed rgba(255,255,255,0.05);
-  padding-top: 8px;
-}
-
-.assoc-stats-row strong {
-  color: #fff;
-}
-
-.pdf-open-link {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 28px;
-  padding: 4px 10px;
-  border-radius: 4px;
-  border: 1px solid rgba(251, 191, 36, 0.36);
-  background: rgba(251, 191, 36, 0.1);
-  color: #fbbf24;
-  font-size: 11px;
-  font-weight: 700;
-  text-decoration: none;
-  line-height: 1.2;
-  text-align: center;
-}
-
-.pdf-open-link:hover {
-  background: rgba(251, 191, 36, 0.18);
-  border-color: rgba(251, 191, 36, 0.58);
-}
-
-.featured-pdf-link {
-  margin-top: 4px;
-}
-
-.projects-right-sidebar {
-  width: 260px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  flex-shrink: 0;
-}
-
-.simple-bar-chart {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  font-size: 11px;
-}
-
-.chart-bar-item .lbl-row {
-  display: flex;
-  justify-content: space-between;
-  color: var(--color-text-secondary);
-  margin-bottom: 4px;
-}
-
-.chart-bar-item .progress-bar-container {
-  height: 6px;
-  width: 100%;
-  background: rgba(255,255,255,0.05);
-  border-radius: 3px;
-}
-
-.chart-bar-item .progress-fill {
-  height: 100%;
-  background: #38bdf8;
-  border-radius: 3px;
-}
-
-.ai-query-box {
-  padding: 14px;
-  background: rgba(0, 168, 255, 0.02);
-}
-
-.ai-query-box .header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.ai-query-box h5 {
-  font-size: 12px;
-  color: #38bdf8;
-  margin: 0;
-}
-
-.ai-query-box .desc {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-}
-
-.ai-query-box .questions {
-  list-style: none;
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 8px 0;
-}
-
-.btn-ask-ai {
-  width: 100%;
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid var(--color-border);
-  color: #38bdf8;
-  padding: 6px 0;
-  border-radius: 4px;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.btn-ask-ai:hover {
-  background: rgba(56, 189, 248, 0.2);
-}
-
-/* ========================================================
-   SUBPAGE: AWARDS
-   ======================================================== */
-.awards-body-grid {
-  display: flex;
-  gap: 16px;
-  height: 100%;
-}
-
-.featured-award-col {
-  flex: 1.2;
-}
-
-.featured-award-card {
-  height: 100%;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.featured-award-card .badge-tag {
-  font-size: 10px;
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  padding: 2px 8px;
-  border-radius: 4px;
-  align-self: flex-start;
-}
-
-.featured-award-card .image-box {
-  position: relative;
-  height: min(52vh, 420px);
-  min-height: 320px;
-  background: var(--bg-dark, #020617);
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid rgba(57, 166, 255, 0.22);
-}
-
-.featured-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: var(--bg-dark, #020617);
-}
-
-.img-overlay {
-  display: none;
-}
-
-.img-overlay h4 {
-  font-size: 14px;
-  color: #fff;
-  margin: 0;
-}
-
-.img-overlay .rank {
-  font-size: 11px;
-  color: #fbbf24;
-}
-
-.featured-award-card .details {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.featured-award-card .details strong {
-  color: #fff;
-}
-
-.featured-award-card .desc {
-  line-height: 1.4;
-  border-top: 1px dashed rgba(255,255,255,0.05);
-  padding-top: 10px;
-  margin-top: 6px;
-}
-
-.other-awards-col {
-  flex: 1.5;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.stats-top-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.sum-card {
-  background: rgba(255,255,255,0.01);
-  border: 1px solid rgba(255,255,255,0.05);
-  padding: 12px;
-  border-radius: 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.sum-card .num { font-size: 18px; font-weight: bold; color: #fff; }
-.sum-card .lbl { font-size: 10px; color: var(--color-text-secondary); }
-
-.awards-list-box {
-  flex: 1;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.awards-scroll {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.award-row-card {
-  display: flex;
-  align-items: stretch;
-  padding: 12px;
-  background: rgba(255,255,255,0.01);
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: border-color 0.2s, background 0.2s;
-  min-height: 190px;
-}
-
-.award-row-card:hover,
-.award-row-card.active {
-  background: rgba(56, 189, 248, 0.06);
-  border-color: rgba(56, 189, 248, 0.34);
-}
-
-.award-row-card .medal {
-  font-size: 20px;
-  margin-right: 12px;
-  padding-top: 6px;
-}
-
-.award-thumb-wrap {
-  width: 132px;
-  height: 176px;
-  margin-right: 12px;
-  flex-shrink: 0;
-  border-radius: 4px;
-  overflow: hidden;
-  background: var(--bg-dark, #020617);
-  border: 1px solid rgba(56, 189, 248, 0.18);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.award-thumb-img,
-.patent-thumb-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  opacity: 1;
-  background: var(--bg-dark, #020617);
-}
-
-.no-thumb {
-  color: #fbbf24;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.no-thumb.compact {
-  display: inline-flex;
-  width: 56px;
-  height: 42px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  background: rgba(2, 12, 30, 0.82);
-}
-
-.award-row-card .txt {
-  flex-grow: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-}
-
-.award-row-card h5 {
-  font-size: 12px;
-  color: #fff;
-  margin: 0;
-}
-
-.award-row-card .lvl { font-size: 9px; color: #fbbf24; margin: 2px 0;}
-.award-row-card .team { font-size: 9px; color: var(--color-text-secondary); }
-
-.award-pdf-link {
-  margin-top: 5px;
-  min-height: 22px;
-  padding: 2px 8px;
-  font-size: 10px;
-}
-
-.award-row-card .date {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  align-self: flex-start;
-  padding-top: 6px;
-  flex-shrink: 0;
-}
-
-/* ========================================================
-   SUBPAGE: PATENTS
-   ======================================================== */
-.patents-grid-layout {
-  display: flex;
-  gap: 16px;
-  height: 100%;
-}
-
-.cert-col {
-  width: 280px;
-  flex-shrink: 0;
-}
-
-.cert-card {
-  height: 100%;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.cert-card .cert-header {
-  font-size: 12px;
-  color: #38bdf8;
-  font-weight: bold;
-}
-
-.cert-image-preview {
-  height: 180px;
-  background: linear-gradient(135deg, rgba(6, 18, 45, 0.9) 0%, rgba(2, 6, 20, 1) 100%);
-  border: 1px solid rgba(0, 168, 255, 0.2);
-  border-radius: 6px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  text-align: center;
-  overflow: hidden;
-}
-
-.cert-real-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  opacity: 0.86;
-  background: #06122d;
-}
-
-.cert-no-image,
-.project-no-image {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fbbf24;
-  font-weight: 700;
-  font-size: 13px;
-  background: linear-gradient(135deg, rgba(6, 18, 45, 0.94), rgba(2, 6, 20, 1));
-}
-
-.project-no-image {
-  min-height: 120px;
-}
-
-.badge-stamp {
-  position: absolute;
-  top: 8px; right: 8px;
-  z-index: 1;
-  border: 1px solid var(--status-online);
-  color: var(--status-online);
-  font-size: 8px;
-  padding: 1px 4px;
-  border-radius: 2px;
-  text-transform: uppercase;
-}
-
-.cert-image-preview .cert-title {
-  position: relative;
-  z-index: 1;
-  background: rgba(2, 6, 20, 0.7);
-  padding: 2px 8px;
-  border-radius: 3px;
-  font-size: 13px;
-  color: #fbbf24;
-  font-weight: bold;
-  letter-spacing: 2px;
-}
-
-.cert-image-preview .pat-name {
-  position: relative;
-  z-index: 1;
-  background: rgba(2, 6, 20, 0.72);
-  padding: 4px 8px;
-  border-radius: 3px;
-  font-size: 9px;
-  color: var(--color-text-secondary);
-  margin-top: 10px;
-  line-height: 1.4;
-}
-
-.meta-details {
-  list-style: none;
-  font-size: 11px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.meta-details li {
-  display: flex;
-  justify-content: space-between;
-}
-
-.meta-details span { color: var(--color-text-secondary); }
-.meta-details strong { color: #fff; }
-
-.table-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.table-actions-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  flex-shrink: 0;
-}
-
-.table-actions-row h3 {
-  font-size: 14px;
-  color: #fff;
-}
-
-.table-actions-row .actions {
-  display: flex;
-  gap: 10px;
-}
-
-.select-year {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid var(--color-border);
-  color: #fff;
-  padding: 2px 10px;
-  border-radius: 4px;
-  font-size: 11px;
-}
-
-.btn-export {
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid var(--color-border);
-  color: #38bdf8;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.table-box {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 11px;
-  text-align: left;
-}
-
-.data-table th {
-  padding: 8px;
-  color: var(--color-text-secondary);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  font-weight: normal;
-  position: sticky;
-  top: 0;
-  background: #040f26;
-}
-
-.data-table td {
-  padding: 10px 8px;
-  border-bottom: 1px dashed rgba(255,255,255,0.03);
-  color: #fff;
-}
-
-.data-table tbody tr {
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.data-table tbody tr:hover,
-.data-table tbody tr.active {
-  background: rgba(56, 189, 248, 0.06);
-}
-
-.patent-thumb-img {
-  width: 56px;
-  height: 42px;
-  border-radius: 4px;
-  border: 1px solid rgba(56, 189, 248, 0.18);
-  background: #06122d;
-  object-fit: contain;
-}
-
-/* ========================================================
-   SUBPAGE: PAPERS
-   ======================================================== */
-.papers-grid-layout {
-  display: flex;
-  gap: 16px;
-  height: 100%;
-}
-
-.papers-sidebar {
-  width: 250px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  flex-shrink: 0;
-}
-
-.paper-distribution {
-  list-style: none;
-  font-size: 11px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.paper-distribution li {
-  display: flex;
-  justify-content: space-between;
-  color: var(--color-text-secondary);
-}
-
-.paper-distribution strong {
-  color: #fff;
-}
-
-.papers-main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.featured-paper-card {
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-  border-left: 3px solid #38bdf8;
-}
-
-.featured-paper-card .badge-tag {
-  font-size: 9px;
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  padding: 1px 6px;
-  border-radius: 3px;
-  align-self: flex-start;
-}
-
-.featured-paper-card h4 {
-  font-size: 13px;
-  color: #fff;
-  margin: 0;
-  line-height: 1.4;
-}
-
-.featured-paper-card .authors, .featured-paper-card .journal {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-}
-
-.featured-paper-card .abstract {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-  background: rgba(255,255,255,0.01);
-  padding: 8px;
-  border-radius: 4px;
-}
-
-.featured-paper-card .meta-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10px;
-  color: var(--color-text-secondary);
-}
-
-.sci-badge {
-  background: rgba(139,92,246,0.15);
-  color: #a78bfa;
-  padding: 1px 4px;
-  border-radius: 2px;
-}
-
-.achievements-container {
-  height: calc(100vh - 106px);
   gap: 20px;
-  padding: 18px 22px;
+  margin-top: 14px;
 }
 
-.left-sidebar {
-  width: 280px;
-  padding: 20px;
-}
+@media (max-width: 1180px) {
+  .achievements-container {
+    grid-template-columns: 132px 1fr;
+  }
 
-.main-content-panel {
-  padding: 20px;
-}
+  .overview-layout,
+  .project-layout,
+  .award-layout-main,
+  .patent-main-grid,
+  .paper-main-grid {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
 
-.sidebar-header h3,
-.chart-box h4,
-.main-rec-box h4,
-.logs-box h4,
-.table-actions-row h3 {
-  font-size: 16px;
-}
-
-.nav-btn,
-.filter-group .lbl,
-.filter-btn,
-.legend-list,
-.timeline-logs,
-.simple-bar-chart,
-.paper-distribution,
-.data-table,
-.meta-details,
-.featured-paper-card .authors,
-.featured-paper-card .journal,
-.featured-paper-card .abstract {
-  font-size: 13px;
-}
-
-.left-sidebar .sidebar-header h3 {
-  font-size: 22px;
-}
-
-.left-sidebar .nav-btn {
-  min-height: 48px;
-  font-size: 18px;
-  padding: 12px 17px;
-}
-
-.achievements-container .left-sidebar .sidebar-header h3 {
-  font-size: 22px !important;
-  line-height: 1.25;
-}
-
-.overview-stats-grid .stat-card {
-  padding: 18px;
-}
-
-.overview-stats-grid .stat-card .val,
-.donut-center-txt .num,
-.sum-card .num,
-.paper-sum-c .val,
-.pat-sum-c .val {
-  font-size: 22px;
-}
-
-.overview-stats-grid .stat-card .lbl,
-.latest-c-card .desc,
-.featured-award-card .details,
-.proj-meta .desc,
-.team-row,
-.assoc-stats-row {
-  font-size: 13px;
-}
-
-.left-charts-col {
-  width: 320px;
-}
-
-.right-logs-col,
-.projects-right-sidebar,
-.papers-sidebar,
-.cert-col {
-  width: 300px;
-}
-
-.latest-c-card h5,
-.proj-meta h4,
-.award-row-card h5,
-.featured-paper-card h4 {
-  font-size: 15px;
+  .latest-panel,
+  .right-stack,
+  .award-side {
+    min-height: 260px;
+  }
 }
 </style>

@@ -462,6 +462,48 @@
       </div>
 
       <!-- 5. Laboratory Operation Event Stream (Logs log table) -->
+      <div v-else-if="activeModal === 'lab-event-logs'" class="modal-content-wrapper event-logs-modal">
+        <div class="modal-header">
+          <h2>实验室运行事件流</h2>
+          <div class="header-actions">
+            <button class="btn-filter">🔍 筛选</button>
+            <button class="btn-export">📥 导出</button>
+            <button class="close-btn" @click="closeModal">×</button>
+          </div>
+        </div>
+        <div class="modal-body scroll-container">
+          <table class="logs-table font-num">
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>事件类型</th>
+                <th>事件对象</th>
+                <th>事件内容</th>
+                <th>当前状态</th>
+                <th>数据来源</th>
+                <th style="text-align: center;">跳转</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="log in labEventLogsList" :key="log.time">
+                <td class="time-col">{{ log.time }}</td>
+                <td>
+                  <span class="type-tag" :class="log.typeClass">{{ log.type }}</span>
+                </td>
+                <td class="text-highlight">{{ log.target }}</td>
+                <td class="content-col" :title="log.content">{{ log.content }}</td>
+                <td>
+                  <span class="status-text-glow" :class="log.statusClass">{{ log.status }}</span>
+                </td>
+                <td class="source-col">{{ log.source }}</td>
+                <td style="text-align: center; cursor: pointer; color:#38bdf8;">🔗</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 5. Space Alert Center (Logs log table) -->
       <div v-else-if="activeModal === 'event-logs'" class="modal-content-wrapper event-logs-modal">
         <div class="modal-header">
           <h2>空间告警中心</h2>
@@ -678,7 +720,7 @@ const primaryPrinter = computed(() => printerCards.value[0] || {
   id: '3DP-310-001',
   name: '--',
   model: 'Bambu Lab 3D Printer',
-  location: '310实验室 · 制造角',
+  location: '310实验室',
   prints: '--',
   accuracy: '--',
   share: '--',
@@ -706,7 +748,7 @@ const modalSizeClass = computed(() => {
   if (props.activeModal === 'device-quick-status') return 'large-modal';
   if (props.activeModal === 'device-full-details') return 'large-modal';
   if (props.activeModal === 'camera-monitor') return 'xl-modal';
-  if (props.activeModal === 'event-logs') return 'xl-modal';
+  if (props.activeModal === 'event-logs' || props.activeModal === 'lab-event-logs') return 'xl-modal';
   if (props.activeModal === 'meeting-calendar') return 'xl-modal';
   return '';
 });
@@ -722,6 +764,15 @@ const onlineUsersList = [
 ];
 
 // Mock Logs Log
+const labEventLogsList = [
+  { time: '09:39:21', type: '设备事件', typeClass: 'blue-tag', target: 'AI训练服务器集群', content: '训练任务调度启动，GPU 利用率 66%，计算节点保持在线运行。', status: '在线', statusClass: 'blue-tag', source: '设备调度系统' },
+  { time: '09:25:14', type: '项目事件', typeClass: 'green-tag', target: '智慧农业监测识别项目', content: '完成深度模型配准与训练，项目数据集已同步到实验室看板。', status: '进行中', statusClass: 'green-tag', source: '项目管理系统' },
+  { time: '09:12:07', type: '成果事件', typeClass: 'orange-tag', target: '多模态感知融合算法', content: '论文被 IEEE T-ASE 接收，成果材料已进入归档流程。', status: '已收录', statusClass: 'orange-tag', source: '成果管理系统' },
+  { time: '08:58:43', type: '活动事件', typeClass: 'purple-tag', target: 'RoboMaster 友谊培训', content: '新增 12 名成员报名参与培训，活动签到名单已更新。', status: '报名中', statusClass: 'purple-tag', source: '活动管理系统' },
+  { time: '08:42:30', type: '空间事件', typeClass: 'blue-tag', target: '310实验室', content: '实验空间完成晨间巡检，门禁、网络、环境传感器状态正常。', status: '正常', statusClass: 'green-tag', source: '空间物联系统' },
+  { time: '08:18:05', type: '会议事件', typeClass: 'green-tag', target: '401学术汇报厅', content: '智能算法团队例会预约确认，会议屏与摄像头预检通过。', status: '待开始', statusClass: 'blue-tag', source: '会议预约系统' }
+];
+
 const eventLogsList = [
   { time: '10:28:36', type: '告警事件', typeClass: 'red-tag', target: '实验室网络终端', content: '310 实验室网络终端心跳中断，交换机端口丢包率升高，已通知运维排查。', status: '处理中', statusClass: 'orange-tag', source: '网络监测系统' },
   { time: '10:24:11', type: '告警事件', typeClass: 'red-tag', target: '摄像头-06', content: '摄像头-06 视频流离线，最近一次画面回传失败，疑似供电或网络链路异常。', status: '离线', statusClass: 'red-tag', source: '视频监控平台' },

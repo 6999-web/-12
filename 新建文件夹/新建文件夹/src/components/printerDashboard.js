@@ -26,7 +26,7 @@ export const getPrinterCards = (dashboard) => {
       id: `3DP-310-${String(index + 1).padStart(3, '0')}`,
       name,
       model: name === 'P1SC' ? 'Bambu Lab P1S Combo' : 'Bambu Lab 3D Printer',
-      location: '310实验室 · 制造角',
+      location: '310实验室',
       prints,
       accuracy: formatPrinterNumber(accuracyByPrinter[name], 1),
       share: formatPrinterNumber(share, 1),
