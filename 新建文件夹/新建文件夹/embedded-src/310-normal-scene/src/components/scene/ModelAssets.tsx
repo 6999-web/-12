@@ -31,6 +31,9 @@ type GeneratedColliderSpec = {
 };
 
 const workstationFallback: GeneratedColliderSpec[] = [];
+const WORKSTATION_MODEL_URL = "/model/310正常3d交互场景/model/workstation_colored.glb";
+const MEETING_MODEL_URL = "/model/310正常3d交互场景/model/meeting_area.glb";
+const HARDWARE_MODEL_URL = "/model/310正常3d交互场景/model/hardware_area.glb";
 
 const meetingFallback: GeneratedColliderSpec[] = [
   {
@@ -92,7 +95,7 @@ export function ModelAssets() {
       <ModelLayer
         name="WorkstationModelLayer"
         editorId="workstation"
-        url="/model/310正常3d交互场景/model/workstation_area.glb"
+        url={WORKSTATION_MODEL_URL}
         targetCenter={[-3.5, 0, 0.48]}
         targetSize={[15.9, 6.15]}
         fallbackColliders={workstationFallback}
@@ -101,7 +104,7 @@ export function ModelAssets() {
       <ModelLayer
         name="MeetingModelLayer"
         editorId="meeting"
-        url="/model/310正常3d交互场景/model/meeting_area.glb"
+        url={MEETING_MODEL_URL}
         targetCenter={[8.1, 0, -0.35]}
         targetSize={[3.45, 4.45]}
         fallbackColliders={meetingFallback}
@@ -109,7 +112,7 @@ export function ModelAssets() {
       <ModelLayer
         name="HardwareModelLayer"
         editorId="hardware"
-        url="/model/310正常3d交互场景/model/hardware_area.glb"
+        url={HARDWARE_MODEL_URL}
         targetCenter={[7.4, 0, 3.55]}
         targetSize={[5.65, 1.55]}
         fallbackColliders={hardwareFallback}
@@ -280,6 +283,6 @@ function getUsableBounds(scene: THREE.Object3D) {
   return hasVisual ? visualBox : null;
 }
 
-useGLTF.preload("/model/310正常3d交互场景/model/workstation_area.glb");
-useGLTF.preload("/model/310正常3d交互场景/model/meeting_area.glb");
-useGLTF.preload("/model/310正常3d交互场景/model/hardware_area.glb");
+useGLTF.preload(WORKSTATION_MODEL_URL);
+useGLTF.preload(MEETING_MODEL_URL);
+useGLTF.preload(HARDWARE_MODEL_URL);

@@ -39,38 +39,6 @@
         </div>
 
         <div class="overview-layout">
-          <section class="overview-left glass-panel">
-            <h4>成果分类概览</h4>
-            <div class="donut-row">
-              <div class="big-donut">
-                <svg viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="44" class="donut-bg" />
-                  <circle cx="60" cy="60" r="44" class="donut-paper" :stroke-dasharray="donutPart(papers.length)" />
-                  <circle cx="60" cy="60" r="44" class="donut-patent" :stroke-dasharray="donutPart(patents.length)" :stroke-dashoffset="donutOffset(papers.length)" />
-                  <circle cx="60" cy="60" r="44" class="donut-award" :stroke-dasharray="donutPart(awards.length)" :stroke-dashoffset="donutOffset(papers.length + patents.length)" />
-                  <circle cx="60" cy="60" r="44" class="donut-project" :stroke-dasharray="donutPart(projects.length)" :stroke-dashoffset="donutOffset(papers.length + patents.length + awards.length)" />
-                </svg>
-                <div><strong>{{ summary.total }}</strong><span>总计</span></div>
-              </div>
-              <div class="donut-legend">
-                <span><i class="blue"></i>论文成果 {{ papers.length }}</span>
-                <span><i class="green"></i>专利软著 {{ patents.length }}</span>
-                <span><i class="orange"></i>竞赛获奖 {{ awards.length }}</span>
-                <span><i class="purple"></i>项目成果 {{ projects.length }}</span>
-              </div>
-            </div>
-            <h4>类别趋势（近6个月）</h4>
-            <svg class="trend-chart" viewBox="0 0 300 150">
-              <polyline class="line blue" points="12,104 66,92 120,88 174,70 228,68 286,48" />
-              <polyline class="line green" points="12,118 66,106 120,98 174,84 228,76 286,60" />
-              <polyline class="line orange" points="12,128 66,118 120,108 174,98 228,90 286,78" />
-              <polyline class="line purple" points="12,136 66,132 120,126 174,118 228,114 286,106" />
-              <g v-for="(m, index) in ['12月','1月','2月','3月','4月','5月']" :key="m">
-                <text :x="12 + index * 54" y="145">{{ m }}</text>
-              </g>
-            </svg>
-          </section>
-
           <section class="overview-feature-grid">
             <article class="feature-card glass-panel" @click="openDetail('论文成果', featuredPaper)">
               <header><h4>最新论文</h4><button type="button" @click.stop="activeCategory = 'papers'">更多 ›</button></header>
@@ -262,10 +230,6 @@
       </section>
     </main>
 
-    <footer class="achievement-footer glass-panel">
-      <span>快捷入口 ›</span><span>最近访问：公安智慧教育训练平台</span><span>智能警情研判分析平台</span><span>实验室数字中枢</span><span>使用指南</span><span>数据中心</span><span>权限管理</span><b>系统运行状态：● 正常运行</b>
-    </footer>
-
     <div v-if="detailResult" class="detail-dialog-overlay" @click="detailResult = null">
       <section class="result-dialog glass-panel" @click.stop>
         <button type="button" class="dialog-close" @click="detailResult = null">×</button>
@@ -419,10 +383,6 @@ const latestLogs = computed(() => [
 const levelCount = (keyword) => awards.value.filter((award) => `${award.level}${award.name}`.includes(keyword)).length;
 const patentTypeCount = (keyword) => patents.value.filter((patent) => `${patent.type}${patent.name}`.includes(keyword)).length;
 
-const ringLength = 276.5;
-const donutPart = (value) => `${Math.round((value / Math.max(summary.value.total, 1)) * ringLength)} ${ringLength}`;
-const donutOffset = (value) => `-${Math.round((value / Math.max(summary.value.total, 1)) * ringLength)}`;
-
 const openDetail = (type, item) => {
   detailType.value = type;
   detailResult.value = item;
@@ -442,7 +402,7 @@ const detailDesc = computed(() => detailResult.value?.desc || detailResult.value
   height: calc(100vh - 124px);
   display: grid;
   grid-template-columns: 144px minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) 38px;
+  grid-template-rows: minmax(0, 1fr);
   gap: 14px;
   padding: 12px 14px;
   overflow: hidden;
@@ -536,6 +496,8 @@ p {
 .achievement-workspace {
   min-height: 0;
   overflow: hidden;
+  grid-column: 2;
+  grid-row: 1;
 }
 
 .overview-page,
@@ -636,11 +598,10 @@ p {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   gap: 10px;
 }
 
-.overview-left,
 .latest-panel,
 .feature-card,
 .stats-box,
@@ -668,7 +629,6 @@ p {
   flex-direction: column;
 }
 
-.overview-left h4,
 .feature-card h4,
 .latest-panel h4,
 .category-head h2,
@@ -680,22 +640,12 @@ p {
   color: #fff;
 }
 
-.donut-row {
-  display: grid;
-  grid-template-columns: 118px 1fr;
-  align-items: center;
-  gap: 10px;
-  margin: 10px 0 18px;
-}
-
-.big-donut,
 .small-donut {
   position: relative;
   width: 112px;
   height: 112px;
 }
 
-.big-donut svg,
 .small-donut svg {
   width: 100%;
   height: 100%;
@@ -717,7 +667,6 @@ p {
 .donut-award { stroke: #ffbc42; }
 .donut-project { stroke: #7657ff; }
 
-.big-donut div,
 .small-donut strong {
   position: absolute;
   inset: 0;
@@ -726,27 +675,6 @@ p {
   text-align: center;
   color: #fff;
   font-size: 18px;
-}
-
-.big-donut span {
-  color: #9abbd8;
-  font-size: 10px;
-}
-
-.donut-legend {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: #b8d9f5;
-  font-size: 11px;
-}
-
-.donut-legend i {
-  width: 8px;
-  height: 8px;
-  display: inline-block;
-  border-radius: 50%;
-  margin-right: 6px;
 }
 
 .blue { background: #1d7dff; }
@@ -761,22 +689,32 @@ p {
   background: transparent;
 }
 
-.trend-chart {
-  width: 100%;
-  height: 150px;
+.feature-card,
+.latest-panel,
+.scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(98, 199, 255, 0.55) rgba(6, 22, 50, 0.34);
 }
 
-.trend-chart .line {
-  fill: none;
-  stroke-width: 3;
-  filter: drop-shadow(0 0 6px currentColor);
+.feature-card::-webkit-scrollbar,
+.latest-panel::-webkit-scrollbar,
+.scroll-container::-webkit-scrollbar {
+  width: 6px;
 }
 
-.trend-chart .line.blue { stroke: #1d7dff; background: none; color: #1d7dff; }
-.trend-chart .line.green { stroke: #2ee6a6; background: none; color: #2ee6a6; }
-.trend-chart .line.orange { stroke: #ffbc42; background: none; color: #ffbc42; }
-.trend-chart .line.purple { stroke: #7657ff; background: none; color: #7657ff; }
-.trend-chart text { fill: #8fb5d6; font-size: 10px; text-anchor: middle; }
+.feature-card::-webkit-scrollbar-track,
+.latest-panel::-webkit-scrollbar-track,
+.scroll-container::-webkit-scrollbar-track {
+  background: rgba(6, 22, 50, 0.34);
+  border-radius: 999px;
+}
+
+.feature-card::-webkit-scrollbar-thumb,
+.latest-panel::-webkit-scrollbar-thumb,
+.scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(98, 199, 255, 0.55);
+  border-radius: 999px;
+}
 
 .overview-feature-grid {
   min-height: 0;
@@ -788,12 +726,14 @@ p {
 
 .feature-card {
   position: relative;
-  display: grid;
-  grid-template-rows: auto minmax(76px, 1fr) auto auto;
+  display: flex;
+  flex-direction: column;
   gap: 7px;
   cursor: pointer;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  padding-right: 8px;
 }
 
 .feature-card header,
@@ -819,11 +759,13 @@ p {
 }
 
 .paper-preview {
-  min-height: 0;
+  flex: 0 0 82px;
+  min-height: 82px;
   padding: 14px;
   border-radius: 6px;
   background: linear-gradient(135deg, #f8fbff, #dbeaff);
   color: #0b2d54;
+  overflow: hidden;
 }
 
 .paper-preview > div {
@@ -840,8 +782,8 @@ p {
 }
 
 .double-cert {
-  min-height: 0;
-  height: 100%;
+  flex: 0 0 82px;
+  min-height: 82px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-auto-rows: minmax(0, 1fr);
@@ -870,20 +812,19 @@ p {
 }
 
 .wide-img {
-  min-height: 0;
-  height: 100%;
+  flex: 0 0 82px;
+  min-height: 82px;
+  height: 82px;
   margin-bottom: 0;
 }
 
 .feature-card strong {
   display: block;
+  flex-shrink: 0;
   color: #fff;
   font-size: 13px;
   line-height: 1.35;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  word-break: break-word;
 }
 
 .feature-card small,
@@ -894,6 +835,7 @@ p {
 }
 
 .status {
+  flex-shrink: 0;
   justify-self: start;
   display: inline-flex;
   align-items: center;
@@ -929,6 +871,9 @@ p {
   display: flex;
   flex-direction: column;
   gap: 7px;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  padding-right: 8px;
 }
 
 .latest-panel article {
@@ -1428,23 +1373,6 @@ tr:hover {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 5;
   word-break: break-word;
-}
-
-.achievement-footer {
-  grid-column: 1 / -1;
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-  gap: 26px;
-  padding: 0 14px;
-  color: #8fb5d6;
-  font-size: 12px;
-  overflow: hidden;
-}
-
-.achievement-footer b {
-  margin-left: auto;
-  color: #2ee6a6;
 }
 
 .detail-dialog-overlay {
