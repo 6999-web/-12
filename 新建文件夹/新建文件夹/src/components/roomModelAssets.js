@@ -20,15 +20,15 @@ export const ROOM_CONFIGS = {
     rootRotationY: -0.02,
     floorColor: '#eef1ee',
     models: [
-      { url: '/model/401/workstations_fixed.glb', name: 'Classroom401_Workstations' },
-      { url: '/model/401/air_conditioner_01_fixed.glb', name: 'Classroom401_AirConditioner01' },
-      { url: '/model/401/air_conditioner_02_fixed.glb', name: 'Classroom401_AirConditioner02' },
-      { url: '/model/401/air_conditioner_03_fixed.glb', name: 'Classroom401_AirConditioner03' },
-      { url: '/model/401/large_meeting_table_fixed.glb', name: 'Classroom401_LargeMeetingTable' },
-      { url: '/model/401/small_meeting_table_fixed.glb', name: 'Classroom401_SmallMeetingTable' },
-      { url: '/model/401/meeting_screen_fixed.glb', name: 'Classroom401_MeetingScreen' },
-      { url: '/model/401/whiteboard_fixed.glb', name: 'Classroom401_Whiteboard' },
-      { url: '/model/401/podium_fixed.glb', name: 'Classroom401_Podium' }
+      { url: '/model/401/workstations_fixed.glb?v=20260624-fixed', name: 'Classroom401_Workstations' },
+      { url: '/model/401/air_conditioner_01_fixed.glb?v=20260624-fixed', name: 'Classroom401_AirConditioner01' },
+      { url: '/model/401/air_conditioner_02_fixed.glb?v=20260624-fixed', name: 'Classroom401_AirConditioner02' },
+      { url: '/model/401/air_conditioner_03_fixed.glb?v=20260624-fixed', name: 'Classroom401_AirConditioner03' },
+      { url: '/model/401/large_meeting_table_fixed.glb?v=20260624-fixed', name: 'Classroom401_LargeMeetingTable' },
+      { url: '/model/401/small_meeting_table_fixed.glb?v=20260624-fixed', name: 'Classroom401_SmallMeetingTable' },
+      { url: '/model/401/meeting_screen_fixed.glb?v=20260624-fixed', name: 'Classroom401_MeetingScreen' },
+      { url: '/model/401/whiteboard_fixed.glb?v=20260624-fixed', name: 'Classroom401_Whiteboard' },
+      { url: '/model/401/podium_fixed.glb?v=20260624-fixed', name: 'Classroom401_Podium' }
     ]
   },
   meeting913: {
@@ -50,9 +50,9 @@ export const ROOM_CONFIGS = {
     rootRotationY: -0.08,
     floorColor: '#eef1ee',
     models: [
-      { url: '/model/913/meeting_table_fixed.glb', name: 'Meeting913_Table', scale: 0.1 },
-      { url: '/model/913/meeting_screen_fixed.glb', name: 'Meeting913_Screen', scale: 0.1 },
-      { url: '/model/913/chairs_fixed.glb', name: 'Meeting913_Chairs', scale: 0.1 }
+      { url: '/model/913/meeting_table_fixed.glb?v=20260624-fixed', name: 'Meeting913_Table', scale: 0.1 },
+      { url: '/model/913/meeting_screen_fixed.glb?v=20260624-fixed', name: 'Meeting913_Screen', scale: 0.1 },
+      { url: '/model/913/chairs_fixed.glb?v=20260624-fixed', name: 'Meeting913_Chairs', scale: 0.1 }
     ]
   }
 };

@@ -2,7 +2,7 @@
   <div class="lab310-embedded-viewer">
     <iframe
       class="lab310-frame"
-      src="/embedded/310-normal-scene/index.html?embed=home"
+      :src="frameSrc"
       title="310 latest 3D scene"
       loading="eager"
       allow="fullscreen"
@@ -15,10 +15,14 @@
 </template>
 
 <script setup>
-import { onUnmounted, ref } from 'vue';
+import { computed, onUnmounted, ref } from 'vue';
 
 const isReady = ref(false);
 let readyTimer = 0;
+
+const frameSrc = computed(() => {
+  return '/embedded/310-normal-scene/index.html?embed=home';
+});
 
 const handleFrameLoad = () => {
   window.clearTimeout(readyTimer);

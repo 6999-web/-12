@@ -78,16 +78,18 @@
             </article>
           </section>
 
-          <section class="latest-panel glass-panel">
-            <header><h4>最新成果动态</h4></header>
-            <article v-for="item in latestLogs" :key="item.title" @click="openDetail(item.type, item)">
-              <i :class="item.class">{{ item.icon }}</i>
-              <div>
-                <strong>{{ item.title }}</strong>
-                <p>{{ item.type }}　{{ item.date }}</p>
-              </div>
-              <span :class="['status', item.class]">{{ item.state }}</span>
-            </article>
+          <section class="achievement-timeline glass-panel">
+            <header><h4>&#25104;&#26524;&#24402;&#26723;&#26102;&#38388;&#36724;</h4></header>
+            <div class="achievement-timeline-list scroll-container">
+              <article v-for="item in latestLogs" :key="item.title" @click="openDetail(item.type, item)">
+                <time>{{ item.date }}</time>
+                <span :class="['timeline-dot', item.class]"></span>
+                <div>
+                  <strong>{{ item.title }}</strong>
+                  <p>{{ item.type }} &middot; {{ item.state }}</p>
+                </div>
+              </article>
+            </div>
           </section>
         </div>
       </section>
@@ -598,11 +600,12 @@ p {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-rows: minmax(0, 1fr) minmax(160px, 0.72fr);
   gap: 10px;
 }
 
 .latest-panel,
+.achievement-timeline,
 .feature-card,
 .stats-box,
 .relation-box,
@@ -631,6 +634,7 @@ p {
 
 .feature-card h4,
 .latest-panel h4,
+.achievement-timeline h4,
 .category-head h2,
 .award-feature h3,
 .paper-feature h4,
@@ -691,6 +695,7 @@ p {
 
 .feature-card,
 .latest-panel,
+.achievement-timeline-list,
 .scroll-container {
   scrollbar-width: thin;
   scrollbar-color: rgba(98, 199, 255, 0.55) rgba(6, 22, 50, 0.34);
@@ -698,12 +703,14 @@ p {
 
 .feature-card::-webkit-scrollbar,
 .latest-panel::-webkit-scrollbar,
+.achievement-timeline-list::-webkit-scrollbar,
 .scroll-container::-webkit-scrollbar {
   width: 6px;
 }
 
 .feature-card::-webkit-scrollbar-track,
 .latest-panel::-webkit-scrollbar-track,
+.achievement-timeline-list::-webkit-scrollbar-track,
 .scroll-container::-webkit-scrollbar-track {
   background: rgba(6, 22, 50, 0.34);
   border-radius: 999px;
@@ -711,6 +718,7 @@ p {
 
 .feature-card::-webkit-scrollbar-thumb,
 .latest-panel::-webkit-scrollbar-thumb,
+.achievement-timeline-list::-webkit-scrollbar-thumb,
 .scroll-container::-webkit-scrollbar-thumb {
   background: rgba(98, 199, 255, 0.55);
   border-radius: 999px;
@@ -916,6 +924,72 @@ p {
   color: #8fb5d6;
   font-size: 11px;
   margin-top: 4px;
+}
+
+.achievement-timeline {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 12px 14px;
+}
+
+.achievement-timeline header {
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+
+.achievement-timeline-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-left: 10px;
+  border-left: 1px solid rgba(67, 183, 255, 0.32);
+}
+
+.achievement-timeline-list article {
+  position: relative;
+  display: grid;
+  grid-template-columns: 86px 16px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-height: 54px;
+  padding: 0 0 12px;
+  cursor: pointer;
+}
+
+.achievement-timeline-list time {
+  color: #72e7ff;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.timeline-dot {
+  width: 9px;
+  height: 9px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: #43b7ff;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.timeline-dot.green { background: #2ee6a6; }
+.timeline-dot.orange { background: #ffbc42; }
+.timeline-dot.blue { background: #62c7ff; }
+
+.achievement-timeline-list strong {
+  display: block;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.achievement-timeline-list p {
+  margin-top: 4px;
+  color: #8fb5d6;
+  font-size: 11px;
 }
 
 .category-head {

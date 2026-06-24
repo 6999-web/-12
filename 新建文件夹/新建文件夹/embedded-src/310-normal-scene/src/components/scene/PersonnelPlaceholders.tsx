@@ -1,6 +1,7 @@
 import { Clone, useGLTF } from "@react-three/drei";
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
+import { FIXED_310_SOURCE_CENTER, FIXED_310_SOURCE_SCALE } from "./ModelAssets";
 import type { Vec3 } from "./types";
 
 const CAT_MODEL_URL = "/model/kiki.glb?v=20260612-full-white-2";
@@ -13,6 +14,14 @@ const catColliderMaterial = new THREE.MeshBasicMaterial({
   opacity: 0,
   depthWrite: false,
 });
+
+function fixed310SeatPosition(sourceX: number, sourceZ: number): Vec3 {
+  return [
+    (sourceX - FIXED_310_SOURCE_CENTER.x) * FIXED_310_SOURCE_SCALE,
+    0.05,
+    (sourceZ - FIXED_310_SOURCE_CENTER.z) * FIXED_310_SOURCE_SCALE,
+  ];
+}
 
 type CatOccupantSpec = {
   id: string;
@@ -34,7 +43,7 @@ const occupants: CatOccupantSpec[] = [
     department: "教育科技BU、具身智能BU",
     squad: "25数据警务技术专业二区",
     seat: "310 工位 A03",
-    position: [-8.459, 0.05, -1.906],
+    position: fixed310SeatPosition(4.114, -13.12),
     rotationY: 0,
     status: "在岗",
   },
@@ -45,7 +54,7 @@ const occupants: CatOccupantSpec[] = [
     department: "教育科技BU",
     squad: "25数据警务技术专业二区",
     seat: "310 工位 A06",
-    position: [-6.136, 0.05, -1.887],
+    position: fixed310SeatPosition(9.304, -13.09),
     rotationY: 0,
     status: "在岗",
   },
@@ -56,7 +65,7 @@ const occupants: CatOccupantSpec[] = [
     department: "具身智能BU",
     squad: "25数据警务技术专业一区",
     seat: "310 工位 B02",
-    position: [-2.764, 0.05, 1.731],
+    position: fixed310SeatPosition(2.739, -9.181),
     rotationY: 0,
     status: "在岗",
   },
@@ -67,7 +76,7 @@ const occupants: CatOccupantSpec[] = [
     department: "教育科技BU",
     squad: "25数据警务技术专业二区",
     seat: "310 工位 B05",
-    position: [-1.061, 0.05, 1.731],
+    position: fixed310SeatPosition(7.915, -9.187),
     rotationY: 0,
     status: "在岗",
   },

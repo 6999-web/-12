@@ -10,21 +10,9 @@
       </div>
 
       <div class="overview-grid">
-        <article>
-          <span>累计活动</span>
-          <strong>{{ activitySummary.total }}</strong>
-        </article>
-        <article>
-          <span>本月举办</span>
-          <strong>{{ activitySummary.month }}</strong>
-        </article>
-        <article>
-          <span>累计参与</span>
-          <strong>{{ activitySummary.attendees }}</strong>
-        </article>
-        <article>
-          <span>媒体材料</span>
-          <strong>{{ activitySummary.reports }}</strong>
+        <article v-for="item in activitySummaryCards" :key="item.label">
+          <span>{{ item.label }}</span>
+          <strong>{{ item.value }}</strong>
         </article>
       </div>
 
@@ -331,6 +319,12 @@ const activitySummary = computed(() => ({
   attendees: activities.value.reduce((sum, activity) => sum + Number(activity.attendees || 0), Number(featuredActivity.value?.attendees || 0)),
   reports: activities.value.filter((activity) => activity.cover).length + (featuredActivity.value?.cover ? 1 : 0)
 }));
+
+const activitySummaryCards = computed(() => [
+  { label: '\u7d2f\u8ba1\u6d3b\u52a8', value: activitySummary.value.total },
+  { label: '\u672c\u6708\u4e3e\u529e', value: activitySummary.value.month },
+  { label: '\u5a92\u4f53\u6750\u6599', value: activitySummary.value.reports }
+]);
 
 const calendarDays = computed(() => [
   { month: 4, day: 27, other: true },

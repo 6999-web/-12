@@ -1,8 +1,6 @@
 import { useGLTF } from "@react-three/drei";
 import { useEffect } from "react";
 import * as THREE from "three";
-import { useModelEditorState, type EditableModelId } from "./modelEditorStore";
-import type { Vec3 } from "./types";
 
 const colliderMaterial = new THREE.MeshBasicMaterial({
   color: "#4FC3FF",
@@ -10,16 +8,6 @@ const colliderMaterial = new THREE.MeshBasicMaterial({
   opacity: 0,
   depthWrite: false,
 });
-
-type ModelLayerProps = {
-  name: string;
-  editorId: EditableModelId;
-  url: string;
-  targetCenter: Vec3;
-  targetSize: [number, number];
-  fallbackColliders?: GeneratedColliderSpec[];
-  rootYOverride?: number;
-};
 
 type GeneratedColliderSpec = {
   rootName: string;
@@ -30,132 +18,132 @@ type GeneratedColliderSpec = {
   description: string;
 };
 
-const workstationFallback: GeneratedColliderSpec[] = [];
-const WORKSTATION_MODEL_URL = "/model/310正常3d交互场景/model/workstation_colored.glb";
-const MEETING_MODEL_URL = "/model/310正常3d交互场景/model/meeting_area.glb";
-const HARDWARE_MODEL_URL = "/model/310正常3d交互场景/model/hardware_area.glb";
+const fixedModelUrls = [
+  { url: "/model/310_fixed/workstations_fixed.glb?v=20260624-fixed", name: "Fixed310_Workstations" },
+  { url: "/model/310_fixed/meeting_screen_table_fixed.glb?v=20260624-fixed", name: "Fixed310_MeetingArea" },
+  { url: "/model/310_fixed/hardware_workstations_fixed.glb?v=20260624-fixed", name: "Fixed310_HardwareArea" },
+  { url: "/model/310_fixed/air_conditioner_01_fixed.glb?v=20260624-fixed", name: "Fixed310_AirConditioner01" },
+  { url: "/model/310_fixed/air_conditioner_02_fixed.glb?v=20260624-fixed", name: "Fixed310_AirConditioner02" },
+  { url: "/model/310_fixed/water_printer_fixed.glb?v=20260624-fixed", name: "Fixed310_WaterPrinter" },
+  { url: "/model/310_fixed/front_door_fixed.glb?v=20260624-fixed", name: "Fixed310_FrontDoor" },
+  { url: "/model/310_fixed/back_door_fixed.glb?v=20260624-fixed", name: "Fixed310_BackDoor" },
+] as const;
 
-const meetingFallback: GeneratedColliderSpec[] = [
+export const FIXED_310_SOURCE_CENTER = new THREE.Vector3(18.1935, 0, -8.6885);
+export const FIXED_310_SOURCE_SCALE = 0.65;
+
+const deviceMeta: GeneratedColliderSpec[] = [
   {
-    rootName: "meeting_table_root",
-    colliderName: "meeting_table_collider",
+    rootName: "room_310_meeting_table_root",
+    colliderName: "room_310_meeting_table_collider",
     displayName: "会议桌",
     type: "meeting_table",
     status: "可用",
     description: "会议讨论、项目评审和团队协作区域。",
   },
   {
-    rootName: "meeting_screen_root",
-    colliderName: "meeting_screen_collider",
+    rootName: "room_310_meeting_screen_root",
+    colliderName: "room_310_meeting_screen_collider",
     displayName: "会议大屏",
     type: "meeting_screen",
     status: "在线",
     description: "用于展示实验室数据、项目看板和会议内容。",
   },
-];
-
-const hardwareFallback: GeneratedColliderSpec[] = [
   {
-    rootName: "hardware_workbench_root",
-    colliderName: "hardware_workbench_collider",
+    rootName: "room_310_hardware_workbench_root",
+    colliderName: "room_310_hardware_workbench_collider",
     displayName: "硬件工作台",
     type: "hardware_workbench",
     status: "使用中",
     description: "硬件调试、机器人装配和实验操作区域。",
   },
   {
-    rootName: "printer_3d_01_root",
-    colliderName: "printer_3d_01_collider",
+    rootName: "room_310_printer_3d_01_root",
+    colliderName: "room_310_printer_3d_01_collider",
     displayName: "3D 打印机 1",
     type: "printer_3d",
     status: "在线",
     description: "用于模型打印、结构件加工和快速原型制作。",
   },
   {
-    rootName: "printer_3d_02_root",
-    colliderName: "printer_3d_02_collider",
+    rootName: "room_310_printer_3d_02_root",
+    colliderName: "room_310_printer_3d_02_collider",
     displayName: "3D 打印机 2",
     type: "printer_3d",
     status: "在线",
     description: "用于模型打印、结构件加工和快速原型制作。",
   },
   {
-    rootName: "printer_3d_03_root",
-    colliderName: "printer_3d_03_collider",
+    rootName: "room_310_printer_3d_03_root",
+    colliderName: "room_310_printer_3d_03_collider",
     displayName: "3D 打印机 3",
     type: "printer_3d",
     status: "在线",
     description: "用于模型打印、结构件加工和快速原型制作。",
   },
+  {
+    rootName: "room_310_print_machine_01_root",
+    colliderName: "room_310_print_machine_01_collider",
+    displayName: "普通打印机",
+    type: "print_machine",
+    status: "在线",
+    description: "用于文档、项目材料和成果附件打印。",
+  },
+  {
+    rootName: "room_310_water_dispenser_01_root",
+    colliderName: "room_310_water_dispenser_01_collider",
+    displayName: "饮水机",
+    type: "water_dispenser",
+    status: "可用",
+    description: "实验室公共饮水设备。",
+  },
+  {
+    rootName: "room_310_air_conditioner_01_root",
+    colliderName: "room_310_air_conditioner_01_collider",
+    displayName: "空调 1",
+    type: "air_conditioner",
+    status: "在线",
+    description: "实验室环境温控设备。",
+  },
+  {
+    rootName: "room_310_air_conditioner_02_root",
+    colliderName: "room_310_air_conditioner_02_collider",
+    displayName: "空调 2",
+    type: "air_conditioner",
+    status: "在线",
+    description: "实验室环境温控设备。",
+  },
 ];
 
 export function ModelAssets() {
-  return (
-    <group name="ModelAssets">
-      <ModelLayer
-        name="WorkstationModelLayer"
-        editorId="workstation"
-        url={WORKSTATION_MODEL_URL}
-        targetCenter={[-3.5, 0, 0.48]}
-        targetSize={[15.9, 6.15]}
-        fallbackColliders={workstationFallback}
-        rootYOverride={0}
-      />
-      <ModelLayer
-        name="MeetingModelLayer"
-        editorId="meeting"
-        url={MEETING_MODEL_URL}
-        targetCenter={[8.1, 0, -0.35]}
-        targetSize={[3.45, 4.45]}
-        fallbackColliders={meetingFallback}
-      />
-      <ModelLayer
-        name="HardwareModelLayer"
-        editorId="hardware"
-        url={HARDWARE_MODEL_URL}
-        targetCenter={[7.4, 0, 3.55]}
-        targetSize={[5.65, 1.55]}
-        fallbackColliders={hardwareFallback}
-      />
-    </group>
-  );
-}
-
-function ModelLayer({ name, editorId, url, targetCenter, targetSize, fallbackColliders = [], rootYOverride }: ModelLayerProps) {
-  const { scene } = useGLTF(url);
-  const editorState = useModelEditorState();
-  const editorTransform = editorState[editorId];
+  const gltfs = fixedModelUrls.map((asset) => useGLTF(asset.url));
 
   useEffect(() => {
-    scene.name = name;
-    scene.position.set(0, 0, 0);
-    scene.scale.setScalar(1);
-    scene.updateWorldMatrix(true, true);
+    gltfs.forEach(({ scene }) => {
+      prepareMeshes(scene);
+      prepareExistingColliders(scene);
+    });
+  }, [gltfs]);
 
-    prepareMeshes(scene);
-    createFallbackColliders(scene, fallbackColliders);
-    prepareExistingColliders(scene);
-
-    const bounds = getUsableBounds(scene);
-    if (!bounds) return;
-
-    const size = bounds.getSize(new THREE.Vector3());
-    const center = bounds.getCenter(new THREE.Vector3());
-    const scale = Math.min(targetSize[0] / Math.max(size.x, 0.001), targetSize[1] / Math.max(size.z, 0.001)) * editorTransform.scale;
-
-    scene.scale.setScalar(scale);
-    scene.rotation.y = THREE.MathUtils.degToRad(editorTransform.rotationY);
-    scene.updateWorldMatrix(true, true);
-
-    scene.position.set(
-      editorTransform.center[0] - center.x * scale,
-      rootYOverride !== undefined ? rootYOverride + editorTransform.center[1] : editorTransform.center[1] - bounds.min.y * scale,
-      editorTransform.center[2] - center.z * scale,
-    );
-    scene.updateWorldMatrix(true, true);
-  }, [editorTransform, fallbackColliders, name, rootYOverride, scene, targetSize]);
-
-  return <primitive object={scene} />;
+  return (
+    <group
+      name="ModelAssets"
+      scale={FIXED_310_SOURCE_SCALE}
+      position={[
+        -FIXED_310_SOURCE_CENTER.x * FIXED_310_SOURCE_SCALE,
+        0,
+        -FIXED_310_SOURCE_CENTER.z * FIXED_310_SOURCE_SCALE,
+      ]}
+    >
+      {gltfs.map((gltf, index) => (
+        <primitive
+          key={fixedModelUrls[index].url}
+          object={gltf.scene}
+          name={fixedModelUrls[index].name}
+        />
+      ))}
+    </group>
+  );
 }
 
 function prepareMeshes(scene: THREE.Object3D) {
@@ -178,48 +166,20 @@ function shouldHideArtifact(name: string) {
   return name.startsWith("zz_old_") || name.includes("_disabled") || ["Object_1652", "Object_1653", "Object_1805", "Object_1808"].includes(name);
 }
 
-function createFallbackColliders(scene: THREE.Object3D, specs: GeneratedColliderSpec[]) {
-  specs.forEach((spec) => {
-    if (scene.getObjectByName(spec.colliderName)) return;
-    const root = scene.getObjectByName(spec.rootName);
-    if (!root) return;
-
-    const box = new THREE.Box3().setFromObject(root);
-    if (box.isEmpty()) return;
-
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
-    const geometry = new THREE.BoxGeometry(Math.max(size.x, 0.1), Math.max(size.y, 0.1), Math.max(size.z, 0.1));
-    const collider = new THREE.Mesh(geometry, colliderMaterial);
-    collider.name = spec.colliderName;
-    collider.position.copy(center);
-    collider.userData.generatedCollider = true;
-    collider.userData.selectionRoot = root;
-    applyColliderMeta(collider, spec);
-    scene.add(collider);
-  });
-}
-
 function prepareExistingColliders(scene: THREE.Object3D) {
   scene.traverse((object) => {
     if (!object.name.endsWith("_collider") || !(object instanceof THREE.Mesh)) return;
 
-    const meta = getColliderMeta(object.name);
-    if (!meta && object.userData.generatedCollider !== true) return;
-
+    const meta = getColliderMeta(object.name) ?? createGenericColliderMeta(object.name);
     object.visible = true;
     object.userData.__isCollider = true;
     object.userData.selectable = true;
     object.userData.selectionRoot = object.userData.selectionRoot ?? getRootForCollider(scene, object) ?? object.parent ?? object;
-
-    if (meta) applyColliderMeta(object, meta);
-
-    if (object instanceof THREE.Mesh) {
-      object.material = colliderMaterial;
-      object.castShadow = false;
-      object.receiveShadow = false;
-      object.renderOrder = -1;
-    }
+    applyColliderMeta(object, meta);
+    object.material = colliderMaterial;
+    object.castShadow = false;
+    object.receiveShadow = false;
+    object.renderOrder = -1;
   });
 }
 
@@ -256,33 +216,19 @@ function getColliderMeta(name: string): GeneratedColliderSpec | null {
     };
   }
 
-  return [...meetingFallback, ...hardwareFallback].find((item) => item.colliderName === name) ?? null;
+  return deviceMeta.find((item) => item.colliderName === name) ?? null;
 }
 
-function getUsableBounds(scene: THREE.Object3D) {
-  const colliderBox = new THREE.Box3();
-  let hasCollider = false;
-
-  scene.traverse((object) => {
-    if (object.userData.__isCollider !== true || !object.visible) return;
-    colliderBox.union(new THREE.Box3().setFromObject(object));
-    hasCollider = true;
-  });
-
-  if (hasCollider) return colliderBox;
-
-  const visualBox = new THREE.Box3();
-  let hasVisual = false;
-  scene.traverse((object) => {
-    if (!object.visible || shouldHideArtifact(object.name)) return;
-    if (!(object instanceof THREE.Mesh)) return;
-    visualBox.union(new THREE.Box3().setFromObject(object));
-    hasVisual = true;
-  });
-
-  return hasVisual ? visualBox : null;
+function createGenericColliderMeta(name: string): GeneratedColliderSpec {
+  const id = name.replace(/_collider$/, "");
+  return {
+    rootName: `${id}_root`,
+    colliderName: name,
+    displayName: id.replace(/^room_310_/, "").replace(/_/g, " "),
+    type: "object",
+    status: "在线",
+    description: "可交互对象。",
+  };
 }
 
-useGLTF.preload(WORKSTATION_MODEL_URL);
-useGLTF.preload(MEETING_MODEL_URL);
-useGLTF.preload(HARDWARE_MODEL_URL);
+fixedModelUrls.forEach((asset) => useGLTF.preload(asset.url));
