@@ -34,3 +34,6 @@ extracted_narrative/
 
 # Codex
 .codex-run/
+
+# Deployment archives
+*.zip
